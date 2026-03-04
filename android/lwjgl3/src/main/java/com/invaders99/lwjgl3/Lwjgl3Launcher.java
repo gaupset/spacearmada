@@ -13,7 +13,12 @@ public class Lwjgl3Launcher {
     }
 
     private static Lwjgl3Application createApplication() {
-        AppConfig config = new AppConfig("http://localhost:5001/invaders99-3f807/us-central1");
+        AppConfig config = new AppConfig(
+            "http://localhost:5001/invaders99-3f807/us-central1",
+            "http://localhost:8080",
+            "http://localhost:9000",
+            "invaders99-3f807"
+        );
         return new Lwjgl3Application(new Main(config), getDefaultConfiguration());
     }
 

@@ -15,7 +15,10 @@ public class AndroidLauncher extends AndroidApplication {
         AndroidApplicationConfiguration configuration = new AndroidApplicationConfiguration();
         configuration.useImmersiveMode = true; // Recommended, but not required.
         AppConfig config = new AppConfig(
-            "http://10.0.2.2:5001/invaders99-3f807/us-central1"
+            "http://10.0.2.2:5001/invaders99-3f807/us-central1",
+            "http://10.0.2.2:8080",
+            "http://10.0.2.2:9000",
+            "invaders99-3f807"
         );
         initialize(new Main(config), configuration);
     }

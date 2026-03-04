@@ -16,7 +16,7 @@ import com.invaders99.ui.UiFactory;
 import com.invaders99.util.Assets;
 import com.invaders99.util.Theme;
 
-/** Settings screen with Firebase connection status and a back button. */
+/** Settings screen with Firebase service tests and a back button. */
 public class SettingsScreen implements Screen {
     private static final float VIEWPORT_MIN_WIDTH = 360f;
     private static final float VIEWPORT_MIN_HEIGHT = 640f;
@@ -27,7 +27,9 @@ public class SettingsScreen implements Screen {
     private final Assets assets;
 
     private Stage stage;
-    private FirebaseTestWidget firebaseWidget;
+    private FirebaseTestWidget functionsWidget;
+    private FirebaseTestWidget firestoreWidget;
+    private FirebaseTestWidget databaseWidget;
 
     public SettingsScreen(Main game, Assets assets) {
         this.game = game;
@@ -40,7 +42,9 @@ public class SettingsScreen implements Screen {
         Gdx.input.setInputProcessor(stage);
 
         buildLayout();
-        firebaseWidget.autoTest();
+        functionsWidget.autoTest();
+        firestoreWidget.autoTest();
+        databaseWidget.autoTest();
     }
 
     private void buildLayout() {
@@ -53,9 +57,23 @@ public class SettingsScreen implements Screen {
         titleLabel.setFontScale(FONT_SCALE_TITLE);
         root.add(titleLabel).center().padBottom(40f).row();
 
-        // Firebase connection widget
-        firebaseWidget = new FirebaseTestWidget();
-        root.add(firebaseWidget)
+        // Cloud Functions test
+        functionsWidget = new FirebaseTestWidget("CLOUD FUNCTIONS", FirebaseTestWidget.SERVICE_FUNCTIONS);
+        root.add(functionsWidget)
+            .width(Theme.BUTTON_WIDTH)
+            .padBottom(BUTTON_SPACING)
+            .row();
+
+        // Firestore test
+        firestoreWidget = new FirebaseTestWidget("FIRESTORE", FirebaseTestWidget.SERVICE_FIRESTORE);
+        root.add(firestoreWidget)
+            .width(Theme.BUTTON_WIDTH)
+            .padBottom(BUTTON_SPACING)
+            .row();
+
+        // Realtime Database test
+        databaseWidget = new FirebaseTestWidget("REALTIME DATABASE", FirebaseTestWidget.SERVICE_DATABASE);
+        root.add(databaseWidget)
             .width(Theme.BUTTON_WIDTH)
             .padBottom(BUTTON_SPACING)
             .row();

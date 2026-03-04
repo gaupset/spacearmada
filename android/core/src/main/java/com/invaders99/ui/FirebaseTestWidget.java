@@ -1,5 +1,6 @@
 package com.invaders99.ui;
 
+
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
@@ -13,15 +14,25 @@ import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.invaders99.service.FirebaseService;
 import com.invaders99.util.Theme;
 
+
+import com.badlogic.gdx.Gdx;
+
 public class FirebaseTestWidget extends Table {
     private static final Color STATUS_SUCCESS = new Color(0.2f, 1.0f, 0.4f, 1f);
     private static final Color STATUS_ERROR = new Color(1.0f, 0.3f, 0.3f, 1f);
     private static final Color STATUS_PENDING = new Color(1.0f, 1.0f, 0.3f, 1f);
 
+    public static final String SERVICE_FUNCTIONS = "functions";
+    public static final String SERVICE_FIRESTORE = "firestore";
+    public static final String SERVICE_DATABASE = "database";
+
     private final Label statusLabel;
     private final Label.LabelStyle statusStyle;
+    private final String service;
 
-    public FirebaseTestWidget() {
+    public FirebaseTestWidget(String title, String service) {
+        this.service = service;
+
         Skin skin = UiFactory.getInstance().getSkin();
         Theme theme = UiFactory.getInstance().getTheme();
         setSkin(skin);
@@ -29,7 +40,7 @@ public class FirebaseTestWidget extends Table {
         setBackground(createBackground(theme));
 
         // Title
-        Label titleLabel = new Label("FIREBASE CONNECTION", skin);
+        Label titleLabel = new Label(title, skin);
         titleLabel.setFontScale(Theme.FONT_SCALE_SMALL);
 
         // Status
@@ -43,7 +54,7 @@ public class FirebaseTestWidget extends Table {
         testButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                testConnection();
+                runTest();
             }
         });
 
@@ -54,11 +65,12 @@ public class FirebaseTestWidget extends Table {
         add(testButton).center().padTop(8f).width(100f).height(36f);
     }
 
-    private void testConnection() {
+    private void runTest() {
         statusLabel.setText("Testing...");
         statusStyle.fontColor = STATUS_PENDING;
 
-        FirebaseService.getInstance().testConnection(new FirebaseService.FirebaseCallback() {
+        FirebaseService svc = FirebaseService.getInstance();
+        FirebaseService.FirebaseCallback callback = new FirebaseService.FirebaseCallback() {
             @Override
             public void onSuccess(String response) {
                 statusLabel.setText(response);
@@ -70,11 +82,25 @@ public class FirebaseTestWidget extends Table {
                 statusLabel.setText(error);
                 statusStyle.fontColor = STATUS_ERROR;
             }
-        });
+        };
+
+        switch (service) {
+            case SERVICE_FIRESTORE:
+                svc.testFirestore(callback);
+                break;
+            case SERVICE_DATABASE:
+                svc.testDatabase(callback);
+                break;
+            case SERVICE_FUNCTIONS:
+                svc.testConnection(callback);
+                break;
+            default:
+                Gdx.app.error("FirebaseTestWidget", "Unknown service: " + service);
+        }
     }
 
     public void autoTest() {
-        testConnection();
+        runTest();
     }
 
     private static final int SCALE = 4;
@@ -82,7 +108,7 @@ public class FirebaseTestWidget extends Table {
     private static TextureRegionDrawable createBackground(Theme theme) {
         int w = (int) Theme.BUTTON_WIDTH * SCALE;
         int h = 80 * SCALE;
-        int b = SCALE; // 1px border at logical size
+        int b = SCALE;
         Pixmap pixmap = new Pixmap(w, h, Pixmap.Format.RGBA8888);
         pixmap.setColor(theme.primary);
         pixmap.fill();
