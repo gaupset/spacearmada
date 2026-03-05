@@ -22,34 +22,38 @@ public class LobbyService {
         FirebaseService.getInstance().putDbData("lobbies/" + id, body, callback);
     }
 
-    public void getPlayers() {
+    public void getLobbies() {
+        // get lobbies
+        FirebaseService.getInstance().getDbData("lobbies",
+            new FirebaseService.FirebaseCallback() {
+                @Override
+                public void onSuccess(String response) {
+
+                    JsonValue root = (response == null || response.equals("null")) ? null : new JsonReader().parse(response);
+                    final String finalId = LobbyHandler.getInstance().getNewID(root);
+
+                    LobbyHandler.getInstance().createNewLobby2(finalId);
+                }
+
+                @Override
+                public void onFailure(String error) {
+                    System.err.println("Fetch players failed: " + error);
+                }
+            });
+
+    }
+
+    public void setPlayer() {
+        // get players
         FirebaseService.getInstance().getDbData("players",
             new FirebaseService.FirebaseCallback() {
             @Override
             public void onSuccess(String response) {
-                String newId;
+
                 JsonValue root = (response == null || response.equals("null")) ? null : new JsonReader().parse(response);
+                final String finalId = LobbyHandler.getInstance().getNewID(root);
 
-                Random rand = new Random();
-                do {
-                    newId = String.format("%06d", rand.nextInt(1000000));
-                } while (root != null && root.has(newId));
-
-                final String finalId = newId;
-                PlayerModel newPlayer = new PlayerModel("Player_" + finalId);
-
-                savePlayer(finalId, newPlayer, new FirebaseService.FirebaseCallback() {
-                    @Override
-                    public void onSuccess(String response) {
-                        LobbyHandler.getInstance().playerID = finalId;
-                        System.out.println("Created player: " + finalId);
-                    }
-
-                    @Override
-                    public void onFailure(String error) {
-                        System.err.println("Player creation failed: " + error);
-                    }
-                });
+                LobbyHandler.getInstance().setNewPlayer2(finalId);
             }
 
             @Override
@@ -59,10 +63,45 @@ public class LobbyService {
         });
     }
 
-    public void savePlayer(String id, PlayerModel player, FirebaseService.FirebaseCallback callback) {
+    public void writePlayer(String id, PlayerModel player, FirebaseService.FirebaseCallback callback) {
         String body = FirebaseJson.toJson(player);
         FirebaseService.getInstance().putDbData("players/" + id, body, callback);
     }
+
+    public void writeLobby(String id, LobbyModel lobby) {
+        // write player into Lobby
+        String body = FirebaseJson.toJson(lobby);
+        FirebaseService.FirebaseCallback callback = new FirebaseService.FirebaseCallback() {
+            @Override
+            public void onSuccess(String response) {
+                LobbyHandler.getInstance().lobbyID = id;
+                System.out.println("Created lobby: " + id);
+            }
+
+            @Override
+            public void onFailure(String error) {
+                System.err.println("Player creation failed: " + error);
+            }
+        };
+        FirebaseService.getInstance().putDbData("lobbies/" + id, body, callback);
+
+        // write Player in Lobby: write to "players/players_id" : lobby = lobbyID
+        FirebaseService.FirebaseCallback callback2 = new FirebaseService.FirebaseCallback() {
+            @Override
+            public void onSuccess(String response) {
+                System.out.println("set lobby entry");
+            }
+
+            @Override
+            public void onFailure(String error) {
+                System.err.println("Player creation failed: " + error);
+            }
+        };
+        String body2 = "{\"currentLobby\": \"" + id + "\"}";
+        FirebaseService.getInstance().patchDbData("players/" + id, body2, callback2);
+
+    }
+
 
     public void updatePlayerLobbyReference(String playerId, String lobbyId, FirebaseService.FirebaseCallback callback) {
         String body = "{\"currentLobby\": \"" + lobbyId + "\"}";

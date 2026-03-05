@@ -9,6 +9,7 @@ public class LobbyHandler {
     private static LobbyHandler instance;
     private final LobbyService lobbyService;
     public String playerID;
+    public String lobbyID;
 
     private LobbyHandler() {
         this.lobbyService = new LobbyService();
@@ -22,11 +23,8 @@ public class LobbyHandler {
         return instance;
     }
 
-    public void start() {
-        checkDatabaseFormat();
-    }
 
-    private void checkDatabaseFormat() {
+    public void start() {
         lobbyService.getRoot(new FirebaseService.FirebaseCallback() {
             @Override
             public void onSuccess(String response) {
@@ -36,6 +34,7 @@ public class LobbyHandler {
                 } else {
                     createDatabase();
                 }
+                createNewLobby();
             }
 
             @Override
@@ -52,7 +51,6 @@ public class LobbyHandler {
             public void onSuccess(String response) {
                 setNewPlayer();
             }
-
             @Override
             public void onFailure(String error) {
                 System.err.println("Database setup failed: " + error);
@@ -66,25 +64,39 @@ public class LobbyHandler {
             return;
         }
 
-        lobbyService.getPlayers();
+        lobbyService.setPlayer();
     }
 
-
-    public void createLobbyGroup(String name) {
-        final String newId = String.format("%06d", new Random().nextInt(1000000));
-        LobbyModel lobby = new LobbyModel(name);
-
-        lobbyService.createLobby(newId, lobby, new FirebaseService.FirebaseCallback() {
+    public void setNewPlayer2(String finalId) {
+        PlayerModel newPlayer = new PlayerModel("Player_" + finalId);
+        FirebaseService.FirebaseCallback callback = new FirebaseService.FirebaseCallback() {
             @Override
             public void onSuccess(String response) {
-                System.out.println("Lobby created: " + newId);
+                playerID = finalId;
+                System.out.println("Created player: " + finalId);
             }
 
             @Override
             public void onFailure(String error) {
-                System.err.println("Lobby creation failed: " + error);
+                System.err.println("Player creation failed: " + error);
             }
-        });
+        };
+        lobbyService.writePlayer(finalId, newPlayer, callback);
+    }
+
+    public void createNewLobby() {
+        if (lobbyID != null) {
+            System.out.println("Lobby already exists: " + lobbyID);
+            return;
+        }
+        // get current Lobbygroups and proceed from there!
+        lobbyService.getLobbies();
+    }
+
+    public void createNewLobby2(String finalId) {
+        LobbyModel newLobby = new LobbyModel("Lobby" + finalId);
+        lobbyService.writeLobby(finalId, newLobby);
+
     }
 
     public void joinLobbyWithID(final String lobbyId) {
@@ -118,7 +130,16 @@ public class LobbyHandler {
         });
     }
 
-    public String getPlayerID() {
-        return playerID;
+    public String getNewID(JsonValue root) {
+        // used to create new individual ids both for Lobby AND Player
+        String newId;
+
+        Random rand = new Random();
+        do {
+            newId = String.format("%06d", rand.nextInt(1000000));
+        } while (root != null && root.has(newId));
+
+        return newId;
     }
+
 }
