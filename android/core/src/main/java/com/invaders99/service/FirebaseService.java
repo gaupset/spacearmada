@@ -34,6 +34,27 @@ public class FirebaseService {
         return instance;
     }
 
+    // Generic DB methods
+    public void getDbData(String path, final FirebaseCallback callback) {
+        String url = databaseBaseUrl + "/" + path + ".json?ns=" + projectId;
+        sendRequest(Net.HttpMethods.GET, url, null, callback);
+    }
+
+    public void putDbData(String path, String body, final FirebaseCallback callback) {
+        String url = databaseBaseUrl + "/" + path + ".json?ns=" + projectId;
+        sendRequest(Net.HttpMethods.PUT, url, body, callback);
+    }
+
+    public void patchDbData(String path, String body, final FirebaseCallback callback) {
+        String url = databaseBaseUrl + "/" + path + ".json?ns=" + projectId;
+        sendRequest("PATCH", url, body, callback);
+    }
+
+    public void postDbData(String path, String body, final FirebaseCallback callback) {
+        String url = databaseBaseUrl + "/" + path + ".json?ns=" + projectId;
+        sendRequest(Net.HttpMethods.POST, url, body, callback);
+    }
+
     public void testConnection(final FirebaseCallback callback) {
         sendRequest(Net.HttpMethods.GET, functionsBaseUrl + "/helloWorld", null, callback);
     }
@@ -81,23 +102,20 @@ public class FirebaseService {
             }
         });
     }
-    
-    public void testDatabase(final FirebaseCallback callback) {
-        String refUrl = databaseBaseUrl + "/_connectivity/test.json?ns=" + projectId;
 
+    public void testDatabase(final FirebaseCallback callback) {
+        String refUrl = "_connectivity/test";
         ConnectivityProbe probe = new ConnectivityProbe();
         String body = FirebaseJson.toJson(probe);
 
-        // Insert
-        sendRequest(Net.HttpMethods.PUT, refUrl, body, new FirebaseCallback() {
+        putDbData(refUrl, body, new FirebaseCallback() {
             @Override
             public void onSuccess(String response) {
-                // Select
-                sendRequest(Net.HttpMethods.GET, refUrl, null, new FirebaseCallback() {
+                getDbData(refUrl, new FirebaseCallback() {
                     @Override
                     public void onSuccess(String response) {
-                        // Delete
-                        sendRequest(Net.HttpMethods.DELETE, refUrl, null, new FirebaseCallback() {
+                        String url = databaseBaseUrl + "/" + refUrl + ".json?ns=" + projectId;
+                        sendRequest(Net.HttpMethods.DELETE, url, null, new FirebaseCallback() {
                             @Override
                             public void onSuccess(String r) {
                                 callback.onSuccess("Realtime DB OK");

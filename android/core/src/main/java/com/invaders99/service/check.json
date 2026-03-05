@@ -1,0 +1,15 @@
+{
+  "lobbies": {
+    "lobby1": {
+      "players":
+         ["playerID1", "playerID2"],
+      "gamestarted": false
+    }
+  },
+  "players": {
+    "player1": {
+      "name": "Player 1",
+      "score": 1000
+    }
+  }
+}

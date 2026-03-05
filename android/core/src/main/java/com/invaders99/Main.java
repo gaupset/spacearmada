@@ -3,6 +3,7 @@ package com.invaders99;
 import com.badlogic.gdx.Game;
 import com.invaders99.screen.HomeScreen;
 import com.invaders99.service.FirebaseService;
+import com.invaders99.service.LobbyHandler;
 import com.invaders99.ui.UiFactory;
 import com.invaders99.util.AppConfig;
 import com.invaders99.util.Assets;
@@ -32,6 +33,10 @@ public class Main extends Game {
 
         // Go to home screen
         setScreen(new HomeScreen(this, assets));
+
+        LobbyHandler.init();
+        LobbyHandler.getInstance().start();
+        LobbyHandler.getInstance().readDatabase();
     }
 
     @Override
