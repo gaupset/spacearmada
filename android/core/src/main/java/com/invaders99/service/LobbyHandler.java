@@ -2,20 +2,20 @@ package com.invaders99.service;
 
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
-import com.invaders99.util.FirebaseJson;
 
 import java.util.Random;
 
 public class LobbyHandler {
-    static LobbyHandler instance;
-    static LobbyService lobbyService;
-    static CallbackFactory callbackFactory;
+    private static LobbyHandler instance;
+    private final LobbyService lobbyService;
+    public String playerID;
 
-    private String playerID;
+    private LobbyHandler() {
+        this.lobbyService = new LobbyService();
+    }
 
     public static void init() {
         instance = new LobbyHandler();
-        lobbyService = new LobbyService();
     }
 
     public static LobbyHandler getInstance() {
@@ -23,106 +23,97 @@ public class LobbyHandler {
     }
 
     public void start() {
-        lobbyService.checkDatabaseFormat(new FirebaseService.FirebaseCallback() {
+        checkDatabaseFormat();
+    }
+
+    private void checkDatabaseFormat() {
+        lobbyService.getRoot(new FirebaseService.FirebaseCallback() {
             @Override
             public void onSuccess(String response) {
-                System.out.println("Database OK");
+                JsonValue root = (response == null || response.equals("null")) ? null : new JsonReader().parse(response);
+                if (root != null && root.has("lobbies") && root.has("players")) {
+                    setNewPlayer();
+                } else {
+                    createDatabase();
+                }
+            }
+
+            @Override
+            public void onFailure(String error) {
+                System.err.println("Format check failed: " + error);
+            }
+        });
+    }
+
+    private void createDatabase() {
+        String initialData = "{\"lobbies\": {\"init\": true}, \"players\": {\"init\": true}}";
+        lobbyService.setupDatabase(initialData, new FirebaseService.FirebaseCallback() {
+            @Override
+            public void onSuccess(String response) {
                 setNewPlayer();
             }
 
             @Override
             public void onFailure(String error) {
-                System.out.println("Database error: " + error);
-            }
-        });
-    }
-
-    public void readDatabase() {
-        FirebaseService.getInstance().getDbData("", new FirebaseService.FirebaseCallback() {
-            @Override
-            public void onSuccess(String response) {
-                System.out.println(response);
-            }
-
-            @Override
-            public void onFailure(String error) {
-                System.out.println("Database error: " + error);
+                System.err.println("Database setup failed: " + error);
             }
         });
     }
 
     public void setNewPlayer() {
-        if (playerID != null) return;
+        if (playerID != null) {
+            System.out.println("Player already exists: " + playerID);
+            return;
+        }
 
-        // 1. Get current players to ensure uniqueness
-        FirebaseService.getInstance().getDbData("players", new FirebaseService.FirebaseCallback() {
+        lobbyService.getPlayers();
+    }
+
+
+    public void createLobbyGroup(String name) {
+        final String newId = String.format("%06d", new Random().nextInt(1000000));
+        LobbyModel lobby = new LobbyModel(name);
+
+        lobbyService.createLobby(newId, lobby, new FirebaseService.FirebaseCallback() {
             @Override
             public void onSuccess(String response) {
-                String newId;
-                JsonValue root = (response == null || response.equals("null")) ? null : new JsonReader().parse(response);
+                System.out.println("Lobby created: " + newId);
+            }
 
-                // 2. Generate a unique 6-digit ID
-                Random rand = new Random();
-                do {
-                    newId = String.format("%06d", rand.nextInt(1000000));
-                } while (root != null && root.has(newId));
+            @Override
+            public void onFailure(String error) {
+                System.err.println("Lobby creation failed: " + error);
+            }
+        });
+    }
 
-                final String finalId = newId;
-                PlayerModel newPlayer = new PlayerModel("Player_" + finalId);
-                String body = FirebaseJson.toJson(newPlayer);
+    public void joinLobbyWithID(final String lobbyId) {
+        if (playerID == null) {
+            System.err.println("No player ID found. Register first.");
+            return;
+        }
 
-                // 3. Write the new player to the database
-                FirebaseService.getInstance().putDbData("players/" + finalId, body, new FirebaseService.FirebaseCallback() {
+        // 1. Update Player's currentLobby
+        lobbyService.updatePlayerLobbyReference(playerID, lobbyId, new FirebaseService.FirebaseCallback() {
+            @Override
+            public void onSuccess(String response) {
+                // 2. Add Player to Lobby's players list
+                lobbyService.addPlayerToLobbyList(lobbyId, playerID, new FirebaseService.FirebaseCallback() {
                     @Override
                     public void onSuccess(String response) {
-                        playerID = finalId;
-                        lobbyService.playerID = finalId;
-                        System.out.println("Created new player: " + playerID);
+                        System.out.println("Joined lobby: " + lobbyId);
                     }
 
                     @Override
                     public void onFailure(String error) {
-                        System.err.println("Failed to create player: " + error);
+                        System.err.println("Failed to add player to lobby list: " + error);
                     }
                 });
             }
 
             @Override
             public void onFailure(String error) {
-                System.err.println("Failed to fetch players: " + error);
-            }
-        });
-    }
-
-    public void joinLobbyWithID(String lobbyId) {
-        if (playerID == null) {
-            System.err.println("Cannot join lobby: Player ID not set.");
-            return;
-        }
-
-        lobbyService.setPlayerInLobby(lobbyId, playerID, new FirebaseService.FirebaseCallback() {
-            @Override
-            public void onSuccess(String response) {
-                System.out.println("Joined lobby: " + lobbyId);
-            }
-
-            @Override
-            public void onFailure(String error) {
-                System.err.println("Join failed: " + error);
-            }
-        });
-    }
-
-    public void createLobbyGroup(String name) {
-        lobbyService.createLobby(name, new FirebaseService.FirebaseCallback() {
-            @Override
-            public void onSuccess(String response) {
-                System.out.println("Lobby created: " + response);
-            }
-
-            @Override
-            public void onFailure(String error) {
-                System.err.println("Lobby creation failed: " + error);
+                System.err.println("Failed to update player lobby ref: " + error);
             }
         });
     }

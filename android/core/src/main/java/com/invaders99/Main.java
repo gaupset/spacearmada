@@ -36,7 +36,6 @@ public class Main extends Game {
 
         LobbyHandler.init();
         LobbyHandler.getInstance().start();
-        LobbyHandler.getInstance().readDatabase();
     }
 
     @Override
