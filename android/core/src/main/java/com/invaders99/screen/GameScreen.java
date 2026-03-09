@@ -1,0 +1,71 @@
+package com.invaders99.screen;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.invaders99.Main;
+import com.invaders99.game.controller.GameController;
+import com.invaders99.game.model.GameModel;
+import com.invaders99.game.view.GameRenderer;
+import com.invaders99.util.Assets;
+
+public class GameScreen implements Screen {
+    private final Main game;
+    private final Assets assets;
+
+    private ExtendViewport viewport;
+    private SpriteBatch batch;
+    private GameModel model;
+    private GameRenderer renderer;
+    private GameController controller;
+
+    public GameScreen(Main game, Assets assets) {
+        this.game = game;
+        this.assets = assets;
+    }
+
+    @Override
+    public void show() {
+        viewport = new ExtendViewport(GameModel.WORLD_WIDTH, GameModel.WORLD_HEIGHT);
+        batch = new SpriteBatch();
+        model = new GameModel();
+        renderer = new GameRenderer(assets);
+        controller = new GameController(model, viewport);
+        Gdx.input.setInputProcessor(controller);
+    }
+
+    @Override
+    public void render(float delta) {
+        controller.update(delta);
+
+        viewport.apply();
+        batch.setProjectionMatrix(viewport.getCamera().combined);
+        ScreenUtils.clear(Color.BLACK);
+        renderer.render(model, batch);
+    }
+
+    @Override
+    public void resize(int width, int height) {
+        viewport.update(width, height, true);
+    }
+
+    @Override
+    public void pause() {}
+
+    @Override
+    public void resume() {}
+
+    @Override
+    public void hide() {
+        dispose();
+    }
+
+    @Override
+    public void dispose() {
+        if (batch != null) batch.dispose();
+        if (renderer != null) renderer.dispose();
+    }
+}

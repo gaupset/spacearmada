@@ -1,6 +1,8 @@
 package com.invaders99.util;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
@@ -41,6 +43,15 @@ public class Assets {
 
     public BitmapFont getDefaultFont() {
         return defaultFont;
+    }
+
+    public static Texture createColorTexture(Color color) {
+        Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        pixmap.setColor(color);
+        pixmap.fill();
+        Texture tex = new Texture(pixmap);
+        pixmap.dispose();
+        return tex;
     }
 
     public void dispose() {
