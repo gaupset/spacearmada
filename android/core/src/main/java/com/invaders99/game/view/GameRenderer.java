@@ -1,9 +1,11 @@
 package com.invaders99.game.view;
 
+import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import com.invaders99.game.model.Bullet;
 import com.invaders99.game.model.Enemy;
 import com.invaders99.game.model.GameModel;
@@ -29,11 +31,14 @@ public class GameRenderer {
         this.bulletTex = Assets.createColorTexture(BULLET_COLOR);
     }
 
-    public void render(GameModel model, SpriteBatch batch) {
+    public void render(GameModel model, SpriteBatch batch, Viewport viewport) {
         batch.begin();
 
-        // Background
-        batch.draw(background, 0, 0, GameModel.WORLD_WIDTH, GameModel.WORLD_HEIGHT);
+        // Background (fills entire viewport, not game area)
+        Camera cam = viewport.getCamera();
+        float camW = cam.viewportWidth;
+        float camH = cam.viewportHeight;
+        batch.draw(background, cam.position.x - camW / 2f, cam.position.y - camH / 2f, camW, camH);
 
         // Bullets
         for (Bullet b : model.bullets) {

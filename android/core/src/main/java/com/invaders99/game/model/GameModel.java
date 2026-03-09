@@ -10,6 +10,7 @@ public class GameModel {
     public final Array<Bullet> bullets = new Array<>();
     public final Array<Enemy> enemies = new Array<>();
     public int score;
+    public boolean menuOpen;
 
     public GameModel() {
         player = new Player(WORLD_WIDTH / 2f, 40f);
