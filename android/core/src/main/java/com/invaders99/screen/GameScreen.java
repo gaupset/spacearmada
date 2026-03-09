@@ -49,6 +49,11 @@ public class GameScreen implements Screen {
     public void render(float delta) {
         controller.update(delta);
 
+        if (model.isGameOver()) {
+            game.setScreen(new GameOverScreen(game, assets, model.score));
+            return;
+        }
+
         viewport.apply();
         batch.setProjectionMatrix(viewport.getCamera().combined);
         ScreenUtils.clear(Color.BLACK);

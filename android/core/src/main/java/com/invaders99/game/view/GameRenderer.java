@@ -16,12 +16,14 @@ public class GameRenderer {
     private static final Color PLAYER_COLOR = new Color(0f, 1f, 1f, 1f);
     private static final Color ENEMY_COLOR = new Color(1f, 0.2f, 0.5f, 1f);
     private static final Color BULLET_COLOR = new Color(1f, 1f, 0.4f, 1f);
+    private static final Color ENEMY_BULLET_COLOR = new Color(1f, 0.4f, 0.1f, 1f);
 
     private final Texture background;
     private final BitmapFont font;
     private final Texture playerTex;
     private final Texture enemyTex;
     private final Texture bulletTex;
+    private final Texture enemyBulletTex;
 
     public GameRenderer(Assets assets) {
         this.background = assets.getStarsBackground();
@@ -29,6 +31,7 @@ public class GameRenderer {
         this.playerTex = Assets.createColorTexture(PLAYER_COLOR);
         this.enemyTex = Assets.createColorTexture(ENEMY_COLOR);
         this.bulletTex = Assets.createColorTexture(BULLET_COLOR);
+        this.enemyBulletTex = Assets.createColorTexture(ENEMY_BULLET_COLOR);
     }
 
     public void render(GameModel model, SpriteBatch batch, Viewport viewport) {
@@ -40,9 +43,14 @@ public class GameRenderer {
         float camH = cam.viewportHeight;
         batch.draw(background, cam.position.x - camW / 2f, cam.position.y - camH / 2f, camW, camH);
 
-        // Bullets
+        // Player bullets
         for (Bullet b : model.bullets) {
             batch.draw(bulletTex, b.x - Bullet.WIDTH / 2f, b.y - Bullet.HEIGHT / 2f, Bullet.WIDTH, Bullet.HEIGHT);
+        }
+
+        // Enemy bullets
+        for (Bullet b : model.enemyBullets) {
+            batch.draw(enemyBulletTex, b.x - Bullet.WIDTH / 2f, b.y - Bullet.HEIGHT / 2f, Bullet.WIDTH, Bullet.HEIGHT);
         }
 
         // Enemies
@@ -50,13 +58,20 @@ public class GameRenderer {
             batch.draw(enemyTex, e.x - Enemy.WIDTH / 2f, e.y - Enemy.HEIGHT / 2f, Enemy.WIDTH, Enemy.HEIGHT);
         }
 
-        // Player
+        // Player (translucent when invincible)
         Player p = model.player;
+        if (model.invincible) {
+            batch.setColor(1f, 1f, 1f, 0.4f);
+        }
         batch.draw(playerTex, p.x - Player.WIDTH / 2f, p.y - Player.HEIGHT / 2f, Player.WIDTH, Player.HEIGHT);
+        if (model.invincible) {
+            batch.setColor(1f, 1f, 1f, 1f);
+        }
 
-        // Score
+        // HUD
         font.getData().setScale(0.5f);
         font.draw(batch, "SCORE: " + model.score, 10f, GameModel.WORLD_HEIGHT - 10f);
+        font.draw(batch, "LIVES: " + model.lives, 10f, GameModel.WORLD_HEIGHT - 30f);
 
         batch.end();
     }
@@ -65,5 +80,6 @@ public class GameRenderer {
         playerTex.dispose();
         enemyTex.dispose();
         bulletTex.dispose();
+        enemyBulletTex.dispose();
     }
 }

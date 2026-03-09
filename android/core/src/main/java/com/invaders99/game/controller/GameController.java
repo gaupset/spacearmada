@@ -12,6 +12,8 @@ import com.invaders99.game.model.Player;
 public class GameController extends InputAdapter {
     private static final float SHOOT_INTERVAL = 0.3f;
     private static final float SPAWN_INTERVAL = 2.0f;
+    private static final float INVINCIBLE_DURATION = 1.5f;
+    private static final float ENEMY_SHOOT_INTERVAL = 1.5f;
 
     private final GameModel model;
     private final Viewport viewport;
@@ -20,6 +22,8 @@ public class GameController extends InputAdapter {
     private float shootTimer;
     private float spawnTimer;
     private boolean spawnLeft = true;
+    private float invincibleTimer;
+    private float enemyShootTimer;
 
     public GameController(GameModel model, Viewport viewport) {
         this.model = model;
@@ -27,6 +31,16 @@ public class GameController extends InputAdapter {
     }
 
     public void update(float delta) {
+        if (model.isGameOver()) return;
+
+        // Invincibility timer
+        if (model.invincible) {
+            invincibleTimer -= delta;
+            if (invincibleTimer <= 0) {
+                model.invincible = false;
+            }
+        }
+
         // Auto-shoot
         shootTimer += delta;
         if (shootTimer >= SHOOT_INTERVAL) {
@@ -48,9 +62,22 @@ public class GameController extends InputAdapter {
             model.enemies.add(new Enemy(x, GameModel.WORLD_HEIGHT + Enemy.HEIGHT));
         }
 
-        // Move bullets
+        // Enemy shooting
+        enemyShootTimer += delta;
+        if (enemyShootTimer >= ENEMY_SHOOT_INTERVAL && model.enemies.size > 0) {
+            enemyShootTimer = 0;
+            Enemy shooter = model.enemies.random();
+            model.enemyBullets.add(new Bullet(shooter.x, shooter.y - Enemy.HEIGHT / 2f, true));
+        }
+
+        // Move player bullets
         for (Bullet b : model.bullets) {
             b.y += Bullet.SPEED * delta;
+        }
+
+        // Move enemy bullets
+        for (Bullet b : model.enemyBullets) {
+            b.y -= Bullet.ENEMY_SPEED * delta;
         }
 
         // Move enemies
@@ -58,7 +85,7 @@ public class GameController extends InputAdapter {
             e.y -= Enemy.SPEED * delta;
         }
 
-        // Collisions
+        // Player bullet vs enemy collisions
         for (int i = model.bullets.size - 1; i >= 0; i--) {
             Bullet b = model.bullets.get(i);
             for (int j = model.enemies.size - 1; j >= 0; j--) {
@@ -72,19 +99,57 @@ public class GameController extends InputAdapter {
             }
         }
 
-        // Remove off-screen bullets
+        // Player-enemy collision
+        if (!model.invincible) {
+            for (int i = model.enemies.size - 1; i >= 0; i--) {
+                Enemy e = model.enemies.get(i);
+                if (model.player.getBounds().overlaps(e.getBounds())) {
+                    model.enemies.removeIndex(i);
+                    hitPlayer();
+                    break;
+                }
+            }
+        }
+
+        // Enemy bullet vs player collision
+        if (!model.invincible) {
+            for (int i = model.enemyBullets.size - 1; i >= 0; i--) {
+                Bullet b = model.enemyBullets.get(i);
+                if (b.getBounds().overlaps(model.player.getBounds())) {
+                    model.enemyBullets.removeIndex(i);
+                    hitPlayer();
+                    break;
+                }
+            }
+        }
+
+        // Remove off-screen player bullets
         for (int i = model.bullets.size - 1; i >= 0; i--) {
             if (model.bullets.get(i).y > GameModel.WORLD_HEIGHT + 20f) {
                 model.bullets.removeIndex(i);
             }
         }
 
-        // Remove off-screen enemies
+        // Remove off-screen enemy bullets
+        for (int i = model.enemyBullets.size - 1; i >= 0; i--) {
+            if (model.enemyBullets.get(i).y < -20f) {
+                model.enemyBullets.removeIndex(i);
+            }
+        }
+
+        // Remove off-screen enemies (costs a life)
         for (int i = model.enemies.size - 1; i >= 0; i--) {
             if (model.enemies.get(i).y < -Enemy.HEIGHT) {
                 model.enemies.removeIndex(i);
+                model.lives--;
             }
         }
+    }
+
+    private void hitPlayer() {
+        model.lives--;
+        model.invincible = true;
+        invincibleTimer = INVINCIBLE_DURATION;
     }
 
     @Override

@@ -10,7 +10,14 @@ public class GameModel {
     public final Array<Bullet> bullets = new Array<>();
     public final Array<Enemy> enemies = new Array<>();
     public int score;
+    public int lives = 3;
+    public boolean invincible;
     public boolean menuOpen;
+    public final Array<Bullet> enemyBullets = new Array<>();
+
+    public boolean isGameOver() {
+        return lives <= 0;
+    }
 
     public GameModel() {
         player = new Player(WORLD_WIDTH / 2f, 40f);
