@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Slider;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.invaders99.util.Theme;
@@ -85,6 +86,20 @@ public class UiFactory {
         secondaryLabelStyle.font = font;
         secondaryLabelStyle.fontColor = new Color(theme.textSecondary);
         skin.add("secondary", secondaryLabelStyle);
+
+        // Slider style
+        Slider.SliderStyle sliderStyle = new Slider.SliderStyle();
+        sliderStyle.background = createBorderedDrawable(
+            theme.buttonIdle, theme.border,
+            (int) Theme.BUTTON_WIDTH, 5,
+            1
+        );
+        sliderStyle.knob = createBorderedDrawable(
+            theme.primary, theme.primary,
+            5, 10,
+            0
+        );
+        skin.add("default-horizontal", sliderStyle);
     }
 
     private static final int SCALE = 4;
