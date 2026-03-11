@@ -118,6 +118,73 @@ public class LobbyHandler {
         });
     }
 
+    public void leaveLobby(final boolean isHost, final LobbyCallback callback) {
+        if (lobbyID == null || playerID == null) {
+            callback.onFailure("Not in a lobby");
+            return;
+        }
+
+        if (isHost) {
+            // Host: delete lobby and update all players (this is a simplified version)
+            // Ideally you'd fetch all players in the lobby first and nullify their currentLobby
+            // Here we just delete the lobby and nullify the host's currentLobby
+            FirebaseService.getInstance().getDbData("lobbies/" + lobbyID + "/players", new FirebaseService.FirebaseCallback() {
+                @Override
+                public void onSuccess(String response) {
+                    if (response != null && !response.equals("null")) {
+                        JsonValue players = new JsonReader().parse(response);
+                        for (JsonValue p : players) {
+                            nullifyPlayerLobby(p.name());
+                        }
+                    }
+
+                    FirebaseService.getInstance().deleteDbData("lobbies/" + lobbyID, new FirebaseService.FirebaseCallback() {
+                        @Override
+                        public void onSuccess(String response) {
+                            lobbyID = null;
+                            callback.onSuccess("Lobby deleted");
+                        }
+
+                        @Override
+                        public void onFailure(String error) {
+                            callback.onFailure(error);
+                        }
+                    });
+                }
+
+                @Override
+                public void onFailure(String error) {
+                    callback.onFailure(error);
+                }
+            });
+        } else {
+            // Guest: remove self from lobby and nullify own currentLobby
+            FirebaseService.getInstance().deleteDbData("lobbies/" + lobbyID + "/players/" + playerID, new FirebaseService.FirebaseCallback() {
+                @Override
+                public void onSuccess(String response) {
+                    nullifyPlayerLobby(playerID);
+                    lobbyID = null;
+                    callback.onSuccess("Left lobby");
+                }
+
+                @Override
+                public void onFailure(String error) {
+                    callback.onFailure(error);
+                }
+            });
+        }
+    }
+
+    private void nullifyPlayerLobby(String pId) {
+        String body = "{\"currentLobby\": null}";
+        FirebaseService.getInstance().patchDbData("players/" + pId, body, new FirebaseService.FirebaseCallback() {
+            @Override
+            public void onSuccess(String response) {}
+            @Override
+            public void onFailure(String error) {}
+        });
+    }
+
     public void getLobbyStatus(final LobbyStatusCallback callback) {
         if (lobbyID == null) return;
         FirebaseService.getInstance().getDbData("lobbies/" + lobbyID, new FirebaseService.FirebaseCallback() {

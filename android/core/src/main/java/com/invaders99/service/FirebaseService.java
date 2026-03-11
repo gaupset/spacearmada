@@ -39,7 +39,7 @@ public class FirebaseService {
         String url = databaseBaseUrl + "/" + path + ".json?ns=" + projectId;
         sendRequest(Net.HttpMethods.GET, url, null, callback);
     }
-    
+
     public void putDbData(String path, String body, final FirebaseCallback callback) {
         String url = databaseBaseUrl + "/" + path + ".json?ns=" + projectId;
         sendRequest(Net.HttpMethods.PUT, url, body, callback);
@@ -53,6 +53,11 @@ public class FirebaseService {
     public void postDbData(String path, String body, final FirebaseCallback callback) {
         String url = databaseBaseUrl + "/" + path + ".json?ns=" + projectId;
         sendRequest(Net.HttpMethods.POST, url, body, callback);
+    }
+
+    public void deleteDbData(String path, final FirebaseCallback callback) {
+        String url = databaseBaseUrl + "/" + path + ".json?ns=" + projectId;
+        sendRequest(Net.HttpMethods.DELETE, url, null, callback);
     }
 
     public void testConnection(final FirebaseCallback callback) {
@@ -114,8 +119,7 @@ public class FirebaseService {
                 getDbData(refUrl, new FirebaseCallback() {
                     @Override
                     public void onSuccess(String response) {
-                        String url = databaseBaseUrl + "/_connectivity/test.json?ns=" + projectId;
-                        sendRequest(Net.HttpMethods.DELETE, url, null, new FirebaseCallback() {
+                        deleteDbData(refUrl, new FirebaseCallback() {
                             @Override
                             public void onSuccess(String r) {
                                 callback.onSuccess("Realtime DB OK");

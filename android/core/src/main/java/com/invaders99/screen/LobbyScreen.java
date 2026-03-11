@@ -30,14 +30,14 @@ public class LobbyScreen implements Screen {
     private Table root;
     private Label playerCountLabel;
     private float updateTimer = 0;
-    private static final float UPDATE_INTERVAL = 2.0f; // Update every 2 seconds
+    private static final float UPDATE_INTERVAL = 2.0f;
     private boolean inLobby = false;
+    private boolean isHost = false;
 
     public LobbyScreen(Main game, Assets assets) {
         this.game = game;
         this.assets = assets;
         this.lobbyHandler = new LobbyHandler();
-        // Use a more stable ID for testing, or better yet, one from Auth
         this.lobbyHandler.setPlayerID("player_" + (System.currentTimeMillis() % 10000));
     }
 
@@ -55,7 +55,6 @@ public class LobbyScreen implements Screen {
         root.setFillParent(true);
         stage.addActor(root);
 
-        // Ensure database format is correct
         lobbyHandler.checkDatabaseFormat(new LobbyHandler.LobbyCallback() {
             @Override
             public void onSuccess(String response) {
@@ -72,6 +71,7 @@ public class LobbyScreen implements Screen {
     private void showMainOptions() {
         root.clear();
         inLobby = false;
+        isHost = false;
         SpaceButton createBtn = new SpaceButton("CREATE LOBBY");
         SpaceButton joinBtn = new SpaceButton("JOIN LOBBY");
         SpaceButton backBtn = new SpaceButton("BACK");
@@ -106,20 +106,18 @@ public class LobbyScreen implements Screen {
         lobbyHandler.createLobby(new LobbyHandler.LobbyCallback() {
             @Override
             public void onSuccess(String response) {
-                System.out.println("create Lobby:" + response);
+                isHost = true;
                 showWaitingRoom(true);
             }
 
             @Override
             public void onFailure(String error) {
-                System.out.println("Lobby create failed: " + error);
                 Gdx.app.error("Lobby", "Create failed: " + error);
             }
         });
     }
 
     private void showJoinInput() {
-        System.out.println("print join Input");
         root.clear();
         final TextField codeField = new TextField("", UiFactory.getInstance().getSkin());
         SpaceButton confirmBtn = new SpaceButton("JOIN");
@@ -128,7 +126,6 @@ public class LobbyScreen implements Screen {
         confirmBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                System.out.println("join Lobby: " + codeField.getText());
                 joinLobby(codeField.getText());
             }
         });
@@ -136,7 +133,6 @@ public class LobbyScreen implements Screen {
         cancelBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                System.out.println("join lobby cancel");
                 showMainOptions();
             }
         });
@@ -151,7 +147,7 @@ public class LobbyScreen implements Screen {
         lobbyHandler.joinLobby(code, new LobbyHandler.LobbyCallback() {
             @Override
             public void onSuccess(String response) {
-                System.out.println("join Lobby: " + response);
+                isHost = false;
                 showWaitingRoom(false);
             }
 
@@ -162,9 +158,10 @@ public class LobbyScreen implements Screen {
         });
     }
 
-    private void showWaitingRoom(boolean isHost) {
+    private void showWaitingRoom(boolean host) {
         root.clear();
         inLobby = true;
+        this.isHost = host;
         root.add(new Label("LOBBY: " + lobbyHandler.getLobbyID(), UiFactory.getInstance().getSkin())).pad(20).row();
 
         playerCountLabel = new Label("Players: ...", UiFactory.getInstance().getSkin());
@@ -178,7 +175,6 @@ public class LobbyScreen implements Screen {
                     lobbyHandler.startGame(new LobbyHandler.LobbyCallback() {
                         @Override
                         public void onSuccess(String response) {
-                            System.out.println("showWaitingRoom: " + response);
                             game.setScreen(new GameScreen(game, assets));
                         }
                         @Override
@@ -197,7 +193,18 @@ public class LobbyScreen implements Screen {
         leaveBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                showMainOptions();
+                lobbyHandler.leaveLobby(isHost, new LobbyHandler.LobbyCallback() {
+                    @Override
+                    public void onSuccess(String success) {
+                        showMainOptions();
+                    }
+
+                    @Override
+                    public void onFailure(String error) {
+                        Gdx.app.error("Lobby", "Leave failed: " + error);
+                        showMainOptions();
+                    }
+                });
             }
         });
         root.add(leaveBtn).width(Theme.BUTTON_WIDTH).height(Theme.BUTTON_HEIGHT).pad(10).row();
@@ -218,6 +225,7 @@ public class LobbyScreen implements Screen {
             @Override
             public void onFailure(String error) {
                 Gdx.app.error("Lobby", "Status update failed: " + error);
+                showMainOptions();
             }
         });
     }
