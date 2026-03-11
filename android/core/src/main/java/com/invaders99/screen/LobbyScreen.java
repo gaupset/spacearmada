@@ -55,7 +55,7 @@ public class LobbyScreen implements Screen {
         root.setFillParent(true);
         stage.addActor(root);
 
-        // Ensure database format is correct before allowing actions
+        // Ensure database format is correct
         lobbyHandler.checkDatabaseFormat(new LobbyHandler.LobbyCallback() {
             @Override
             public void onSuccess(String response) {
@@ -119,6 +119,7 @@ public class LobbyScreen implements Screen {
     }
 
     private void showJoinInput() {
+        System.out.println("print join Input");
         root.clear();
         final TextField codeField = new TextField("", UiFactory.getInstance().getSkin());
         SpaceButton confirmBtn = new SpaceButton("JOIN");
@@ -127,6 +128,7 @@ public class LobbyScreen implements Screen {
         confirmBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                System.out.println("join Lobby: " + codeField.getText());
                 joinLobby(codeField.getText());
             }
         });
@@ -134,6 +136,7 @@ public class LobbyScreen implements Screen {
         cancelBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                System.out.println("join lobby cancel");
                 showMainOptions();
             }
         });

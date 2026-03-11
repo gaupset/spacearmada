@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.invaders99.util.Theme;
 
@@ -74,6 +75,19 @@ public class UiFactory {
         buttonStyle.downFontColor = new Color(1f, 0.4f, 0.7f, 1f);  // lighter pink on press
         skin.add("default", buttonStyle);
 
+        // TextField style
+        TextField.TextFieldStyle textFieldStyle = new TextField.TextFieldStyle();
+        textFieldStyle.font = font;
+        textFieldStyle.fontColor = new Color(theme.primary);
+        textFieldStyle.background = createBorderedDrawable(
+            theme.buttonIdle, theme.border,
+            200, 40,
+            (int) Theme.BORDER_THICKNESS
+        );
+        textFieldStyle.cursor = createSimpleDrawable(theme.primary, 2, 30);
+        textFieldStyle.selection = createSimpleDrawable(new Color(theme.primary.r, theme.primary.g, theme.primary.b, 0.5f), 10, 30);
+        skin.add("default", textFieldStyle);
+
         // Default label style
         Label.LabelStyle labelStyle = new Label.LabelStyle();
         labelStyle.font = font;
@@ -110,6 +124,16 @@ public class UiFactory {
 
         skin.add("tex-" + (texCounter++), texture);
 
+        return new TextureRegionDrawable(texture);
+    }
+
+    private TextureRegionDrawable createSimpleDrawable(Color color, int width, int height) {
+        Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
+        pixmap.setColor(color);
+        pixmap.fill();
+        Texture texture = new Texture(pixmap);
+        pixmap.dispose();
+        skin.add("tex-" + (texCounter++), texture);
         return new TextureRegionDrawable(texture);
     }
 
