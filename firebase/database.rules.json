@@ -1,6 +1,20 @@
 {
   "rules": {
-    ".read": true,
-    ".write": true
+    ".read": true,".write": true,
+    "lobbies": {
+      "$lobbyId": {
+        ".write": "!data.exists() || data.child('gamestarted').val() == false",
+        "players": {
+          "$playerId": {
+            ".write": "!data.exists()"
+          }
+        }
+      }
+    },
+    "players": {
+      "$playerId": {
+        ".write": "!data.exists() || (data.exists() && auth != null)"
+      }
+    }
   }
 }

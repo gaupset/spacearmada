@@ -112,6 +112,7 @@ public class LobbyScreen implements Screen {
 
             @Override
             public void onFailure(String error) {
+                System.out.println("Lobby create failed: " + error);
                 Gdx.app.error("Lobby", "Create failed: " + error);
             }
         });
