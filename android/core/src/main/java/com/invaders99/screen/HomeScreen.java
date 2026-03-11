@@ -58,18 +58,24 @@ public class HomeScreen implements Screen {
 
         // Buttons bottom 2/3
         Table buttons = new Table();
-        String[] buttonLabels = {"DEV GAME", "QUICKPLAY", "LOGIN", "SIGNUP", "SETTINGS"};
+        String[] buttonLabels = {"DEV GAME", "LOBBY", "LOGIN", "SIGNUP", "SETTINGS"};
         for (String label : buttonLabels) {
             SpaceButton button = new SpaceButton(label);
-            if ("SETTINGS".equals(label)) {
+            if ("LOBBY".equals(label)) {
+                button.addListener(new ClickListener() {
+                    @Override
+                    public void clicked(InputEvent event, float x, float y) {
+                        game.setScreen(new LobbyScreen(game, assets));
+                    }
+                });
+            } else if ("SETTINGS".equals(label)) {
                 button.addListener(new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
                         game.setScreen(new SettingsScreen(game, assets));
                     }
                 });
-            }
-            if ("DEV GAME".equals(label)) {
+            } else if ("DEV GAME".equals(label)) {
                 button.addListener(new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
