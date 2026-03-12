@@ -1,0 +1,16 @@
+{
+  "lobbies": {
+    "lobbyID": {
+      "players": {
+        "playerID1": true,
+        "playerID2": true
+      },
+      "gamestarted": false
+    }
+  },
+  "players": {
+    "playerID": {
+      "score": 1000
+    }
+  }
+}

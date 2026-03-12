@@ -1,10 +1,12 @@
 package com.invaders99.util;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * Serializes plain Java objects into JSON for Firebase REST APIs.
- * Supports: String, long, int, double, float, boolean.
+ * Supports: String, long, int, double, float, boolean, Collection, Map.
  */
 public final class FirebaseJson {
 
@@ -20,6 +22,7 @@ public final class FirebaseJson {
 
     /** Plain JSON for Realtime Database */
     public static String toJson(Object obj) {
+        if (obj == null) return "null";
         StringBuilder sb = new StringBuilder("{");
         appendFields(sb, obj, false);
         sb.append("}");
@@ -67,10 +70,36 @@ public final class FirebaseJson {
     }
 
     private static void appendJsonValue(StringBuilder sb, Object value) {
-        if (value instanceof String) {
+        if (value == null) {
+            sb.append("null");
+        } else if (value instanceof String) {
             sb.append("\"").append(escapeJson((String) value)).append("\"");
-        } else {
+        } else if (value instanceof Boolean || value instanceof Number) {
             sb.append(value);
+        } else if (value instanceof Collection) {
+            sb.append("[");
+            boolean first = true;
+            for (Object item : (Collection<?>) value) {
+                if (!first) sb.append(",");
+                first = false;
+                appendJsonValue(sb, item);
+            }
+            sb.append("]");
+        } else if (value instanceof Map) {
+            sb.append("{");
+            boolean first = true;
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
+                if (!first) sb.append(",");
+                first = false;
+                sb.append("\"").append(escapeJson(String.valueOf(entry.getKey()))).append("\":");
+                appendJsonValue(sb, entry.getValue());
+            }
+            sb.append("}");
+        } else {
+            // Treat as object
+            sb.append("{");
+            appendFields(sb, value, false);
+            sb.append("}");
         }
     }
 
