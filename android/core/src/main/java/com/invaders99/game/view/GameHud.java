@@ -13,8 +13,8 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.invaders99.game.model.GameModel;
+import com.invaders99.service.AudioService;
 import com.invaders99.ui.UiFactory;
-import com.invaders99.util.Assets;
 import com.invaders99.util.Theme;
 
 public class GameHud {
@@ -23,8 +23,6 @@ public class GameHud {
     private final Table menuPanel;
     private final Texture overlayTex;
 
-    private boolean soundOn = true;
-    private boolean musicOn = true;
     private final TextButton soundButton;
     private final TextButton musicButton;
 
@@ -37,6 +35,7 @@ public class GameHud {
         stage = new Stage(new ExtendViewport(GameModel.WORLD_WIDTH, GameModel.WORLD_HEIGHT));
 
         Skin skin = UiFactory.getInstance().getSkin();
+        AudioService audio = AudioService.getInstance();
 
         // Overlay background
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
@@ -75,26 +74,28 @@ public class GameHud {
         title.setFontScale(1.2f);
         content.add(title).padBottom(24f).row();
 
-        // Sound toggle
-        soundButton = new TextButton("SOUND: ON", skin);
+        // Sound toggle setup: interacts with AudioService to enable/disable sound effects
+        soundButton = new TextButton(getSoundText(audio.isSoundEnabled()), skin);
         soundButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
         soundButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                soundOn = !soundOn;
-                soundButton.setText(soundOn ? "SOUND: ON" : "SOUND: OFF");
+                boolean enabled = !audio.isSoundEnabled();
+                audio.setSoundEnabled(enabled);
+                soundButton.setText(getSoundText(enabled));
             }
         });
         content.add(soundButton).row();
 
-        // Music toggle
-        musicButton = new TextButton("MUSIC: ON", skin);
+        // Music toggle setup: interacts with AudioService to enable/disable background music
+        musicButton = new TextButton(getMusicText(audio.isMusicEnabled()), skin);
         musicButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
         musicButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                musicOn = !musicOn;
-                musicButton.setText(musicOn ? "MUSIC: ON" : "MUSIC: OFF");
+                boolean enabled = !audio.isMusicEnabled();
+                audio.setMusicEnabled(enabled);
+                musicButton.setText(getMusicText(enabled));
             }
         });
         content.add(musicButton).row();
@@ -124,6 +125,14 @@ public class GameHud {
 
         menuPanel.add(content);
         stage.addActor(menuPanel);
+    }
+
+    private String getSoundText(boolean enabled) {
+        return "SOUND: " + (enabled ? "ON" : "OFF");
+    }
+
+    private String getMusicText(boolean enabled) {
+        return "MUSIC: " + (enabled ? "ON" : "OFF");
     }
 
     public void act(float delta) {

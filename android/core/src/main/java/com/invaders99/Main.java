@@ -2,6 +2,7 @@ package com.invaders99;
 
 import com.badlogic.gdx.Game;
 import com.invaders99.screen.HomeScreen;
+import com.invaders99.service.AudioService;
 import com.invaders99.service.FirebaseService;
 import com.invaders99.ui.UiFactory;
 import com.invaders99.util.AppConfig;
@@ -30,6 +31,9 @@ public class Main extends Game {
         FirebaseService.init();
         UiFactory.init(assets.getDefaultFont());
 
+        // Start background music
+        AudioService.getInstance().playMusic("elevator_music.mp3", true);
+
         // Go to home screen
         setScreen(new HomeScreen(this, assets));
     }
@@ -39,5 +43,6 @@ public class Main extends Game {
         super.dispose();
         UiFactory.getInstance().dispose();
         if (assets != null) assets.dispose();
+        AudioService.getInstance().stopMusic();
     }
 }

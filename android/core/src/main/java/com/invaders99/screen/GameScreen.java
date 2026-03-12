@@ -36,7 +36,7 @@ public class GameScreen implements Screen {
         batch = new SpriteBatch();
         model = new GameModel();
         renderer = new GameRenderer(assets);
-        controller = new GameController(model, viewport);
+        controller = new GameController(model, viewport, assets);
         hud = new GameHud(model, () -> game.setScreen(new HomeScreen(game, assets)));
 
         InputMultiplexer mux = new InputMultiplexer();

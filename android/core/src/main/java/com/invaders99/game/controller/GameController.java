@@ -8,6 +8,8 @@ import com.invaders99.game.model.Bullet;
 import com.invaders99.game.model.Enemy;
 import com.invaders99.game.model.GameModel;
 import com.invaders99.game.model.Player;
+import com.invaders99.service.AudioService;
+import com.invaders99.util.Assets;
 
 public class GameController extends InputAdapter {
     private static final float SHOOT_INTERVAL = 0.3f;
@@ -17,6 +19,7 @@ public class GameController extends InputAdapter {
 
     private final GameModel model;
     private final Viewport viewport;
+    private final Assets assets;
     private final Vector3 touchPoint = new Vector3();
 
     private float shootTimer;
@@ -25,9 +28,10 @@ public class GameController extends InputAdapter {
     private float invincibleTimer;
     private float enemyShootTimer;
 
-    public GameController(GameModel model, Viewport viewport) {
+    public GameController(GameModel model, Viewport viewport, Assets assets) {
         this.model = model;
         this.viewport = viewport;
+        this.assets = assets;
     }
 
     public void update(float delta) {
@@ -46,6 +50,8 @@ public class GameController extends InputAdapter {
         if (shootTimer >= SHOOT_INTERVAL) {
             shootTimer -= SHOOT_INTERVAL;
             model.bullets.add(new Bullet(model.player.x, model.player.y + Player.HEIGHT / 2f));
+            // Play laser sound
+            AudioService.getInstance().playSound(assets.getLaserSound());
         }
 
         // Spawn enemies

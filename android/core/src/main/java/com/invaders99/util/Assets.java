@@ -1,6 +1,7 @@
 package com.invaders99.util;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
@@ -14,6 +15,8 @@ public class Assets {
     private Texture logoCrop;
     private BitmapFont defaultFont;
     private FreeTypeFontGenerator fontGenerator;
+
+    private Sound laserSound;
 
     public void load() {
         // Stars background
@@ -31,6 +34,9 @@ public class Assets {
         param.minFilter = Texture.TextureFilter.Linear;
         param.magFilter = Texture.TextureFilter.Linear;
         defaultFont = fontGenerator.generateFont(param);
+
+        // Sounds
+        laserSound = Gdx.audio.newSound(Gdx.files.internal("laser_sound.mp3"));
     }
 
     public Texture getStarsBackground() {
@@ -43,6 +49,10 @@ public class Assets {
 
     public BitmapFont getDefaultFont() {
         return defaultFont;
+    }
+
+    public Sound getLaserSound() {
+        return laserSound;
     }
 
     public static Texture createColorTexture(Color color) {
@@ -59,5 +69,6 @@ public class Assets {
         if (logoCrop != null) logoCrop.dispose();
         if (defaultFont != null) defaultFont.dispose();
         if (fontGenerator != null) fontGenerator.dispose();
+        if (laserSound != null) laserSound.dispose();
     }
 }

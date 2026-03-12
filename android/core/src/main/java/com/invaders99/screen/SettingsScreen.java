@@ -2,21 +2,24 @@ package com.invaders99.screen;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Slider;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.invaders99.Main;
+import com.invaders99.service.AudioService;
 import com.invaders99.ui.FirebaseTestWidget;
 import com.invaders99.ui.SpaceButton;
 import com.invaders99.ui.UiFactory;
 import com.invaders99.util.Assets;
 import com.invaders99.util.Theme;
 
-/** Settings screen with Firebase service tests and a back button. */
 public class SettingsScreen implements Screen {
     private static final float VIEWPORT_MIN_WIDTH = 360f;
     private static final float VIEWPORT_MIN_HEIGHT = 640f;
@@ -52,26 +55,51 @@ public class SettingsScreen implements Screen {
         root.setFillParent(true);
         root.center();
 
+        UiFactory ui = UiFactory.getInstance();
+
         // Title
-        Label titleLabel = new Label("SETTINGS", UiFactory.getInstance().getSkin());
+        Label titleLabel = new Label("SETTINGS", ui.getSkin());
         titleLabel.setFontScale(FONT_SCALE_TITLE);
         root.add(titleLabel).center().padBottom(40f).row();
 
-        // Cloud Functions test
+        // --- Audio Settings ---
+        AudioService audio = AudioService.getInstance();
+
+        root.add(new Label("MUSIC VOLUME", ui.getSkin(), "secondary")).padBottom(5f).row();
+        Slider musicSlider = new Slider(0f, 1f, 0.05f, false, ui.getSkin());
+        musicSlider.setValue(audio.getMusicVolume());
+        musicSlider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                audio.setMusicVolume(musicSlider.getValue());
+            }
+        });
+        root.add(musicSlider).width(Theme.BUTTON_WIDTH).padBottom(20f).row();
+
+        root.add(new Label("SOUND VOLUME", ui.getSkin(), "secondary")).padBottom(5f).row();
+        Slider soundSlider = new Slider(0f, 1f, 0.05f, false, ui.getSkin());
+        soundSlider.setValue(audio.getSoundVolume());
+        soundSlider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                audio.setSoundVolume(soundSlider.getValue());
+            }
+        });
+        root.add(soundSlider).width(Theme.BUTTON_WIDTH).padBottom(40f).row();
+
+        // --- Firebase Tests ---
         functionsWidget = new FirebaseTestWidget("CLOUD FUNCTIONS", FirebaseTestWidget.SERVICE_FUNCTIONS);
         root.add(functionsWidget)
             .width(Theme.BUTTON_WIDTH)
             .padBottom(BUTTON_SPACING)
             .row();
 
-        // Firestore test
         firestoreWidget = new FirebaseTestWidget("FIRESTORE", FirebaseTestWidget.SERVICE_FIRESTORE);
         root.add(firestoreWidget)
             .width(Theme.BUTTON_WIDTH)
             .padBottom(BUTTON_SPACING)
             .row();
 
-        // Realtime Database test
         databaseWidget = new FirebaseTestWidget("REALTIME DATABASE", FirebaseTestWidget.SERVICE_DATABASE);
         root.add(databaseWidget)
             .width(Theme.BUTTON_WIDTH)
