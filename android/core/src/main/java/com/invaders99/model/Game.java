@@ -1,8 +1,8 @@
-package com.invaders99.game.model;
+package com.invaders99.model;
 
 import com.badlogic.gdx.utils.Array;
 
-public class GameModel {
+public class Game {
     public static final float WORLD_WIDTH = 360f;
     public static final float WORLD_HEIGHT = 640f;
 
@@ -15,11 +15,11 @@ public class GameModel {
     public boolean menuOpen;
     public final Array<Bullet> enemyBullets = new Array<>();
 
-    public boolean isGameOver() {
-        return lives <= 0;
+    public Game() {
+        player = new Player(WORLD_WIDTH / 2f, 40f);
     }
 
-    public GameModel() {
-        player = new Player(WORLD_WIDTH / 2f, 40f);
+    public boolean isGameOver() {
+        return lives <= 0;
     }
 }

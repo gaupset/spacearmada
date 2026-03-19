@@ -62,7 +62,7 @@ public class LobbyHandler {
 
     public void createLobby(final LobbyCallback callback) {
         final String newId = String.format("%06d", new Random().nextInt(1000000));
-        LobbyModel lobby = new LobbyModel();
+        com.invaders99.model.Lobby lobby = new com.invaders99.model.Lobby();
         lobby.players.put(playerID, true);
         String body = FirebaseJson.toJson(lobby);
         System.out.println("createLobby: " + body);

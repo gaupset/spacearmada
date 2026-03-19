@@ -1,43 +1,46 @@
-package com.invaders99.screen;
+package com.invaders99.view.state;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
-import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.invaders99.Main;
-import com.invaders99.game.controller.GameController;
-import com.invaders99.game.model.GameModel;
-import com.invaders99.game.view.GameHud;
-import com.invaders99.game.view.GameRenderer;
+import com.invaders99.controller.MainController;
+import com.invaders99.controller.WaveController;
+import com.invaders99.controller.state.GameController;
+import com.invaders99.model.Game;
 import com.invaders99.util.Assets;
+import com.invaders99.view.GameHud;
+import com.invaders99.view.GameRenderer;
+import com.invaders99.view.GameStateManager;
 
-public class GameScreen implements Screen {
-    private final Main game;
-    private final Assets assets;
+public class GameState extends State {
+    private final MainController main;
 
     private ExtendViewport viewport;
-    private SpriteBatch batch;
-    private GameModel model;
+    private Game model;
     private GameRenderer renderer;
     private GameController controller;
     private GameHud hud;
 
-    public GameScreen(Main game, Assets assets) {
-        this.game = game;
-        this.assets = assets;
+    public GameState(GameStateManager gsm, MainController main) {
+        super(gsm);
+        this.main = main;
     }
 
     @Override
     public void show() {
-        viewport = new ExtendViewport(GameModel.WORLD_WIDTH, GameModel.WORLD_HEIGHT);
-        batch = new SpriteBatch();
-        model = new GameModel();
+        Assets assets = main.getAssets();
+        model = new Game();
+        viewport = new ExtendViewport(Game.WORLD_WIDTH, Game.WORLD_HEIGHT);
         renderer = new GameRenderer(assets);
-        controller = new GameController(model, viewport, assets);
-        hud = new GameHud(model, () -> game.setScreen(new HomeScreen(game, assets)));
+        controller = new GameController(model, viewport, assets, new WaveController());
+        hud = new GameHud(
+            model,
+            open -> model.menuOpen = open,
+            () -> gsm.set(new MenuState(gsm, main))
+        );
 
         InputMultiplexer mux = new InputMultiplexer();
         mux.addProcessor(hud.getStage());
@@ -46,20 +49,23 @@ public class GameScreen implements Screen {
     }
 
     @Override
-    public void render(float delta) {
-        controller.update(delta);
+    public void update(float dt) {
+        controller.update(dt);
 
         if (model.isGameOver()) {
-            game.setScreen(new GameOverScreen(game, assets, model.score));
+            gsm.set(new GameOverState(gsm, main, model.score));
             return;
         }
+    }
 
+    @Override
+    public void render(SpriteBatch batch) {
         viewport.apply();
         batch.setProjectionMatrix(viewport.getCamera().combined);
         ScreenUtils.clear(Color.BLACK);
         renderer.render(model, batch, viewport);
 
-        hud.act(delta);
+        hud.act(Gdx.graphics.getDeltaTime());
         hud.draw();
     }
 
@@ -70,19 +76,7 @@ public class GameScreen implements Screen {
     }
 
     @Override
-    public void pause() {}
-
-    @Override
-    public void resume() {}
-
-    @Override
-    public void hide() {
-        dispose();
-    }
-
-    @Override
     public void dispose() {
-        if (batch != null) batch.dispose();
         if (renderer != null) renderer.dispose();
         if (hud != null) hud.dispose();
     }

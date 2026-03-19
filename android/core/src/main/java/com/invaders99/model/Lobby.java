@@ -1,11 +1,11 @@
-package com.invaders99.service;
+package com.invaders99.model;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class LobbyModel {
+public class Lobby {
     public Map<String, Boolean> players = new HashMap<>();
     public boolean gamestarted = false;
 
-    public LobbyModel() {}
+    public Lobby() {}
 }
