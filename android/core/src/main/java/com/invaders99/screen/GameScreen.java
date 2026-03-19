@@ -24,6 +24,8 @@ public class GameScreen implements Screen {
     private GameRenderer renderer;
     private GameController controller;
     private GameHud hud;
+    private InputMultiplexer inputMux;
+    private boolean goingToPause;
 
     public GameScreen(Main game, Assets assets) {
         this.game = game;
@@ -32,17 +34,33 @@ public class GameScreen implements Screen {
 
     @Override
     public void show() {
-        viewport = new ExtendViewport(GameModel.WORLD_WIDTH, GameModel.WORLD_HEIGHT);
-        batch = new SpriteBatch();
-        model = new GameModel();
-        renderer = new GameRenderer(assets);
-        controller = new GameController(model, viewport, assets);
-        hud = new GameHud(model, () -> game.setScreen(new HomeScreen(game, assets)));
+        if (model == null) {
+            viewport = new ExtendViewport(GameModel.WORLD_WIDTH, GameModel.WORLD_HEIGHT);
+            batch = new SpriteBatch();
+            model = new GameModel();
+            renderer = new GameRenderer(assets);
+            controller = new GameController(model, viewport, assets);
+            hud = new GameHud(model, () -> game.setScreen(new HomeScreen(game, assets)),
+                () -> {
+                    goingToPause = true;
+                    game.setScreen(new PauseScreen(game, assets, this));
+                });
 
-        InputMultiplexer mux = new InputMultiplexer();
-        mux.addProcessor(hud.getStage());
-        mux.addProcessor(controller);
-        Gdx.input.setInputProcessor(mux);
+            inputMux = new InputMultiplexer();
+            inputMux.addProcessor(hud.getStage());
+            inputMux.addProcessor(controller);
+        }
+        Gdx.input.setInputProcessor(inputMux);
+    }
+
+    /** Renders the current game state without updating (for pause overlay). */
+    public void renderFrozen(float delta) {
+        viewport.apply();
+        batch.setProjectionMatrix(viewport.getCamera().combined);
+        ScreenUtils.clear(Color.BLACK);
+        renderer.render(model, batch, viewport);
+        hud.act(delta);
+        hud.draw();
     }
 
     @Override
@@ -77,6 +95,10 @@ public class GameScreen implements Screen {
 
     @Override
     public void hide() {
+        if (goingToPause) {
+            goingToPause = false;
+            return;
+        }
         dispose();
     }
 

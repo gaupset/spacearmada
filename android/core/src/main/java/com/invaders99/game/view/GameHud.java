@@ -30,7 +30,7 @@ public class GameHud {
         void onQuit();
     }
 
-    public GameHud(GameModel model, QuitListener quitListener) {
+    public GameHud(GameModel model, QuitListener quitListener, Runnable pauseListener) {
         this.model = model;
         stage = new Stage(new ExtendViewport(GameModel.WORLD_WIDTH, GameModel.WORLD_HEIGHT));
 
@@ -43,6 +43,16 @@ public class GameHud {
         pixmap.fill();
         overlayTex = new Texture(pixmap);
         pixmap.dispose();
+
+        // Pause button
+        TextButton pauseButton = new TextButton("PAUSE", skin);
+        pauseButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
+        pauseButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                if (pauseListener != null) pauseListener.run();
+            }
+        });
 
         // Menu button
         TextButton menuButton = new TextButton("MENU", skin);
@@ -57,6 +67,7 @@ public class GameHud {
         Table topBar = new Table();
         topBar.setFillParent(true);
         topBar.top().right();
+        topBar.add(pauseButton).width(80f).height(36f).pad(8f);
         topBar.add(menuButton).width(80f).height(36f).pad(8f);
         stage.addActor(topBar);
 
