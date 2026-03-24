@@ -1,43 +1,39 @@
-package com.invaders99.screen;
+package com.invaders99.view.state;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.invaders99.Main;
-import com.invaders99.game.model.GameModel;
+import com.invaders99.model.Game;
 import com.invaders99.ui.SpaceButton;
-import com.invaders99.util.Assets;
-import com.invaders99.util.Theme;
+import com.invaders99.ui.UiFactory;
+import com.invaders99.view.GameStateManager;
 
-public class PauseScreen implements Screen {
+public class PauseState extends State {
     private static final float PAUSE_DURATION = 10f;
 
-    private final Main game;
-    private final Assets assets;
-    private final GameScreen gameScreen;
-
+    private final GameState gameState;
     private Stage stage;
     private Texture overlayTex;
     private float pauseTimeLeft;
 
-    public PauseScreen(Main game, Assets assets, GameScreen gameScreen) {
-        this.game = game;
-        this.assets = assets;
-        this.gameScreen = gameScreen;
+    public PauseState(GameStateManager gsm, GameState gameState) {
+        super(gsm);
+        this.gameState = gameState;
     }
 
     @Override
     public void show() {
-        stage = new Stage(new ExtendViewport(GameModel.WORLD_WIDTH, GameModel.WORLD_HEIGHT));
+        stage = new Stage(new ExtendViewport(Game.WORLD_WIDTH, Game.WORLD_HEIGHT));
         Gdx.input.setInputProcessor(stage);
         pauseTimeLeft = PAUSE_DURATION;
 
@@ -51,12 +47,14 @@ public class PauseScreen implements Screen {
     }
 
     private void buildLayout() {
+        Skin skin = UiFactory.getInstance().getSkin();
+
         Table root = new Table();
         root.setFillParent(true);
         root.setBackground(new TextureRegionDrawable(overlayTex));
         root.center();
 
-        Label title = new Label("GAME PAUSED", new Label.LabelStyle(assets.getDefaultFont(), Theme.CLASSIC.primary));
+        Label title = new Label("GAME PAUSED", skin);
         title.setFontScale(1.5f);
         root.add(title).padBottom(40f).row();
 
@@ -64,46 +62,36 @@ public class PauseScreen implements Screen {
         unpauseButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                game.setScreen(gameScreen);
+                gsm.pop();
             }
         });
-        root.add(unpauseButton)
-            .width(Theme.BUTTON_WIDTH)
-            .height(Theme.BUTTON_HEIGHT)
-            .row();
+        root.add(unpauseButton).row();
 
         stage.addActor(root);
     }
 
     @Override
-    public void render(float delta) {
-        gameScreen.renderFrozen(delta);
-
-        pauseTimeLeft -= delta;
+    public void update(float dt) {
+        pauseTimeLeft -= dt;
         if (pauseTimeLeft <= 0f) {
-            game.setScreen(gameScreen);
+            gsm.pop();
             return;
         }
+        stage.act(dt);
+    }
 
+    @Override
+    public void render(SpriteBatch batch) {
+        gameState.renderFrozen(batch, Gdx.graphics.getDeltaTime());
         stage.getViewport().apply();
-        stage.act(delta);
         stage.draw();
     }
 
     @Override
     public void resize(int width, int height) {
-        stage.getViewport().update(width, height, true);
-    }
-
-    @Override
-    public void pause() {}
-
-    @Override
-    public void resume() {}
-
-    @Override
-    public void hide() {
-        dispose();
+        if (stage != null) {
+            stage.getViewport().update(width, height, true);
+        }
     }
 
     @Override

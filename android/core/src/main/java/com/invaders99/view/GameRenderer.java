@@ -1,4 +1,4 @@
-package com.invaders99.game.view;
+package com.invaders99.view;
 
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
@@ -6,10 +6,10 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import com.invaders99.game.model.Bullet;
-import com.invaders99.game.model.Enemy;
-import com.invaders99.game.model.GameModel;
-import com.invaders99.game.model.Player;
+import com.invaders99.model.Bullet;
+import com.invaders99.model.Enemy;
+import com.invaders99.model.Game;
+import com.invaders99.model.Player;
 import com.invaders99.util.Assets;
 
 public class GameRenderer {
@@ -34,31 +34,26 @@ public class GameRenderer {
         this.enemyBulletTex = Assets.createColorTexture(ENEMY_BULLET_COLOR);
     }
 
-    public void render(GameModel model, SpriteBatch batch, Viewport viewport) {
+    public void render(Game model, SpriteBatch batch, Viewport viewport) {
         batch.begin();
 
-        // Background (fills entire viewport, not game area)
         Camera cam = viewport.getCamera();
         float camW = cam.viewportWidth;
         float camH = cam.viewportHeight;
         batch.draw(background, cam.position.x - camW / 2f, cam.position.y - camH / 2f, camW, camH);
 
-        // Player bullets
         for (Bullet b : model.bullets) {
             batch.draw(bulletTex, b.x - Bullet.WIDTH / 2f, b.y - Bullet.HEIGHT / 2f, Bullet.WIDTH, Bullet.HEIGHT);
         }
 
-        // Enemy bullets
         for (Bullet b : model.enemyBullets) {
             batch.draw(enemyBulletTex, b.x - Bullet.WIDTH / 2f, b.y - Bullet.HEIGHT / 2f, Bullet.WIDTH, Bullet.HEIGHT);
         }
 
-        // Enemies
         for (Enemy e : model.enemies) {
             batch.draw(enemyTex, e.x - Enemy.WIDTH / 2f, e.y - Enemy.HEIGHT / 2f, Enemy.WIDTH, Enemy.HEIGHT);
         }
 
-        // Player (translucent when invincible)
         Player p = model.player;
         if (model.invincible) {
             batch.setColor(1f, 1f, 1f, 0.4f);
@@ -68,10 +63,9 @@ public class GameRenderer {
             batch.setColor(1f, 1f, 1f, 1f);
         }
 
-        // HUD
         font.getData().setScale(0.5f);
-        font.draw(batch, "SCORE: " + model.score, 10f, GameModel.WORLD_HEIGHT - 10f);
-        font.draw(batch, "LIVES: " + model.lives, 10f, GameModel.WORLD_HEIGHT - 30f);
+        font.draw(batch, "SCORE: " + model.score, 10f, Game.WORLD_HEIGHT - 10f);
+        font.draw(batch, "LIVES: " + model.lives, 10f, Game.WORLD_HEIGHT - 30f);
 
         batch.end();
     }

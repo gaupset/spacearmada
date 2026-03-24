@@ -1,4 +1,4 @@
-package com.invaders99.game.model;
+package com.invaders99.model;
 
 import com.badlogic.gdx.math.Rectangle;
 
