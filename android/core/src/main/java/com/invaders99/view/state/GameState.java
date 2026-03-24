@@ -17,6 +17,7 @@ import com.invaders99.view.GameStateManager;
 
 public class GameState extends State {
     private final MainController main;
+    private InputMultiplexer inputMux;
 
     private ExtendViewport viewport;
     private Game model;
@@ -31,21 +32,33 @@ public class GameState extends State {
 
     @Override
     public void show() {
-        Assets assets = main.getAssets();
-        model = new Game();
-        viewport = new ExtendViewport(Game.WORLD_WIDTH, Game.WORLD_HEIGHT);
-        renderer = new GameRenderer(assets);
-        controller = new GameController(model, viewport, assets, new WaveController());
-        hud = new GameHud(
-            model,
-            open -> model.menuOpen = open,
-            () -> gsm.set(new MenuState(gsm, main))
-        );
+        if (model == null) {
+            Assets assets = main.getAssets();
+            model = new Game();
+            viewport = new ExtendViewport(Game.WORLD_WIDTH, Game.WORLD_HEIGHT);
+            renderer = new GameRenderer(assets);
+            controller = new GameController(model, viewport, assets, new WaveController());
+            hud = new GameHud(
+                model,
+                open -> model.menuOpen = open,
+                () -> gsm.set(new MenuState(gsm, main)),
+                () -> gsm.push(new PauseState(gsm, this))
+            );
 
-        InputMultiplexer mux = new InputMultiplexer();
-        mux.addProcessor(hud.getStage());
-        mux.addProcessor(controller);
-        Gdx.input.setInputProcessor(mux);
+            inputMux = new InputMultiplexer();
+            inputMux.addProcessor(hud.getStage());
+            inputMux.addProcessor(controller);
+        }
+        Gdx.input.setInputProcessor(inputMux);
+    }
+
+    public void renderFrozen(SpriteBatch batch, float delta) {
+        viewport.apply();
+        batch.setProjectionMatrix(viewport.getCamera().combined);
+        ScreenUtils.clear(Color.BLACK);
+        renderer.render(model, batch, viewport);
+        hud.act(delta);
+        hud.draw();
     }
 
     @Override
@@ -75,7 +88,6 @@ public class GameState extends State {
         hud.resize(width, height);
     }
 
-    @Override
     public void dispose() {
         if (renderer != null) renderer.dispose();
         if (hud != null) hud.dispose();
