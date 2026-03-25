@@ -81,6 +81,7 @@ public class LobbyHandler {
             public void onSuccess(String response) {
                 lobbyID = newId;
                 sendHeartbeat();
+                callback.onSuccess(response);
             }
             @Override
             public void onFailure(String error) {
@@ -94,7 +95,6 @@ public class LobbyHandler {
         FirebaseService.getInstance().getDbData("lobbies/" + lobbyId, new FirebaseService.FirebaseCallback() {
             @Override
             public void onSuccess(String response) {
-                sendHeartbeat();
                 if (response == null || response.equals("null")) {
                     callback.onFailure("Lobby not found");
                     return;
@@ -108,6 +108,8 @@ public class LobbyHandler {
                         @Override
                         public void onSuccess(String response) {
                             lobbyID = lobbyId;
+                            sendHeartbeat();
+                            callback.onSuccess(response);
                         }
                         @Override
                         public void onFailure(String error) {
