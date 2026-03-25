@@ -14,6 +14,7 @@ import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.invaders99.controller.MainController;
+import com.invaders99.service.ScoreService;
 import com.invaders99.ui.SpaceButton;
 import com.invaders99.util.Assets;
 import com.invaders99.util.Theme;
@@ -27,11 +28,14 @@ public class GameOverState extends State {
     private final MainController main;
     private final int finalScore;
     private Stage stage;
+    private boolean isNewHighScore;
 
     public GameOverState(GameStateManager gsm, MainController main, int finalScore) {
         super(gsm);
         this.main = main;
         this.finalScore = finalScore;
+        // Persist high score on device
+        this.isNewHighScore = ScoreService.getInstance().updateHighScore(finalScore);
     }
 
     @Override
@@ -55,11 +59,22 @@ public class GameOverState extends State {
 
         Label title = new Label("GAME OVER", new Label.LabelStyle(assets.getDefaultFont(), Theme.CLASSIC.primary));
         title.setFontScale(1.5f);
-        root.add(title).padBottom(30f).row();
+        root.add(title).padBottom(10f).row();
+
+        if (isNewHighScore) {
+            Label newHigh = new Label("NEW HIGH SCORE!", new Label.LabelStyle(assets.getDefaultFont(), Color.GOLD));
+            newHigh.setFontScale(0.8f);
+            root.add(newHigh).padBottom(10f).row();
+        }
 
         Label scoreLabel = new Label("SCORE: " + finalScore, new Label.LabelStyle(assets.getDefaultFont(), Color.WHITE));
         scoreLabel.setFontScale(1.0f);
-        root.add(scoreLabel).padBottom(60f).row();
+        root.add(scoreLabel).padBottom(20f).row();
+
+        Label highLabel = new Label("BEST: " + ScoreService.getInstance().getHighScore(),
+                new Label.LabelStyle(assets.getDefaultFont(), Color.LIGHT_GRAY));
+        highLabel.setFontScale(0.7f);
+        root.add(highLabel).padBottom(60f).row();
 
         SpaceButton playAgain = new SpaceButton("PLAY AGAIN");
         playAgain.addListener(new ClickListener() {

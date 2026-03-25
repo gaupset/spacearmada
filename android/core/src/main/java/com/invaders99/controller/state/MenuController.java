@@ -20,7 +20,12 @@ public class MenuController {
     }
 
     public void onLobbyClicked() {
-        gsm.set(new LobbyState(gsm, main));
+        try {
+            gsm.set(new LobbyState(gsm, main));
+        } catch (Exception e) {
+            System.err.println("Failed to enter lobby: " + e.getMessage());
+            // Optionally: gsm.set(new ErrorState(gsm, main, "No Server Connection"));
+        }
     }
 
     public void onSettingsClicked() {

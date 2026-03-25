@@ -58,7 +58,6 @@ public class GameController extends InputAdapter {
         if (shootTimer >= SHOOT_INTERVAL) {
             shootTimer -= SHOOT_INTERVAL;
             model.bullets.add(new Bullet(model.player.x, model.player.y + Player.HEIGHT / 2f));
-            AudioService.getInstance().playSound(assets.getLaserSound());
         }
     }
 
@@ -87,6 +86,7 @@ public class GameController extends InputAdapter {
                     model.bullets.removeIndex(i);
                     model.enemies.removeIndex(j);
                     model.score++;
+                    AudioService.getInstance().playSound(assets.getLaserSound());
                     break;
                 }
             }

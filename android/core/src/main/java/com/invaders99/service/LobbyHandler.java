@@ -73,6 +73,7 @@ public class LobbyHandler {
                 System.out.println("create Lobby success");
                 lobbyID = newId;
                 updatePlayerLobby(newId, callback);
+                updatePlayerOnlineStatus();
             }
 
             @Override
@@ -99,6 +100,7 @@ public class LobbyHandler {
                         public void onSuccess(String response) {
                             lobbyID = lobbyId;
                             updatePlayerLobby(lobbyId, callback);
+                            updatePlayerOnlineStatus();
                         }
 
                         @Override
@@ -123,6 +125,8 @@ public class LobbyHandler {
             callback.onFailure("Not in a lobby");
             return;
         }
+
+        updatePlayerOnlineStatus();
 
         if (isHost) {
             // Host: delete lobby and update all players (this is a simplified version)
@@ -176,7 +180,7 @@ public class LobbyHandler {
     }
 
     private void nullifyPlayerLobby(String pId) {
-        String body = "{\"currentLobby\": null}";
+        String body = "{\"currentLobby\": null, \"lastTimeOnline\": " + System.currentTimeMillis() + "}";
         FirebaseService.getInstance().patchDbData("players/" + pId, body, new FirebaseService.FirebaseCallback() {
             @Override
             public void onSuccess(String response) {}
@@ -212,6 +216,7 @@ public class LobbyHandler {
             @Override
             public void onSuccess(String response) {
                 callback.onSuccess(response);
+                updatePlayerOnlineStatus();
             }
 
             @Override
@@ -222,7 +227,8 @@ public class LobbyHandler {
     }
 
     private void updatePlayerLobby(String lobbyId, final LobbyCallback callback) {
-        String body = "{\"currentLobby\": \"" + lobbyId + "\"}";
+        int highScore = ScoreService.getInstance().getHighScore();
+        String body = "{\"currentLobby\": \"" + lobbyId + "\", \"lastTimeOnline\": " + System.currentTimeMillis() + ", \"personalHighScore\": " + highScore + "}";
         FirebaseService.getInstance().patchDbData("players/" + playerID, body, new FirebaseService.FirebaseCallback() {
             @Override
             public void onSuccess(String response) {
@@ -236,8 +242,24 @@ public class LobbyHandler {
         });
     }
 
+    private void updatePlayerOnlineStatus() {
+        if (playerID == null) return;
+        int highScore = ScoreService.getInstance().getHighScore();
+        String body = "{\"lastTimeOnline\": " + System.currentTimeMillis() + ", \"personalHighScore\": " + highScore + "}";
+        FirebaseService.getInstance().patchDbData("players/" + playerID, body, new FirebaseService.FirebaseCallback() {
+            @Override
+            public void onSuccess(String response) {}
+            @Override
+            public void onFailure(String error) {}
+        });
+    }
+
     public void setPlayerID(String id) {
         this.playerID = id;
+    }
+
+    public String getPlayerID() {
+        return playerID;
     }
 
     public String getLobbyID() {
