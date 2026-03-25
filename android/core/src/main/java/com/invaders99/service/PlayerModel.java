@@ -3,7 +3,9 @@ package com.invaders99.service;
 public class PlayerModel {
     public int score = 1000;
     public String currentLobby;
-    public long lastTimeOnline;
+    public int personalHighScore;
+    public Object lastTimeOnline;
+    public Object joinedLobbyAt;
 
     public PlayerModel() {}
 }

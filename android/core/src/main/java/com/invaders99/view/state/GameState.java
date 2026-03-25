@@ -4,12 +4,15 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.utils.JsonValue;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.invaders99.controller.MainController;
 import com.invaders99.controller.WaveController;
 import com.invaders99.controller.state.GameController;
 import com.invaders99.model.Game;
+import com.invaders99.service.LobbyHandler;
 import com.invaders99.util.Assets;
 import com.invaders99.view.GameHud;
 import com.invaders99.view.GameRenderer;
@@ -17,6 +20,7 @@ import com.invaders99.view.GameStateManager;
 
 public class GameState extends State {
     private final MainController main;
+    private final LobbyHandler lobbyHandler;
     private InputMultiplexer inputMux;
 
     private ExtendViewport viewport;
@@ -24,10 +28,17 @@ public class GameState extends State {
     private GameRenderer renderer;
     private GameController controller;
     private GameHud hud;
+    private Timer.Task heartbeatTask;
+    private Timer.Task lobbyCheckTask;
 
     public GameState(GameStateManager gsm, MainController main) {
+        this(gsm, main, null);
+    }
+
+    public GameState(GameStateManager gsm, MainController main, LobbyHandler lobbyHandler) {
         super(gsm);
         this.main = main;
+        this.lobbyHandler = lobbyHandler;
     }
 
     @Override
@@ -41,7 +52,7 @@ public class GameState extends State {
             hud = new GameHud(
                 model,
                 open -> model.menuOpen = open,
-                () -> gsm.set(new MenuState(gsm, main)),
+                () -> exitGame(),
                 () -> gsm.push(new PauseState(gsm, this))
             );
 
@@ -50,6 +61,53 @@ public class GameState extends State {
             inputMux.addProcessor(controller);
         }
         Gdx.input.setInputProcessor(inputMux);
+
+        if (lobbyHandler != null) {
+            startLobbyTasks();
+        }
+    }
+
+    private void startLobbyTasks() {
+        heartbeatTask = Timer.schedule(new Timer.Task() {
+            @Override
+            public void run() {
+                lobbyHandler.sendHeartbeat();
+                lobbyHandler.updateScore(model.score);
+            }
+        }, 0, 5f);
+
+        lobbyCheckTask = Timer.schedule(new Timer.Task() {
+            @Override
+            public void run() {
+                lobbyHandler.getAndChangeLobbyStatus(new LobbyHandler.LobbyStatusCallback() {
+                    @Override
+                    public void onUpdate(JsonValue lobbyData) {
+                        if (lobbyData.getBoolean("gameEnded", false)) {
+                            triggerGameOver();
+                        }
+                    }
+                    @Override
+                    public void onFailure(String error) {}
+                });
+            }
+        }, 1f, 2f);
+    }
+
+    private void exitGame() {
+        if (lobbyHandler != null) {
+            lobbyHandler.leaveLobby(new LobbyHandler.LobbyCallback() {
+                @Override
+                public void onSuccess(String success) {
+                    gsm.set(new MenuState(gsm, main));
+                }
+                @Override
+                public void onFailure(String error) {
+                    gsm.set(new MenuState(gsm, main));
+                }
+            });
+        } else {
+            gsm.set(new MenuState(gsm, main));
+        }
     }
 
     public void renderFrozen(SpriteBatch batch, float delta) {
@@ -66,9 +124,18 @@ public class GameState extends State {
         controller.update(dt);
 
         if (model.isGameOver()) {
-            gsm.set(new GameOverState(gsm, main, model.score));
-            return;
+            triggerGameOver();
         }
+    }
+
+    private void triggerGameOver() {
+        stopLobbyTasks();
+        gsm.set(new GameOverState(gsm, main, model.score, lobbyHandler));
+    }
+
+    private void stopLobbyTasks() {
+        if (heartbeatTask != null) heartbeatTask.cancel();
+        if (lobbyCheckTask != null) lobbyCheckTask.cancel();
     }
 
     @Override
@@ -88,7 +155,9 @@ public class GameState extends State {
         hud.resize(width, height);
     }
 
+    @Override
     public void dispose() {
+        stopLobbyTasks();
         if (renderer != null) renderer.dispose();
         if (hud != null) hud.dispose();
     }

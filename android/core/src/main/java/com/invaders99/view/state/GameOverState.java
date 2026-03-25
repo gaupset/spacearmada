@@ -10,10 +10,13 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.utils.JsonValue;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.invaders99.controller.MainController;
+import com.invaders99.service.LobbyHandler;
 import com.invaders99.service.ScoreService;
 import com.invaders99.ui.SpaceButton;
 import com.invaders99.util.Assets;
@@ -27,15 +30,21 @@ public class GameOverState extends State {
 
     private final MainController main;
     private final int finalScore;
+    private final LobbyHandler lobbyHandler;
     private Stage stage;
     private boolean isNewHighScore;
+    private Table scoresTable;
 
-    public GameOverState(GameStateManager gsm, MainController main, int finalScore) {
+    public GameOverState(GameStateManager gsm, MainController main, int finalScore, LobbyHandler lobbyHandler) {
         super(gsm);
         this.main = main;
         this.finalScore = finalScore;
-        // Persist high score on device
+        this.lobbyHandler = lobbyHandler;
         this.isNewHighScore = ScoreService.getInstance().updateHighScore(finalScore);
+
+        if (lobbyHandler != null && lobbyHandler.getLobbyID() != null) {
+            lobbyHandler.setPlayerGameOver(finalScore);
+        }
     }
 
     @Override
@@ -43,11 +52,57 @@ public class GameOverState extends State {
         stage = new Stage(new ExtendViewport(VIEWPORT_MIN_WIDTH, VIEWPORT_MIN_HEIGHT));
         Gdx.input.setInputProcessor(stage);
         buildLayout();
+
+        if (lobbyHandler != null && lobbyHandler.getLobbyID() != null) {
+            startLobbyStatusPolling();
+        }
+    }
+
+    private void startLobbyStatusPolling() {
+        Timer.schedule(new Timer.Task() {
+            @Override
+            public void run() {
+                if (lobbyHandler != null && lobbyHandler.getLobbyID() != null) {
+                    lobbyHandler.getAndChangeLobbyStatus(new LobbyHandler.LobbyStatusCallback() {
+                        @Override
+                        public void onUpdate(JsonValue lobbyData) {
+                            updateScoresTable(lobbyData);
+                        }
+                        @Override
+                        public void onFailure(String error) {}
+                    });
+                } else {
+                    this.cancel();
+                }
+            }
+        }, 0, 2f);
+    }
+
+    private void updateScoresTable(JsonValue lobbyData) {
+        if (scoresTable == null) return;
+        scoresTable.clearChildren();
+
+        JsonValue players = lobbyData.get("players");
+        if (players == null) return;
+
+        Assets assets = main.getAssets();
+        Label.LabelStyle style = new Label.LabelStyle(assets.getDefaultFont(), Color.WHITE);
+
+        for (JsonValue p : players) {
+            String name = p.getString("actualName", "Unknown");
+            int score = p.getInt("score", 0);
+            boolean isGameOver = p.getBoolean("gameOver", false);
+            boolean left = p.getBoolean("leftLobby", false);
+
+            String statusText = left ? "[LEFT]" : (isGameOver ? "[DONE]" : "[PLAYING...]");
+            Label pLabel = new Label(name + ": " + score + " " + statusText, style);
+            pLabel.setFontScale(0.6f);
+            scoresTable.add(pLabel).row();
+        }
     }
 
     private void buildLayout() {
         Assets assets = main.getAssets();
-
         Image bg = new Image(new TextureRegionDrawable(assets.getStarsBackground()));
         bg.setScaling(Scaling.fill);
         bg.setFillParent(true);
@@ -67,33 +122,34 @@ public class GameOverState extends State {
             root.add(newHigh).padBottom(10f).row();
         }
 
-        Label scoreLabel = new Label("SCORE: " + finalScore, new Label.LabelStyle(assets.getDefaultFont(), Color.WHITE));
+        Label scoreLabel = new Label("YOUR SCORE: " + finalScore, new Label.LabelStyle(assets.getDefaultFont(), Color.WHITE));
         scoreLabel.setFontScale(1.0f);
         root.add(scoreLabel).padBottom(20f).row();
 
-        Label highLabel = new Label("BEST: " + ScoreService.getInstance().getHighScore(),
-                new Label.LabelStyle(assets.getDefaultFont(), Color.LIGHT_GRAY));
-        highLabel.setFontScale(0.7f);
-        root.add(highLabel).padBottom(60f).row();
-
-        SpaceButton playAgain = new SpaceButton("PLAY AGAIN");
-        playAgain.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                gsm.set(new GameState(gsm, main));
-            }
-        });
-        root.add(playAgain)
-            .width(Theme.BUTTON_WIDTH)
-            .height(Theme.BUTTON_HEIGHT)
-            .padBottom(BUTTON_SPACING)
-            .row();
+        // Multi-player Scores
+        if (lobbyHandler != null && lobbyHandler.getLobbyID() != null) {
+            scoresTable = new Table();
+            root.add(scoresTable).padBottom(20f).row();
+        }
 
         SpaceButton home = new SpaceButton("HOME");
         home.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                gsm.set(new MenuState(gsm, main));
+                if (lobbyHandler != null) {
+                    lobbyHandler.leaveLobby(new LobbyHandler.LobbyCallback() {
+                        @Override
+                        public void onSuccess(String success) {
+                            gsm.set(new MenuState(gsm, main));
+                        }
+                        @Override
+                        public void onFailure(String error) {
+                            gsm.set(new MenuState(gsm, main));
+                        }
+                    });
+                } else {
+                    gsm.set(new MenuState(gsm, main));
+                }
             }
         });
         root.add(home)
@@ -108,6 +164,9 @@ public class GameOverState extends State {
     @Override
     public void update(float dt) {
         stage.act(dt);
+        if (lobbyHandler != null) {
+            lobbyHandler.sendHeartbeat();
+        }
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.invaders99.controller;
 
-import com.badlogic.gdx.utils.JsonValue;
 import com.invaders99.service.LobbyHandler;
 
 public class FirebaseController {
@@ -24,11 +23,11 @@ public class FirebaseController {
     }
 
     public void leaveLobby(boolean isHost, LobbyHandler.LobbyCallback callback) {
-        lobbyHandler.leaveLobby(isHost, callback);
+        lobbyHandler.leaveLobby(callback);
     }
 
     public void getLobbyStatus(LobbyHandler.LobbyStatusCallback callback) {
-        lobbyHandler.getLobbyStatus(callback);
+        lobbyHandler.getAndChangeLobbyStatus(callback);
     }
 
     public void startGame(LobbyHandler.LobbyCallback callback) {

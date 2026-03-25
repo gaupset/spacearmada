@@ -1,13 +1,75 @@
 {
   "rules": {
-    ".read": true,".write": true,
+    ".read": false,
+    ".write": false,
+
     "lobbies": {
       "$lobbyId": {
-        ".write": "!data.exists() || data.child('gamestarted').val() == false",
+        ".read": "auth != null && root.child('lobbies').child($lobbyId).child('players').child(auth.uid).exists()",
+
+        ".write": false,
+
+        "gameStarted": {
+          ".write": "auth != null && root.child('lobbies').child($lobbyId).child('players').child(auth.uid).exists()",
+          ".validate": "newData.isBoolean()"
+        },
+
+        "gameEnded": {
+          ".write": "false",
+          ".validate": "newData.isBoolean()"
+        },
+
+        "lobbyCreatedAt": {
+          ".write": "!data.exists() && auth != null",
+          ".validate": "newData.isNumber()"
+        },
+
+        "gameEndedAt": {
+          ".write": "false",
+          ".validate": "newData.val() == null || newData.isNumber()"
+        },
+
         "players": {
-          "$playerId": {
-            ".write": "!data.exists()"
+          ".indexOn": ["lastTimeOnline", "online", "inGameOverScreen", "eliminated", "leftLobby"],
+
+          "$sessionPlayerId": {
+            ".read": "auth != null && root.child('lobbies').child($lobbyId).child('players').child(auth.uid).exists()",
+
+            ".write": "auth != null && $sessionPlayerId === auth.uid",
+
+            "online": {
+              ".validate": "newData.isBoolean()"
+            },
+            "inGameOverScreen": {
+              ".validate": "newData.isBoolean()"
+            },
+            "eliminated": {
+              ".validate": "newData.isBoolean()"
+            },
+            "leftLobby": {
+              ".validate": "newData.isBoolean()"
+            },
+            "leftAt": {
+              ".validate": "newData.val() == null || newData.isNumber()"
+            },
+            "lastTimeOnline": {
+              ".validate": "newData.isNumber()"
+            },
+            "score": {
+              ".validate": "newData.isNumber() && newData.val() >= 0"
+            },
+            "actualName": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32"
+            },
+
+            "$other": {
+              ".validate": false
+            }
           }
+        },
+
+        "$other": {
+          ".validate": false
         }
       }
     },
@@ -18,3 +80,4 @@
     }
   }
 }
+
