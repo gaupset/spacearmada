@@ -218,7 +218,7 @@ public class LobbyState extends State {
                 if (lobbyData.has("players")) {
                     playerCountLabel.setText("Players: " + lobbyData.get("players").size);
                 }
-                if (lobbyData.getBoolean("gamestarted", false)) {
+                if (lobbyData.getBoolean("gameStarted", false)) {
                     gsm.set(new GameState(gsm, main));
                 }
             }

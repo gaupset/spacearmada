@@ -108,7 +108,7 @@ public class LobbyHandler {
                         @Override
                         public void onSuccess(String response) {
                             lobbyID = lobbyId;
-                            sendHeartbeat();
+                                sendHeartbeat();
                             callback.onSuccess(response);
                         }
                         @Override
