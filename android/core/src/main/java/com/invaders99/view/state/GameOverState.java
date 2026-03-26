@@ -30,21 +30,53 @@ public class GameOverState extends State {
 
     private final MainController main;
     private final int finalScore;
-    private final LobbyHandler lobbyHandler;
+    private LobbyHandler lobbyHandler;
     private Stage stage;
     private boolean isNewHighScore;
     private Table scoresTable;
+    private boolean inLobby = false;
+    private Timer.Task heartbeatTask;
+    private Timer.Task lobbyCheckTask;
 
     public GameOverState(GameStateManager gsm, MainController main, int finalScore, LobbyHandler lobbyHandler) {
         super(gsm);
         this.main = main;
         this.finalScore = finalScore;
         this.lobbyHandler = lobbyHandler;
+        inLobby = true;
         this.isNewHighScore = ScoreService.getInstance().updateHighScore(finalScore);
+    }
 
-        if (lobbyHandler != null && lobbyHandler.getLobbyID() != null) {
-            lobbyHandler.setPlayerGameOver(finalScore);
-        }
+    private void startLobbyTasks() {
+        heartbeatTask = Timer.schedule(new Timer.Task() {
+            @Override
+            public void run() {
+                lobbyHandler.sendHeartbeat();
+            }
+        }, 0, 5f);
+
+        lobbyCheckTask = Timer.schedule(new Timer.Task() {
+            @Override
+            public void run() {
+                lobbyHandler.getLobbyStatus(new LobbyHandler.LobbyStatusCallback() {
+                    @Override
+                    public void onUpdate(JsonValue lobbyData) {
+                        if (lobbyData.getBoolean("gameEnded", false)) {
+                            // deleteLobby();
+                        }
+                    }
+                    @Override
+                    public void onFailure(String error) {}
+                });
+            }
+        }, 0.5f, 1f);
+    }
+
+    public GameOverState(GameStateManager gsm, MainController main, int finalScore) {
+        super(gsm);
+        this.main = main;
+        this.finalScore = finalScore;
+        this.isNewHighScore = ScoreService.getInstance().updateHighScore(finalScore);
     }
 
     @Override
@@ -53,9 +85,9 @@ public class GameOverState extends State {
         Gdx.input.setInputProcessor(stage);
         buildLayout();
 
-        if (lobbyHandler != null && lobbyHandler.getLobbyID() != null) {
-            startLobbyStatusPolling();
-        }
+//        if (lobbyHandler != null && lobbyHandler.getLobbyID() != null) {
+//            startLobbyStatusPolling();
+//        }
     }
 
     private void startLobbyStatusPolling() {
@@ -63,7 +95,7 @@ public class GameOverState extends State {
             @Override
             public void run() {
                 if (lobbyHandler != null && lobbyHandler.getLobbyID() != null) {
-                    lobbyHandler.getAndChangeLobbyStatus(new LobbyHandler.LobbyStatusCallback() {
+                    lobbyHandler.getLobbyStatus(new LobbyHandler.LobbyStatusCallback() {
                         @Override
                         public void onUpdate(JsonValue lobbyData) {
                             updateScoresTable(lobbyData);
@@ -164,9 +196,6 @@ public class GameOverState extends State {
     @Override
     public void update(float dt) {
         stage.act(dt);
-        if (lobbyHandler != null) {
-            lobbyHandler.sendHeartbeat();
-        }
     }
 
     @Override

@@ -176,7 +176,7 @@ public class LobbyState extends State {
                     firebaseController.startGame(new LobbyHandler.LobbyCallback() {
                         @Override
                         public void onSuccess(String response) {
-                            gsm.set(new GameState(gsm, main));
+                            gsm.set(new GameState(gsm, main, firebaseController));
                         }
                         @Override
                         public void onFailure(String error) {
@@ -197,6 +197,7 @@ public class LobbyState extends State {
                 firebaseController.leaveLobby(isHost, new LobbyHandler.LobbyCallback() {
                     @Override
                     public void onSuccess(String success) {
+                        inLobby = false;
                         showMainOptions();
                     }
 
@@ -215,11 +216,14 @@ public class LobbyState extends State {
         firebaseController.getLobbyStatus(new LobbyHandler.LobbyStatusCallback() {
             @Override
             public void onUpdate(JsonValue lobbyData) {
-                if (lobbyData.has("players")) {
-                    playerCountLabel.setText("Players: " + lobbyData.get("players").size);
-                }
-                if (lobbyData.getBoolean("gameStarted", false)) {
-                    gsm.set(new GameState(gsm, main));
+                if (inLobby) {
+                    if (lobbyData.has("players")) {
+                        playerCountLabel.setText("Players: " + lobbyData.get("players").size);
+                    }
+                    if (lobbyData.getBoolean("gameStarted", false)) {
+                        inLobby = false;
+                        gsm.set(new GameState(gsm, main, firebaseController));
+                    }
                 }
             }
 
@@ -237,6 +241,7 @@ public class LobbyState extends State {
             updateTimer += dt;
             if (updateTimer >= UPDATE_INTERVAL) {
                 updateTimer = 0;
+                firebaseController.lobbyHandler().sendHeartbeat();
                 updateLobbyStatus();
             }
         }
