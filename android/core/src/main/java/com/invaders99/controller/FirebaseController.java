@@ -42,6 +42,6 @@ public class FirebaseController {
     }
 
     public void checkLobbyState(JsonValue lobbyData){
-        lobbyHandler.evaluateLobby(lobbyData);
+        // lobbyHandler.evaluateLobby(lobbyData);
     }
 }

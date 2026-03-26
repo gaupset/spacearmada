@@ -69,6 +69,11 @@ public class GameState extends State {
         }
         Gdx.input.setInputProcessor(inputMux);
     }
+
+    public LobbyHandler getLobbyHandler() {
+        return lobbyHandler;
+    }
+
     private void exitGame() {
         if (inLobby) {
             // leaveLobby triggers checkLobbyState() in case of success

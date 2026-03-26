@@ -1,8 +1,11 @@
 package com.invaders99.service;
 
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Json;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
 import com.invaders99.model.LobbyPlayer;
+import com.invaders99.model.Sabotage;
 import com.invaders99.util.FirebaseJson;
 
 import java.util.Random;
@@ -72,7 +75,6 @@ public class LobbyHandler {
         String lobbyJson = "{" +
                 "\"gameStarted\": false," +
                 "\"gameEnded\": false," +
-                "\"lobbyCreatedAt\": " + SERVER_TIMESTAMP + "," +
                 "\"players\": {\"" + sessionPlayerID + "\": " + lpJson + "}" +
                 "}";
 
@@ -170,127 +172,10 @@ public class LobbyHandler {
             @Override
             public void onSuccess(String response) {
                 System.out.println("SetPlayerGameOver: checkLobbyState call");
-                checkLobbyState();
+                // checkLobbyState(); done by server side
             }
             @Override
             public void onFailure(String error) {}
-        });
-    }
-
-    public void checkLobbyState() {
-        if (lobbyID == null) return;
-        getLobbyStatus(new LobbyStatusCallback() {
-            @Override
-            public void onUpdate(JsonValue lobbyData) {
-                evaluateLobby(lobbyData);
-            }
-            @Override
-            public void onFailure(String error) {}
-        });
-    }
-
-    public void evaluateLobby(JsonValue lobbyData) {
-        System.out.println("evaluateLobby");
-
-        JsonValue players = lobbyData.get("players");
-        if (players == null) return;
-
-        long now = FirebaseService.getInstance().getServerTime();
-        boolean gameStarted = lobbyData.getBoolean("gameStarted", false);
-        boolean gameEnded = lobbyData.getBoolean("gameEnded", false);
-        long lobbyCreatedAt = lobbyData.getLong("lobbyCreatedAt", 0);
-
-        // in lobby phase do nothing
-
-        // in gamePhase
-        if (!gameEnded && gameStarted) {
-            if (shouldGameEnd(players, now)){
-                endGame();
-            };
-        }
-
-        // evaluate whether lobby can be deleted
-        if (gameStarted && gameEnded) {
-            if (shouldLobbyBeDeleted(players, now)) {
-                deleteLobby();
-            }
-        }
-    }
-
-    private boolean shouldLobbyBeDeleted(JsonValue players, long now) {
-        int activeCount = 0;
-        System.out.println("shouldLobbyBeDeleted");
-
-
-        for (JsonValue p : players) {
-            System.out.println("player: " + p);
-            boolean leftLobby = p.getBoolean("leftLobby", false);
-            long lastOnline = p.getLong("lastTimeOnline", 0);
-
-            boolean offline = lastOnline > 0 && (now - lastOnline >= TIMEOUT_MS);
-            boolean active = !leftLobby && !offline;
-
-            if (active) {
-                activeCount++;
-            }
-        }
-
-        if (activeCount < 1) {
-            System.out.println("evaluateLobby: LobbyshouldBeDeleted, activeCount=" + activeCount);
-            return true;
-        }
-        return false;
-    }
-
-    private boolean shouldGameEnd(JsonValue players, long now) {
-        int activeCount = 0;
-
-        for (JsonValue p : players) {
-            boolean isGameOver = p.getBoolean("gameOver", false);
-            boolean leftLobby = p.getBoolean("leftLobby", false);
-            long lastOnline = p.getLong("lastTimeOnline", 0);
-
-            boolean offline = lastOnline > 0 && (now - lastOnline >= TIMEOUT_MS);
-            boolean active = !isGameOver && !leftLobby && !offline;
-
-            if (active) {
-                activeCount++;
-            }
-        }
-
-        if (activeCount <= 1) {
-            System.out.println("shouldGameEnd: true: game should end, activeCount=" + activeCount);
-            return true;
-        }
-        return false;
-    }
-
-
-    private void endGame() {
-        // sets gameEnded to true
-        if (lobbyID == null) return;
-        String body = "{\"gameEnded\": true, \"gameEndedAt\": " + SERVER_TIMESTAMP + "}";
-        FirebaseService.getInstance().patchDbData("lobbies/" + lobbyID, body, new FirebaseService.FirebaseCallback() {
-            @Override
-            public void onSuccess(String response) {}
-            @Override
-            public void onFailure(String error) {}
-        });
-    }
-
-    private void deleteLobby() {
-        if (lobbyID == null) return;
-        final String targetId = lobbyID;
-        FirebaseService.getInstance().deleteDbData("lobbies/" + targetId, new FirebaseService.FirebaseCallback() {
-            @Override
-            public void onSuccess(String response) {
-                System.out.println("Lobby deleted");
-                if (targetId.equals(lobbyID)) lobbyID = null;
-            }
-            @Override
-            public void onFailure(String error) {
-                System.out.println("Lobby not deleted: Error");
-            }
         });
     }
 
@@ -300,12 +185,12 @@ public class LobbyHandler {
             return;
         }
 
-        String body = "{\"leftLobby\": true, \"gameOver\": true, \"leftAt\": " + SERVER_TIMESTAMP + ", \"inGameOverScreen\": false}";
+        String body = "{\"leftLobby\": true, \"gameOver\": true, \"inGameOverScreen\": false}";
         FirebaseService.getInstance().patchDbData("lobbies/" + lobbyID + "/players/" + sessionPlayerID, body, new FirebaseService.FirebaseCallback() {
             @Override
             public void onSuccess(String response) {
 
-                checkLobbyState();
+                // checkLobbyState(); done on server side
                 lobbyID = null;
                 sessionPlayerID = null;
                 if (callback != null) callback.onSuccess("Left");
@@ -332,6 +217,65 @@ public class LobbyHandler {
         });
     }
 
+    public void setSabotage(Sabotage sabotage){
+        // puts the sabotage to the next players.
+        getLobbyStatus(new LobbyStatusCallback() {
+            @Override
+            public void onUpdate(JsonValue response) {
+                String otherPlayer = findNextPlayer(response);
+                writeSabotage(sabotage, otherPlayer);
+            }
+            @Override
+            public void onFailure(String error) {}
+        });
+    }
+
+    private void writeSabotage(Sabotage sabotage, String otherPlayerID) {
+        System.out.println("writeSabotage");
+        String path = "lobbies/" + lobbyID + "/players/" + otherPlayerID + "/sabotage";
+        Json json = new Json();
+        String sabotageJson = json.toJson(sabotage);
+        FirebaseService.getInstance().putDbData(path, sabotageJson, new FirebaseService.FirebaseCallback() {
+            @Override
+            public void onSuccess(String response) {
+                System.out.println("Firebase success: " + response);
+
+            }
+            @Override
+            public void onFailure(String error) {
+                System.out.println("Firebase failure: " + error);
+            }
+        });
+        }
+
+    private String findNextPlayer(JsonValue playerData) {
+        JsonValue players = playerData.get("players");
+        if (players == null) return "";
+
+        // 1. Collect keys
+        Array<String> ids = new Array<>();
+        for (JsonValue child = players.child; child != null; child = child.next) {
+            ids.add(child.name); // key = playerId
+        }
+
+        // 2. Sort alphabetically
+        ids.sort();
+
+        // 3. Find current index
+        int index = ids.indexOf(sessionPlayerID, false);
+        if (index == -1) return "";
+
+        // 4. Get next (wrap around optional)
+        int nextIndex = (index + 1) % ids.size;
+
+        return ids.get(nextIndex);
+    }
+
+
+    public void getAndDelOwnSabotage(final LobbyCallback callback){
+
+    }
+
     public void getLobbyStatus(final LobbyStatusCallback callback) {
         if (lobbyID == null) return;
         FirebaseService.getInstance().getDbData("lobbies/" + lobbyID, new FirebaseService.FirebaseCallback() {
@@ -354,4 +298,123 @@ public class LobbyHandler {
         this.playerID = id;
     }
     public String getLobbyID() { return lobbyID; }
+
+
+
+    //    public void checkLobbyState() {
+//        if (lobbyID == null) return;
+//        getLobbyStatus(new LobbyStatusCallback() {
+//            @Override
+//            public void onUpdate(JsonValue lobbyData) {
+//                evaluateLobby(lobbyData);
+//            }
+//            @Override
+//            public void onFailure(String error) {}
+//        });
+//    }
+//
+//    public void evaluateLobby(JsonValue lobbyData) {
+//        System.out.println("evaluateLobby");
+//
+//        JsonValue players = lobbyData.get("players");
+//        if (players == null) return;
+//
+//        long now = FirebaseService.getInstance().getServerTime();
+//        boolean gameStarted = lobbyData.getBoolean("gameStarted", false);
+//        boolean gameEnded = lobbyData.getBoolean("gameEnded", false);
+//        long lobbyCreatedAt = lobbyData.getLong("lobbyCreatedAt", 0);
+//
+//        // in lobby phase do nothing
+//
+//        // in gamePhase
+//        if (!gameEnded && gameStarted) {
+//            if (shouldGameEnd(players, now)){
+//                endGame();
+//            };
+//        }
+//
+//        // evaluate whether lobby can be deleted
+//        if (gameStarted && gameEnded) {
+//            if (shouldLobbyBeDeleted(players, now)) {
+//                deleteLobby();
+//            }
+//        }
+//    }
+
+//    private boolean shouldLobbyBeDeleted(JsonValue players, long now) {
+//        int activeCount = 0;
+//        System.out.println("shouldLobbyBeDeleted");
+//
+//
+//        for (JsonValue p : players) {
+//            System.out.println("player: " + p);
+//            boolean leftLobby = p.getBoolean("leftLobby", false);
+//            long lastOnline = p.getLong("lastTimeOnline", 0);
+//
+//            boolean offline = lastOnline > 0 && (now - lastOnline >= TIMEOUT_MS);
+//            boolean active = !leftLobby && !offline;
+//
+//            if (active) {
+//                activeCount++;
+//            }
+//        }
+//
+//        if (activeCount < 1) {
+//            System.out.println("evaluateLobby: LobbyshouldBeDeleted, activeCount=" + activeCount);
+//            return true;
+//        }
+//        return false;
+//    }
+//
+//    private boolean shouldGameEnd(JsonValue players, long now) {
+//        int activeCount = 0;
+//
+//        for (JsonValue p : players) {
+//            boolean isGameOver = p.getBoolean("gameOver", false);
+//            boolean leftLobby = p.getBoolean("leftLobby", false);
+//            long lastOnline = p.getLong("lastTimeOnline", 0);
+//
+//            boolean offline = lastOnline > 0 && (now - lastOnline >= TIMEOUT_MS);
+//            boolean active = !isGameOver && !leftLobby && !offline;
+//
+//            if (active) {
+//                activeCount++;
+//            }
+//        }
+//
+//        if (activeCount <= 1) {
+//            System.out.println("shouldGameEnd: true: game should end, activeCount=" + activeCount);
+//            return true;
+//        }
+//        return false;
+//    }
+
+
+//    private void endGame() {
+//        // sets gameEnded to true
+//        if (lobbyID == null) return;
+//        String body = "{\"gameEnded\": true, \"gameEndedAt\": " + SERVER_TIMESTAMP + "}";
+//        FirebaseService.getInstance().patchDbData("lobbies/" + lobbyID, body, new FirebaseService.FirebaseCallback() {
+//            @Override
+//            public void onSuccess(String response) {}
+//            @Override
+//            public void onFailure(String error) {}
+//        });
+//    }
+//
+//    private void deleteLobby() {
+//        if (lobbyID == null) return;
+//        final String targetId = lobbyID;
+//        FirebaseService.getInstance().deleteDbData("lobbies/" + targetId, new FirebaseService.FirebaseCallback() {
+//            @Override
+//            public void onSuccess(String response) {
+//                System.out.println("Lobby deleted");
+//                if (targetId.equals(lobbyID)) lobbyID = null;
+//            }
+//            @Override
+//            public void onFailure(String error) {
+//                System.out.println("Lobby not deleted: Error");
+//            }
+//        });
+//    }
 }

@@ -24,7 +24,7 @@ import com.invaders99.util.Assets;
 import com.invaders99.util.Theme;
 import com.invaders99.view.GameStateManager;
 
-public class LobbyState extends State {
+public class WaitingRoomState extends State {
     private final MainController main;
     private final FirebaseController firebaseController;
     private Stage stage;
@@ -35,7 +35,7 @@ public class LobbyState extends State {
     private boolean inLobby = false;
     private boolean isHost = false;
 
-    public LobbyState(GameStateManager gsm, MainController main) {
+    public WaitingRoomState(GameStateManager gsm, MainController main) {
         super(gsm);
         this.main = main;
         this.firebaseController = new FirebaseController();

@@ -8,6 +8,7 @@ public class LobbyPlayer {
     public Object lastTimeOnline;
     public int personalHighScore;
     public int score;
+    public Sabotage sabotage;
 
     public LobbyPlayer() {}
 }

@@ -51,31 +51,6 @@ public class GameOverState extends State {
         this.isNewHighScore = ScoreService.getInstance().updateHighScore(finalScore);
     }
 
-    private void startLobbyTasks() {
-        heartbeatTask = Timer.schedule(new Timer.Task() {
-            @Override
-            public void run() {
-                lobbyHandler.sendHeartbeat();
-            }
-        }, 0, 5f);
-
-        lobbyCheckTask = Timer.schedule(new Timer.Task() {
-            @Override
-            public void run() {
-                lobbyHandler.getLobbyStatus(new LobbyHandler.LobbyStatusCallback() {
-                    @Override
-                    public void onUpdate(JsonValue lobbyData) {
-                        if (lobbyData.getBoolean("gameEnded", false)) {
-                            // deleteLobby();
-                        }
-                    }
-                    @Override
-                    public void onFailure(String error) {}
-                });
-            }
-        }, 0.5f, 1f);
-    }
-
     public GameOverState(GameStateManager gsm, MainController main, int finalScore) {
         super(gsm);
         this.main = main;

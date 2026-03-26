@@ -62,11 +62,19 @@
               ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32"
             },
 
+            "sabotage": {
+              ".write": "auth != null && root.child('lobbies').child($lobbyId).child('players').child(auth.uid).exists()",
+              ".validate": "newData.hasChildren(['type', 'duration']) &&
+                            newData.child('type').isString() &&
+                            newData.child('duration').isNumber()"
+            },
             "$other": {
               ".validate": false
             }
           }
         },
+
+
 
         "$other": {
           ".validate": false
