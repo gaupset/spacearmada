@@ -1,89 +1,173 @@
 {
-  "rules": {
-    ".read": false,
-    ".write": false,
 
-    "lobbies": {
-      "$lobbyId": {
-        ".read": "auth != null && root.child('lobbies').child($lobbyId).child('players').child(auth.uid).exists()",
+"rules": {
 
-        ".write": false,
+".read": false,
 
-        "gameStarted": {
-          ".write": "auth != null && root.child('lobbies').child($lobbyId).child('players').child(auth.uid).exists()",
-          ".validate": "newData.isBoolean()"
-        },
+".write": false,
 
-        "gameEnded": {
-          ".write": "false",
-          ".validate": "newData.isBoolean()"
-        },
+  
 
-        "lobbyCreatedAt": {
-          ".write": "!data.exists() && auth != null",
-          ".validate": "newData.isNumber()"
-        },
+"lobbies": {
 
-        "gameEndedAt": {
-          ".write": "false",
-          ".validate": "newData.val() == null || newData.isNumber()"
-        },
+"$lobbyId": {
 
-        "players": {
-          ".indexOn": ["lastTimeOnline", "online", "inGameOverScreen", "eliminated", "leftLobby"],
+".read": "auth != null && root.child('lobbies').child($lobbyId).child('players').child(auth.uid).exists()",
 
-          "$sessionPlayerId": {
-            ".read": "auth != null && root.child('lobbies').child($lobbyId).child('players').child(auth.uid).exists()",
+  
 
-            ".write": "auth != null && $sessionPlayerId === auth.uid",
+".write": false,
 
-            "online": {
-              ".validate": "newData.isBoolean()"
-            },
-            "inGameOverScreen": {
-              ".validate": "newData.isBoolean()"
-            },
-            "eliminated": {
-              ".validate": "newData.isBoolean()"
-            },
-            "leftLobby": {
-              ".validate": "newData.isBoolean()"
-            },
-            "leftAt": {
-              ".validate": "newData.val() == null || newData.isNumber()"
-            },
-            "lastTimeOnline": {
-              ".validate": "newData.isNumber()"
-            },
-            "score": {
-              ".validate": "newData.isNumber() && newData.val() >= 0"
-            },
-            "actualName": {
-              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32"
-            },
+  
 
-            "sabotage": {
-              ".write": "auth != null && root.child('lobbies').child($lobbyId).child('players').child(auth.uid).exists()",
-              ".validate": "newData.hasChildren(['type', 'duration']) && newData.child('type').isString() && newData.child('duration').isNumber()"
-            },
-            "$other": {
-              ".validate": false
-            }
-          }
-        },
+"gameStarted": {
 
+".write": "auth != null && root.child('lobbies').child($lobbyId).child('players').child(auth.uid).exists()",
 
+".validate": "newData.isBoolean()"
 
-        "$other": {
-          ".validate": false
-        }
-      }
-    },
-    "players": {
-      "$playerId": {
-        ".write": "!data.exists() || (data.exists() && auth != null)"
-      }
-    }
-  }
+},
+
+  
+
+"gameEnded": {
+
+".write": "false",
+
+".validate": "newData.isBoolean()"
+
+},
+
+  
+
+"lobbyCreatedAt": {
+
+".write": "!data.exists() && auth != null",
+
+".validate": "newData.isNumber()"
+
+},
+
+  
+
+"gameEndedAt": {
+
+".write": "false",
+
+".validate": "newData.val() == null || newData.isNumber()"
+
+},
+
+  
+
+"players": {
+
+".indexOn": ["lastTimeOnline", "online", "inGameOverScreen", "eliminated", "leftLobby"],
+
+  
+
+"$sessionPlayerId": {
+
+".read": "auth != null && root.child('lobbies').child($lobbyId).child('players').child(auth.uid).exists()",
+
+  
+
+".write": "auth != null && $sessionPlayerId === auth.uid",
+
+  
+
+"online": {
+
+".validate": "newData.isBoolean()"
+
+},
+
+"inGameOverScreen": {
+
+".validate": "newData.isBoolean()"
+
+},
+
+"eliminated": {
+
+".validate": "newData.isBoolean()"
+
+},
+
+"leftLobby": {
+
+".validate": "newData.isBoolean()"
+
+},
+
+"leftAt": {
+
+".validate": "newData.val() == null || newData.isNumber()"
+
+},
+
+"lastTimeOnline": {
+
+".validate": "newData.isNumber()"
+
+},
+
+"score": {
+
+".validate": "newData.isNumber() && newData.val() >= 0"
+
+},
+
+"actualName": {
+
+".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32"
+
+},
+
+  
+
+"sabotage": {
+
+".write": "auth != null && root.child('lobbies').child($lobbyId).child('players').child(auth.uid).exists()",
+
+".validate": "newData.hasChildren(['type', 'duration']) && newData.child('type').isString() && newData.child('duration').isNumber()"
+
+},
+
+"$other": {
+
+".validate": false
+
 }
 
+}
+
+},
+
+  
+  
+  
+
+"$other": {
+
+".validate": false
+
+}
+
+}
+
+},
+
+"players": {
+
+"$playerId": {
+
+".write": "!data.exists() || (data.exists() && auth != null)"
+
+}
+
+}
+
+}
+
+}
