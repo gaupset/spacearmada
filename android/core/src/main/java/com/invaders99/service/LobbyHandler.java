@@ -200,7 +200,7 @@ public class LobbyHandler {
         boolean gameEnded = lobbyData.getBoolean("gameEnded", false);
         long lobbyCreatedAt = lobbyData.getLong("lobbyCreatedAt", 0);
 
-        // in lobbyphase do nothing
+        // in lobby phase do nothing
 
         // in gamePhase
         if (!gameEnded && gameStarted) {

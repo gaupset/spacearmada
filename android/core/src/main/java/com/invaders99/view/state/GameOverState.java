@@ -23,6 +23,10 @@ import com.invaders99.util.Assets;
 import com.invaders99.util.Theme;
 import com.invaders99.view.GameStateManager;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
 public class GameOverState extends State {
     private static final float VIEWPORT_MIN_WIDTH = 360f;
     private static final float VIEWPORT_MIN_HEIGHT = 640f;
@@ -85,9 +89,9 @@ public class GameOverState extends State {
         Gdx.input.setInputProcessor(stage);
         buildLayout();
 
-//        if (lobbyHandler != null && lobbyHandler.getLobbyID() != null) {
-//            startLobbyStatusPolling();
-//        }
+        if (lobbyHandler != null && lobbyHandler.getLobbyID() != null) {
+            startLobbyStatusPolling();
+        }
     }
 
     private void startLobbyStatusPolling() {
@@ -117,10 +121,22 @@ public class GameOverState extends State {
         JsonValue players = lobbyData.get("players");
         if (players == null) return;
 
+        List<JsonValue> playerList = new ArrayList<>();
+        for (JsonValue p : players) {
+            playerList.add(p);
+        }
+
+        playerList.sort(new Comparator<JsonValue>() {
+            @Override
+            public int compare(JsonValue p1, JsonValue p2) {
+                return Integer.compare(p2.getInt("score", 0), p1.getInt("score", 0));
+            }
+        });
+
         Assets assets = main.getAssets();
         Label.LabelStyle style = new Label.LabelStyle(assets.getDefaultFont(), Color.WHITE);
 
-        for (JsonValue p : players) {
+        for (JsonValue p : playerList) {
             String name = p.getString("actualName", "Unknown");
             int score = p.getInt("score", 0);
             boolean isGameOver = p.getBoolean("gameOver", false);
