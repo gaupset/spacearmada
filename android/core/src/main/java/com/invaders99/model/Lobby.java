@@ -4,8 +4,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Lobby {
-    public Map<String, Boolean> players = new HashMap<>();
-    public boolean gamestarted = false;
+    public boolean gameStarted = false;
+    public boolean gameEnded = false;
+    public Object lobbyCreatedAt;
+    public Object gameEndedAt;
+    public Map<String, LobbyPlayer> players = new HashMap<>();
 
     public Lobby() {}
 }

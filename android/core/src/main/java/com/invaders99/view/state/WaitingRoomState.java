@@ -24,7 +24,7 @@ import com.invaders99.util.Assets;
 import com.invaders99.util.Theme;
 import com.invaders99.view.GameStateManager;
 
-public class LobbyState extends State {
+public class WaitingRoomState extends State {
     private final MainController main;
     private final FirebaseController firebaseController;
     private Stage stage;
@@ -35,7 +35,7 @@ public class LobbyState extends State {
     private boolean inLobby = false;
     private boolean isHost = false;
 
-    public LobbyState(GameStateManager gsm, MainController main) {
+    public WaitingRoomState(GameStateManager gsm, MainController main) {
         super(gsm);
         this.main = main;
         this.firebaseController = new FirebaseController();
@@ -176,7 +176,7 @@ public class LobbyState extends State {
                     firebaseController.startGame(new LobbyHandler.LobbyCallback() {
                         @Override
                         public void onSuccess(String response) {
-                            gsm.set(new GameState(gsm, main));
+                            gsm.set(new GameState(gsm, main, firebaseController));
                         }
                         @Override
                         public void onFailure(String error) {
@@ -197,6 +197,7 @@ public class LobbyState extends State {
                 firebaseController.leaveLobby(isHost, new LobbyHandler.LobbyCallback() {
                     @Override
                     public void onSuccess(String success) {
+                        inLobby = false;
                         showMainOptions();
                     }
 
@@ -215,11 +216,14 @@ public class LobbyState extends State {
         firebaseController.getLobbyStatus(new LobbyHandler.LobbyStatusCallback() {
             @Override
             public void onUpdate(JsonValue lobbyData) {
-                if (lobbyData.has("players")) {
-                    playerCountLabel.setText("Players: " + lobbyData.get("players").size);
-                }
-                if (lobbyData.getBoolean("gamestarted", false)) {
-                    gsm.set(new GameState(gsm, main));
+                if (inLobby) {
+                    if (lobbyData.has("players")) {
+                        playerCountLabel.setText("Players: " + lobbyData.get("players").size);
+                    }
+                    if (lobbyData.getBoolean("gameStarted", false)) {
+                        inLobby = false;
+                        gsm.set(new GameState(gsm, main, firebaseController));
+                    }
                 }
             }
 
@@ -237,6 +241,7 @@ public class LobbyState extends State {
             updateTimer += dt;
             if (updateTimer >= UPDATE_INTERVAL) {
                 updateTimer = 0;
+                firebaseController.lobbyHandler().sendHeartbeat();
                 updateLobbyStatus();
             }
         }

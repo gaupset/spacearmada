@@ -6,6 +6,8 @@ import com.invaders99.service.LobbyHandler;
 public class FirebaseController {
     private final LobbyHandler lobbyHandler;
 
+    public LobbyHandler lobbyHandler() {return lobbyHandler;}
+
     public FirebaseController() {
         this.lobbyHandler = new LobbyHandler();
         this.lobbyHandler.setPlayerID("player_" + (System.currentTimeMillis() % 10000));
@@ -24,7 +26,7 @@ public class FirebaseController {
     }
 
     public void leaveLobby(boolean isHost, LobbyHandler.LobbyCallback callback) {
-        lobbyHandler.leaveLobby(isHost, callback);
+        lobbyHandler.leaveLobby(callback);
     }
 
     public void getLobbyStatus(LobbyHandler.LobbyStatusCallback callback) {
@@ -37,5 +39,9 @@ public class FirebaseController {
 
     public String getLobbyID() {
         return lobbyHandler.getLobbyID();
+    }
+
+    public void checkLobbyState(JsonValue lobbyData){
+        // lobbyHandler.evaluateLobby(lobbyData);
     }
 }
