@@ -64,9 +64,7 @@
 
             "sabotage": {
               ".write": "auth != null && root.child('lobbies').child($lobbyId).child('players').child(auth.uid).exists()",
-              ".validate": "newData.hasChildren(['type', 'duration']) &&
-                            newData.child('type').isString() &&
-                            newData.child('duration').isNumber()"
+              ".validate": "newData.hasChildren(['type', 'duration']) && newData.child('type').isString() && newData.child('duration').isNumber()"
             },
             "$other": {
               ".validate": false
