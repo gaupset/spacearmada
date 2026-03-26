@@ -1,14 +1,11 @@
 package com.invaders99.service;
 
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.Json;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
-import com.badlogic.gdx.utils.JsonWriter;
 import com.invaders99.model.LobbyPlayer;
 import com.invaders99.model.Sabotage;
 import com.invaders99.util.FirebaseJson;
-
 import java.util.Random;
 import java.util.UUID;
 
@@ -18,7 +15,6 @@ public class LobbyHandler {
     private String playerID;        // Persistent player ID
 
     private static final String SERVER_TIMESTAMP = "{\".sv\": \"timestamp\"}";
-    private static final long TIMEOUT_MS = 30000;
 
     public interface LobbyCallback {
         void onSuccess(String success);

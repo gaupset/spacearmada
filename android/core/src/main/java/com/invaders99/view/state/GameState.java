@@ -180,7 +180,7 @@ public class GameState extends State {
         }
     }
     private void delSabotage(){
-        // lobbyHandler.delSabotage();
+        lobbyHandler.delSabotage();
     }
 
 

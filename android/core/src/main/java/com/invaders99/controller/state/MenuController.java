@@ -1,10 +1,6 @@
 package com.invaders99.controller.state;
 
-import com.badlogic.gdx.utils.Json;
-import com.badlogic.gdx.utils.JsonWriter;
 import com.invaders99.controller.MainController;
-import com.invaders99.model.Sabotage;
-import com.invaders99.util.FirebaseJson;
 import com.invaders99.view.GameStateManager;
 import com.invaders99.view.state.GameState;
 import com.invaders99.view.state.WaitingRoomState;
