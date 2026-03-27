@@ -15,10 +15,11 @@ import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.invaders99.model.Game;
 import com.invaders99.model.Sabotage;
-import com.invaders99.service.LobbyHandler;
 import com.invaders99.ui.SpaceButton;
 import com.invaders99.ui.UiFactory;
 import com.invaders99.view.GameStateManager;
+
+import java.util.Locale;
 
 public class PauseState extends State {
     private static final float PAUSE_DURATION = 10f;
@@ -27,6 +28,7 @@ public class PauseState extends State {
     private Stage stage;
     private Texture overlayTex;
     private float pauseTimeLeft;
+    private Label timerLabel;
 
     public PauseState(GameStateManager gsm, GameState gameState) {
         super(gsm);
@@ -54,11 +56,18 @@ public class PauseState extends State {
         Table root = new Table();
         root.setFillParent(true);
         root.setBackground(new TextureRegionDrawable(overlayTex));
-        root.center();
+        root.top();
+
+        timerLabel = new Label(formatUnpauseTimer(pauseTimeLeft), skin);
+        timerLabel.setFontScale(1.2f);
+        root.add(timerLabel).padTop(28f).row();
+
+        Table center = new Table();
+        center.center();
 
         Label title = new Label("GAME PAUSED", skin);
         title.setFontScale(1.5f);
-        root.add(title).padBottom(40f).row();
+        center.add(title).padBottom(40f).row();
 
         SpaceButton unpauseButton = new SpaceButton("UNPAUSE");
         unpauseButton.addListener(new ClickListener() {
@@ -67,7 +76,7 @@ public class PauseState extends State {
                 gsm.pop();
             }
         });
-        root.add(unpauseButton).padBottom(20f).row();
+        center.add(unpauseButton).padBottom(20f).row();
 
         if (gameState.getLobbyHandler() != null) {
             SpaceButton sabotageButton = new SpaceButton("SABOTAGE");
@@ -77,15 +86,24 @@ public class PauseState extends State {
                     gameState.getLobbyHandler().setSabotage(new Sabotage());
                 }
             });
-            root.add(sabotageButton).row();
+            center.add(sabotageButton).row();
         }
 
+        root.add(center).expand().center();
+
         stage.addActor(root);
+    }
+
+    private static String formatUnpauseTimer(float seconds) {
+        return String.format(Locale.US, "Unpause timer: %.1fs", Math.max(0f, seconds));
     }
 
     @Override
     public void update(float dt) {
         pauseTimeLeft -= dt;
+        if (timerLabel != null) {
+            timerLabel.setText(formatUnpauseTimer(pauseTimeLeft));
+        }
         if (pauseTimeLeft <= 0f) {
             gsm.pop();
             return;

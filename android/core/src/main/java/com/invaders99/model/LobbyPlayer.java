@@ -9,6 +9,8 @@ public class LobbyPlayer {
     public int personalHighScore;
     public int score;
     public Sabotage sabotage;
+    /** Session id of the player to receive this player's sabotages; set when the match starts. */
+    public String sabotageTargetId;
 
     public LobbyPlayer() {}
 }

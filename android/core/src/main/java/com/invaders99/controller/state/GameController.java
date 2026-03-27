@@ -35,6 +35,7 @@ public class GameController extends InputAdapter {
     public void update(float delta) {
         if (model.isGameOver()) return;
 
+        model.updateSabotageTimers(delta);
         updateInvincibility(delta);
         autoShoot(delta);
         waveController.update(delta, model);
@@ -54,9 +55,10 @@ public class GameController extends InputAdapter {
     }
 
     private void autoShoot(float delta) {
+        float interval = SHOOT_INTERVAL * model.getPlayerShootIntervalMultiplier();
         shootTimer += delta;
-        if (shootTimer >= SHOOT_INTERVAL) {
-            shootTimer -= SHOOT_INTERVAL;
+        if (shootTimer >= interval) {
+            shootTimer -= interval;
             model.bullets.add(new Bullet(model.player.x, model.player.y + Player.HEIGHT / 2f));
         }
     }
@@ -65,14 +67,16 @@ public class GameController extends InputAdapter {
         for (Bullet b : model.bullets) {
             b.y += Bullet.SPEED * delta;
         }
+        float sabotageSpeedMul = model.getEnemyVerticalSpeedMultiplier();
         for (Bullet b : model.enemyBullets) {
-            b.y -= Bullet.ENEMY_SPEED * delta;
+            b.y -= Bullet.ENEMY_SPEED * sabotageSpeedMul * delta;
         }
     }
 
     private void moveEnemies(float delta) {
+        float speedMul = model.getEnemyVerticalSpeedMultiplier();
         for (Enemy e : model.enemies) {
-            e.y -= Enemy.SPEED * delta;
+            e.y -= Enemy.SPEED * speedMul * delta;
         }
     }
 

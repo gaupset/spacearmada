@@ -1,11 +1,13 @@
 package com.invaders99.service;
 
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
 import com.invaders99.model.LobbyPlayer;
 import com.invaders99.model.Sabotage;
 import com.invaders99.util.FirebaseJson;
+import com.invaders99.util.SabotageTargetAssignment;
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
@@ -201,12 +203,33 @@ public class LobbyHandler {
 
     public void startGame(final LobbyCallback callback) {
         if (lobbyID == null) return;
-        String body = "{\"gameStarted\": true}";
-        FirebaseService.getInstance().patchDbData("lobbies/" + lobbyID, body, new FirebaseService.FirebaseCallback() {
+        getLobbyStatus(new LobbyStatusCallback() {
             @Override
-            public void onSuccess(String response) {
-                if (callback != null) callback.onSuccess(response);
+            public void onUpdate(JsonValue lobbyData) {
+                JsonValue players = lobbyData.get("players");
+                if (players == null) {
+                    if (callback != null) callback.onFailure("No players in lobby");
+                    return;
+                }
+                ArrayList<String> eligibleIds = new ArrayList<>();
+                for (JsonValue child = players.child; child != null; child = child.next) {
+                    if (child.getBoolean("leftLobby", false)) continue;
+                    eligibleIds.add(child.name);
+                }
+                Map<String, String> targets = SabotageTargetAssignment.assignTargets(eligibleIds, new Random());
+                String body = SabotageTargetAssignment.toStartGamePatchBody(targets);
+                FirebaseService.getInstance().patchDbData("lobbies/" + lobbyID, body, new FirebaseService.FirebaseCallback() {
+                    @Override
+                    public void onSuccess(String response) {
+                        if (callback != null) callback.onSuccess(response);
+                    }
+                    @Override
+                    public void onFailure(String error) {
+                        if (callback != null) callback.onFailure(error);
+                    }
+                });
             }
+
             @Override
             public void onFailure(String error) {
                 if (callback != null) callback.onFailure(error);
@@ -215,11 +238,10 @@ public class LobbyHandler {
     }
 
     public void setSabotage(Sabotage sabotage){
-        // puts the sabotage to the next players.
         getLobbyStatus(new LobbyStatusCallback() {
             @Override
             public void onUpdate(JsonValue response) {
-                String otherPlayer = findNextPlayer(response);
+                String otherPlayer = getSabotageTargetPlayerId(response);
                 writeSabotage(sabotage, otherPlayer);
             }
             @Override
@@ -238,6 +260,7 @@ public class LobbyHandler {
     }
 
     private void writeSabotage(Sabotage sabotage, String otherPlayerID) {
+        if (otherPlayerID == null || otherPlayerID.isEmpty()) return;
         String path = "lobbies/" + lobbyID + "/players/" + otherPlayerID + "/sabotage";
         String sabotageJson = FirebaseJson.toJson(sabotage);
         FirebaseService.getInstance().putDbData(path, sabotageJson, new FirebaseService.FirebaseCallback() {
@@ -253,28 +276,12 @@ public class LobbyHandler {
         });
         }
 
-    private String findNextPlayer(JsonValue playerData) {
-        JsonValue players = playerData.get("players");
-        if (players == null) return "";
-
-        // 1. Collect keys
-        Array<String> ids = new Array<>();
-        for (JsonValue child = players.child; child != null; child = child.next) {
-            ids.add(child.name); // key = playerId
-        }
-
-        // 2. Sort alphabetically
-        ids.sort();
-        if (ids.size == 1) {return "";}
-
-        // 3. Find current index
-        int index = ids.indexOf(sessionPlayerID, false);
-        if (index == -1) return "";
-
-        // 4. Get next (wrap around optional)
-        int nextIndex = (index + 1) % ids.size;
-
-        return ids.get(nextIndex);
+    private String getSabotageTargetPlayerId(JsonValue lobbyData) {
+        JsonValue players = lobbyData.get("players");
+        if (players == null || sessionPlayerID == null) return "";
+        JsonValue me = players.get(sessionPlayerID);
+        if (me == null) return "";
+        return me.getString("sabotageTargetId", "");
     }
 
     public void getLobbyStatus(final LobbyStatusCallback callback) {

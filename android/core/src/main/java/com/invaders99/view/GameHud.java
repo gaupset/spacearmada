@@ -38,11 +38,18 @@ public class GameHud {
         void onPause();
     }
 
+    public interface SabotageListener {
+        void onSabotage();
+    }
+
+    private final TextButton sabotageButton;
+
     public GameHud(
         Game model,
         MenuToggleListener menuToggleListener,
         QuitListener quitListener,
-        PauseListener pauseListener
+        PauseListener pauseListener,
+        SabotageListener sabotageListener
     ) {
         this.model = model;
         stage = new Stage(new ExtendViewport(Game.WORLD_WIDTH, Game.WORLD_HEIGHT));
@@ -66,6 +73,17 @@ public class GameHud {
                 }
             }
         });
+        sabotageButton = new TextButton("SABOTAGE", skin);
+        sabotageButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
+        sabotageButton.setVisible(model.isSabotageHudVisible());
+        sabotageButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                if (sabotageListener != null) {
+                    sabotageListener.onSabotage();
+                }
+            }
+        });
         TextButton menuButton = new TextButton("MENU", skin);
         menuButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
         menuButton.addListener(new ClickListener() {
@@ -80,6 +98,8 @@ public class GameHud {
         topBar.top().right();
         topBar.add(pauseButton).width(80f).height(36f).pad(8f);
         topBar.add(menuButton).width(80f).height(36f).pad(8f);
+        topBar.row();
+        topBar.add(sabotageButton).colspan(2).right().padTop(2f).padBottom(8f).padLeft(8f).padRight(8f).height(36f).width(170f);
         stage.addActor(topBar);
 
         menuPanel = new Table();
@@ -154,6 +174,7 @@ public class GameHud {
 
     public void act(float delta) {
         menuPanel.setVisible(model.menuOpen);
+        sabotageButton.setVisible(model.isSabotageHudVisible());
         stage.act(delta);
     }
 
