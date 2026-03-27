@@ -18,12 +18,14 @@ public class FirebaseService {
     private final String firestoreBaseUrl;
     private final String databaseBaseUrl;
     private final String projectId;
+    private long serverTimeOffset = 0;
 
     private FirebaseService(AppConfig config) {
         this.functionsBaseUrl = config.firebaseBaseUrl;
         this.firestoreBaseUrl = config.firestoreBaseUrl;
         this.databaseBaseUrl = config.databaseBaseUrl;
         this.projectId = config.projectId;
+        fetchServerTimeOffset();
     }
 
     public static void init() {
@@ -32,6 +34,28 @@ public class FirebaseService {
 
     public static FirebaseService getInstance() {
         return instance;
+    }
+
+    public long getServerTime() {
+        return System.currentTimeMillis() + serverTimeOffset;
+    }
+
+    public void fetchServerTimeOffset() {
+        getDbData(".info/serverTimeOffset", new FirebaseCallback() {
+            @Override
+            public void onSuccess(String response) {
+                try {
+                    serverTimeOffset = Long.parseLong(response.trim());
+                } catch (NumberFormatException e) {
+                    Gdx.app.error("FirebaseService", "Failed to parse serverTimeOffset: " + response);
+                }
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Gdx.app.error("FirebaseService", "Failed to fetch serverTimeOffset: " + error);
+            }
+        });
     }
 
     // Generic DB methods

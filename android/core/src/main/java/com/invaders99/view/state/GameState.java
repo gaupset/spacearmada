@@ -4,12 +4,17 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.utils.JsonValue;
+import com.badlogic.gdx.utils.JsonWriter;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.invaders99.controller.FirebaseController;
 import com.invaders99.controller.MainController;
 import com.invaders99.controller.WaveController;
 import com.invaders99.controller.state.GameController;
 import com.invaders99.model.Game;
+import com.invaders99.service.LobbyHandler;
 import com.invaders99.util.Assets;
 import com.invaders99.view.GameHud;
 import com.invaders99.view.GameRenderer;
@@ -17,6 +22,8 @@ import com.invaders99.view.GameStateManager;
 
 public class GameState extends State {
     private final MainController main;
+    private LobbyHandler lobbyHandler;
+    private FirebaseController firebaseController;
     private InputMultiplexer inputMux;
 
     private ExtendViewport viewport;
@@ -25,9 +32,21 @@ public class GameState extends State {
     private GameController controller;
     private GameHud hud;
 
+    private float updateTimer = 0;
+    private static final float UPDATE_INTERVAL = 2.0f;
+    private boolean inLobby = false;
+
     public GameState(GameStateManager gsm, MainController main) {
         super(gsm);
         this.main = main;
+    }
+
+    public GameState(GameStateManager gsm, MainController main, FirebaseController firebaseController) {
+        super(gsm);
+        this.main = main;
+        inLobby = true;
+        this.firebaseController = firebaseController;
+        this.lobbyHandler = firebaseController.lobbyHandler();
     }
 
     @Override
@@ -41,7 +60,7 @@ public class GameState extends State {
             hud = new GameHud(
                 model,
                 open -> model.menuOpen = open,
-                () -> gsm.set(new MenuState(gsm, main)),
+                () -> exitGame(),
                 () -> gsm.push(new PauseState(gsm, this))
             );
 
@@ -50,6 +69,28 @@ public class GameState extends State {
             inputMux.addProcessor(controller);
         }
         Gdx.input.setInputProcessor(inputMux);
+    }
+
+    public LobbyHandler getLobbyHandler() {
+        return lobbyHandler;
+    }
+
+    private void exitGame() {
+        if (inLobby) {
+            // leaveLobby triggers checkLobbyState() in case of success
+            lobbyHandler.leaveLobby(new LobbyHandler.LobbyCallback() {
+                @Override
+                public void onSuccess(String success) {
+                    gsm.set(new MenuState(gsm, main));
+                }
+                @Override
+                public void onFailure(String error) {
+                    gsm.set(new MenuState(gsm, main));
+                }
+            });
+        } else {
+            gsm.set(new MenuState(gsm, main));
+        }
     }
 
     public void renderFrozen(SpriteBatch batch, float delta) {
@@ -61,15 +102,87 @@ public class GameState extends State {
         hud.draw();
     }
 
+
     @Override
     public void update(float dt) {
         controller.update(dt);
+        if (inLobby) {
+            updateTimer += dt;
+            if (updateTimer >= UPDATE_INTERVAL) {
+                System.out.println("update time!");
+                updateTimer = 0;
+                lobbyHandler.sendHeartbeat();
+                lobbyHandler.updateScore(model.score);
+                updateGameStatus();
 
-        if (model.isGameOver()) {
-            gsm.set(new GameOverState(gsm, main, model.score));
-            return;
+                if (model.isGameOver()) {
+                    triggerGameOver();
+                }
+            }
         }
     }
+
+    private void deploySabotage(JsonValue sabotageR) {
+        // get the attributes from sabotageR and process it.
+        System.out.println(sabotageR);
+    }
+
+    private void updateGameStatus() {
+        if (!inLobby) return;
+        firebaseController.getLobbyStatus(new LobbyHandler.LobbyStatusCallback() {
+            @Override
+            public void onUpdate(JsonValue lobbyData) {
+                if (lobbyData.getBoolean("gameEnded", false)) {
+                    // go to GameOverScreen
+                    System.out.println("update GameStatus: gameEnded is already true, so I end my game");
+                    triggerGameOver();
+                    return;
+                }
+                String playerID = firebaseController.lobbyHandler().sessionPlayerID;
+
+                JsonValue players = lobbyData.get("players");
+                if (players == null) {
+                    System.out.println("No players node found");
+                    return;
+                }
+
+                JsonValue player = players.get(playerID);
+                if (player == null) {
+                    System.out.println("Player not found: " + playerID);
+                    return;
+                }
+
+                JsonValue sabotage = player.get("sabotage");
+                if (sabotage != null) {
+                    System.out.println("Sabotage found: " + sabotage.prettyPrint(JsonWriter.OutputType.json, 0));
+                    delSabotage();
+                    deploySabotage(sabotage);
+                } else {
+                    System.out.println("No sabotage for player " + playerID);
+                }
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Gdx.app.error("Lobby", "Status update failed: " + error);
+            }
+        });
+    }
+
+    private void triggerGameOver() {
+        if (inLobby) {
+            System.out.println("triggerGameOver executed, inLobby");
+            lobbyHandler.setPlayerGameOver(model.score); // checkLobbyState is exc. if success
+            gsm.set(new GameOverState(gsm, main, model.score, firebaseController.lobbyHandler()));
+        }
+        else {
+            gsm.set(new GameOverState(gsm, main, model.score));
+        }
+    }
+    private void delSabotage(){
+        lobbyHandler.delSabotage();
+    }
+
 
     @Override
     public void render(SpriteBatch batch) {
@@ -88,6 +201,7 @@ public class GameState extends State {
         hud.resize(width, height);
     }
 
+    @Override
     public void dispose() {
         if (renderer != null) renderer.dispose();
         if (hud != null) hud.dispose();

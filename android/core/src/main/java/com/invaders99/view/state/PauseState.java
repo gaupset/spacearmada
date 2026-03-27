@@ -14,6 +14,8 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.invaders99.model.Game;
+import com.invaders99.model.Sabotage;
+import com.invaders99.service.LobbyHandler;
 import com.invaders99.ui.SpaceButton;
 import com.invaders99.ui.UiFactory;
 import com.invaders99.view.GameStateManager;
@@ -65,7 +67,18 @@ public class PauseState extends State {
                 gsm.pop();
             }
         });
-        root.add(unpauseButton).row();
+        root.add(unpauseButton).padBottom(20f).row();
+
+        if (gameState.getLobbyHandler() != null) {
+            SpaceButton sabotageButton = new SpaceButton("SABOTAGE");
+            sabotageButton.addListener(new ClickListener() {
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    gameState.getLobbyHandler().setSabotage(new Sabotage());
+                }
+            });
+            root.add(sabotageButton).row();
+        }
 
         stage.addActor(root);
     }
