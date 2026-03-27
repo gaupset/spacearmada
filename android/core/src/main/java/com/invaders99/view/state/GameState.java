@@ -5,6 +5,7 @@ import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.JsonValue;
+import com.badlogic.gdx.utils.JsonWriter;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
@@ -121,18 +122,43 @@ public class GameState extends State {
         }
     }
 
+    private void deploySabotage(JsonValue sabotageR) {
+        // get the attributes from sabotageR and process it.
+        System.out.println(sabotageR);
+    }
+
     private void updateGameStatus() {
+        if (!inLobby) return;
         firebaseController.getLobbyStatus(new LobbyHandler.LobbyStatusCallback() {
             @Override
             public void onUpdate(JsonValue lobbyData) {
-                if (inLobby) {
-                    if (lobbyData.getBoolean("gameEnded", false)) {
-                        // go to GameOverScreen
-                        System.out.println("update GameStatus: gameEnded is already true, so I end my game");
-                        triggerGameOver();
-                    }
-                    else {System.out.println("update GameStatus: gameEnded is false");}
-                    firebaseController.checkLobbyState(lobbyData);
+                if (lobbyData.getBoolean("gameEnded", false)) {
+                    // go to GameOverScreen
+                    System.out.println("update GameStatus: gameEnded is already true, so I end my game");
+                    triggerGameOver();
+                    return;
+                }
+                String playerID = firebaseController.lobbyHandler().sessionPlayerID;
+
+                JsonValue players = lobbyData.get("players");
+                if (players == null) {
+                    System.out.println("No players node found");
+                    return;
+                }
+
+                JsonValue player = players.get(playerID);
+                if (player == null) {
+                    System.out.println("Player not found: " + playerID);
+                    return;
+                }
+
+                JsonValue sabotage = player.get("sabotage");
+                if (sabotage != null) {
+                    System.out.println("Sabotage found: " + sabotage.prettyPrint(JsonWriter.OutputType.json, 0));
+                    delSabotage();
+                    deploySabotage(sabotage);
+                } else {
+                    System.out.println("No sabotage for player " + playerID);
                 }
             }
 
@@ -152,6 +178,9 @@ public class GameState extends State {
         else {
             gsm.set(new GameOverState(gsm, main, model.score));
         }
+    }
+    private void delSabotage(){
+        lobbyHandler.delSabotage();
     }
 
 

@@ -1,23 +1,20 @@
 package com.invaders99.service;
 
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.Json;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
 import com.invaders99.model.LobbyPlayer;
 import com.invaders99.model.Sabotage;
 import com.invaders99.util.FirebaseJson;
-
 import java.util.Random;
 import java.util.UUID;
 
 public class LobbyHandler {
     private String lobbyID;
-    private String sessionPlayerID; // Unique per lobby session
+    public String sessionPlayerID; // Unique per lobby session
     private String playerID;        // Persistent player ID
 
     private static final String SERVER_TIMESTAMP = "{\".sv\": \"timestamp\"}";
-    private static final long TIMEOUT_MS = 30000;
 
     public interface LobbyCallback {
         void onSuccess(String success);
@@ -230,11 +227,19 @@ public class LobbyHandler {
         });
     }
 
+    public void delSabotage(){
+        String path = "lobbies/" + lobbyID + "/players/" + sessionPlayerID+ "/sabotage";
+        FirebaseService.getInstance().deleteDbData(path, new FirebaseService.FirebaseCallback() {
+            @Override
+            public void onSuccess(String response) {}
+            @Override
+            public void onFailure(String error) {}
+        });
+    }
+
     private void writeSabotage(Sabotage sabotage, String otherPlayerID) {
-        System.out.println("writeSabotage");
         String path = "lobbies/" + lobbyID + "/players/" + otherPlayerID + "/sabotage";
-        Json json = new Json();
-        String sabotageJson = json.toJson(sabotage);
+        String sabotageJson = FirebaseJson.toJson(sabotage);
         FirebaseService.getInstance().putDbData(path, sabotageJson, new FirebaseService.FirebaseCallback() {
             @Override
             public void onSuccess(String response) {
@@ -260,6 +265,7 @@ public class LobbyHandler {
 
         // 2. Sort alphabetically
         ids.sort();
+        if (ids.size == 1) {return "";}
 
         // 3. Find current index
         int index = ids.indexOf(sessionPlayerID, false);
@@ -269,11 +275,6 @@ public class LobbyHandler {
         int nextIndex = (index + 1) % ids.size;
 
         return ids.get(nextIndex);
-    }
-
-
-    public void getAndDelOwnSabotage(final LobbyCallback callback){
-
     }
 
     public void getLobbyStatus(final LobbyStatusCallback callback) {

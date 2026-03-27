@@ -6,6 +6,7 @@ import com.invaders99.view.state.GameState;
 import com.invaders99.view.state.WaitingRoomState;
 import com.invaders99.view.state.SettingsState;
 
+
 public class MenuController {
     private final GameStateManager gsm;
     private final MainController main;
@@ -17,6 +18,7 @@ public class MenuController {
 
     public void onPlayClicked() {
         gsm.set(new GameState(gsm, main));
+
     }
 
     public void onLobbyClicked() {
