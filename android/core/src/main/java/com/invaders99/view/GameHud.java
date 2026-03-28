@@ -18,6 +18,8 @@ import com.invaders99.ui.UiFactory;
 import com.invaders99.util.Theme;
 
 public class GameHud {
+    private static final Color PAUSE_BUTTON_DISABLED_LABEL = new Color(0.45f, 0.45f, 0.48f, 1f);
+
     private final Stage stage;
     private final Game model;
     private final Table menuPanel;
@@ -38,13 +40,28 @@ public class GameHud {
         void onPause();
     }
 
+    public interface SabotageListener {
+        void onSabotage();
+    }
+
+    private final TextButton sabotageButton;
+    private final TextButton pauseButton;
+    private final Runnable onMenuResumePressed;
+
+    /**
+     * @param onMenuResumePressed run after RESUME closes the menu — used to exit {@link com.invaders99.view.state.PauseState}
+     *                            when the menu was opened from the pause overlay ({@code null} ok)
+     */
     public GameHud(
         Game model,
         MenuToggleListener menuToggleListener,
         QuitListener quitListener,
-        PauseListener pauseListener
+        PauseListener pauseListener,
+        SabotageListener sabotageListener,
+        Runnable onMenuResumePressed
     ) {
         this.model = model;
+        this.onMenuResumePressed = onMenuResumePressed;
         stage = new Stage(new ExtendViewport(Game.WORLD_WIDTH, Game.WORLD_HEIGHT));
 
         Skin skin = UiFactory.getInstance().getSkin();
@@ -56,13 +73,27 @@ public class GameHud {
         overlayTex = new Texture(pixmap);
         pixmap.dispose();
 
-        TextButton pauseButton = new TextButton("PAUSE", skin);
+        pauseButton = new TextButton("PAUSE", skin);
         pauseButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
         pauseButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                if (!model.isPauseButtonReady()) {
+                    return;
+                }
                 if (pauseListener != null) {
                     pauseListener.onPause();
+                }
+            }
+        });
+        sabotageButton = new TextButton("SABOTAGE", skin);
+        sabotageButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
+        sabotageButton.setVisible(model.isSabotageHudVisible());
+        sabotageButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                if (sabotageListener != null) {
+                    sabotageListener.onSabotage();
                 }
             }
         });
@@ -80,6 +111,8 @@ public class GameHud {
         topBar.top().right();
         topBar.add(pauseButton).width(80f).height(36f).pad(8f);
         topBar.add(menuButton).width(80f).height(36f).pad(8f);
+        topBar.row();
+        topBar.add(sabotageButton).colspan(2).right().padTop(2f).padBottom(8f).padLeft(8f).padRight(8f).height(36f).width(170f);
         stage.addActor(topBar);
 
         menuPanel = new Table();
@@ -125,6 +158,9 @@ public class GameHud {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 menuToggleListener.onMenuToggle(false);
+                if (GameHud.this.onMenuResumePressed != null) {
+                    GameHud.this.onMenuResumePressed.run();
+                }
             }
         });
         content.add(resumeButton).row();
@@ -154,6 +190,14 @@ public class GameHud {
 
     public void act(float delta) {
         menuPanel.setVisible(model.menuOpen);
+        sabotageButton.setVisible(model.isSabotageHudVisible());
+        boolean pauseReady = model.isPauseButtonReady();
+        pauseButton.setDisabled(!pauseReady);
+        if (pauseReady) {
+            pauseButton.getLabel().setColor(Color.WHITE);
+        } else {
+            pauseButton.getLabel().setColor(PAUSE_BUTTON_DISABLED_LABEL);
+        }
         stage.act(delta);
     }
 

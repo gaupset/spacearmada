@@ -14,9 +14,10 @@ public class WaveController {
     private float enemyShootTimer;
 
     public void update(float delta, Game model) {
+        float spawnEvery = SPAWN_INTERVAL / model.getEnemySpawnRateMultiplier();
         spawnTimer += delta;
-        if (spawnTimer >= SPAWN_INTERVAL) {
-            spawnTimer -= SPAWN_INTERVAL;
+        if (spawnTimer >= spawnEvery) {
+            spawnTimer -= spawnEvery;
             float x;
             if (spawnLeft) {
                 x = MathUtils.random(30f, 150f);
