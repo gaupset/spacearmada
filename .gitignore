@@ -78,3 +78,6 @@ node_modules/
 .DS_Store
 Thumbs.db
 .idea/
+
+# Local-only documentation (not committed)
+spacearmada-sabotage-target-local-docs.md

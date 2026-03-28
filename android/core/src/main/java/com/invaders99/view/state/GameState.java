@@ -2,20 +2,23 @@ package com.invaders99.view.state;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
 import com.badlogic.gdx.utils.JsonWriter;
 import com.badlogic.gdx.utils.ScreenUtils;
-import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.invaders99.controller.FirebaseController;
 import com.invaders99.controller.MainController;
 import com.invaders99.controller.WaveController;
 import com.invaders99.controller.state.GameController;
 import com.invaders99.model.Game;
+import com.invaders99.model.Sabotage;
 import com.invaders99.service.LobbyHandler;
 import com.invaders99.util.Assets;
+import com.invaders99.util.FirebaseJson;
 import com.invaders99.view.GameHud;
 import com.invaders99.view.GameRenderer;
 import com.invaders99.view.GameStateManager;
@@ -35,6 +38,11 @@ public class GameState extends State {
     private float updateTimer = 0;
     private static final float UPDATE_INTERVAL = 2.0f;
     private boolean inLobby = false;
+    /**
+     * While {@link PauseState} is shown: when the in-game menu closes ({@code menuOpen} becomes false), also pop the
+     * pause overlay so Resume returns to gameplay. Cleared when pause disposes.
+     */
+    private boolean exitPauseWhenMenuCloses;
 
     public GameState(GameStateManager gsm, MainController main) {
         super(gsm);
@@ -61,7 +69,18 @@ public class GameState extends State {
                 model,
                 open -> model.menuOpen = open,
                 () -> exitGame(),
-                () -> gsm.push(new PauseState(gsm, this))
+                () -> {
+                    if (!model.gameplayPaused) {
+                        gsm.push(new PauseState(gsm, this));
+                    }
+                },
+                () -> gsm.push(new SabotageState(gsm, this, model)),
+                () -> {
+                    if (exitPauseWhenMenuCloses) {
+                        exitPauseWhenMenuCloses = false;
+                        gsm.pop();
+                    }
+                }
             );
 
             inputMux = new InputMultiplexer();
@@ -73,6 +92,92 @@ public class GameState extends State {
 
     public LobbyHandler getLobbyHandler() {
         return lobbyHandler;
+    }
+
+    Game getModel() {
+        return model;
+    }
+
+    Stage getHudStage() {
+        return hud != null ? hud.getStage() : null;
+    }
+
+    void setExitPauseWhenMenuCloses(boolean exitPauseWhenMenuCloses) {
+        this.exitPauseWhenMenuCloses = exitPauseWhenMenuCloses;
+    }
+
+    /**
+     * Set while {@link PauseState} is shown, or {@link SabotageState} until its unpause timer expires, so sabotage
+     * effect timers don't tick and incoming lobby sabotage stays in Firebase until gameplay runs again.
+     */
+    void setGameplayPaused(boolean paused) {
+        model.gameplayPaused = paused;
+    }
+
+    /** Underlying HUD + game input (same order as {@link #show()}). */
+    InputMultiplexer getInputMultiplexer() {
+        return inputMux;
+    }
+
+    void restoreDefaultInput() {
+        if (inputMux != null) {
+            Gdx.input.setInputProcessor(inputMux);
+        }
+    }
+
+    /**
+     * Advances gameplay and lobby sync. Used by {@link GameState#update} and by {@link SabotageState} after the
+     * sabotage unpause timer so the match continues while the overlay stays open.
+     */
+    void updateGameplay(float dt) {
+        controller.update(dt);
+        if (inLobby) {
+            updateTimer += dt;
+            if (updateTimer >= UPDATE_INTERVAL) {
+                System.out.println("update time!");
+                updateTimer = 0;
+                lobbyHandler.sendHeartbeat();
+                lobbyHandler.updateScore(model.score);
+                updateGameStatus();
+
+                if (model.isGameOver()) {
+                    triggerGameOver();
+                }
+            }
+        }
+    }
+
+    /** After closing the pause overlay; HUD pause stays disabled for {@link Game#PAUSE_BUTTON_COOLDOWN_SECONDS}. */
+    void startPauseButtonCooldown() {
+        model.startPauseButtonCooldown();
+    }
+
+    /** Offline "DEV GAME" from the menu ({@code !inLobby}); used for dev-only sabotage behavior. */
+    boolean isDevGame() {
+        return !inLobby;
+    }
+
+    /**
+     * Dev game only: applies sabotage to this player locally (same payload shape as Firebase), so
+     * sabotages can be tested without another player. Lobby multiplayer still uses {@code sabotageTargetId}.
+     */
+    void triggerDevSelfSabotage(String sabotageType) {
+        if (inLobby) {
+            return;
+        }
+        Sabotage s = new Sabotage();
+        s.type = sabotageType;
+        s.duration = 10;
+        JsonValue sabotageJson = new JsonReader().parse(FirebaseJson.toJson(s));
+        deploySabotage(sabotageJson);
+    }
+
+    /** Lobby: send typed sabotage to assigned target via Firebase. */
+    void sendLobbySabotage(Sabotage sabotage) {
+        if (lobbyHandler == null) {
+            return;
+        }
+        lobbyHandler.setSabotage(sabotage);
     }
 
     private void exitGame() {
@@ -105,26 +210,29 @@ public class GameState extends State {
 
     @Override
     public void update(float dt) {
-        controller.update(dt);
-        if (inLobby) {
-            updateTimer += dt;
-            if (updateTimer >= UPDATE_INTERVAL) {
-                System.out.println("update time!");
-                updateTimer = 0;
-                lobbyHandler.sendHeartbeat();
-                lobbyHandler.updateScore(model.score);
-                updateGameStatus();
-
-                if (model.isGameOver()) {
-                    triggerGameOver();
-                }
-            }
-        }
+        updateGameplay(dt);
     }
 
     private void deploySabotage(JsonValue sabotageR) {
-        // get the attributes from sabotageR and process it.
-        System.out.println(sabotageR);
+        float duration = sabotageR.getInt("duration", 10);
+        String type = sabotageR.getString("type", Sabotage.TYPE_ENEMY_SPEED);
+        if ("example".equals(type)) {
+            type = Sabotage.TYPE_ENEMY_SPEED;
+        }
+        switch (type) {
+            case Sabotage.TYPE_ENEMY_SPEED:
+                model.applyEnemySpeedSabotage(duration);
+                break;
+            case Sabotage.TYPE_HALF_PLAYER_BULLETS:
+                model.applyPlayerFireRateSabotage(duration);
+                break;
+            case Sabotage.TYPE_DOUBLE_ALIENS:
+                model.applyAlienSpawnSabotage(duration);
+                break;
+            default:
+                model.applyEnemySpeedSabotage(duration);
+                break;
+        }
     }
 
     private void updateGameStatus() {
@@ -154,6 +262,9 @@ public class GameState extends State {
 
                 JsonValue sabotage = player.get("sabotage");
                 if (sabotage != null) {
+                    if (model.gameplayPaused || model.menuOpen) {
+                        return;
+                    }
                     System.out.println("Sabotage found: " + sabotage.prettyPrint(JsonWriter.OutputType.json, 0));
                     delSabotage();
                     deploySabotage(sabotage);
