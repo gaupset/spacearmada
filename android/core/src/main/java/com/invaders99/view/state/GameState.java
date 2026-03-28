@@ -78,6 +78,52 @@ public class GameState extends State {
         return lobbyHandler;
     }
 
+    /**
+     * Set while {@link PauseState} is shown, or {@link SabotageState} until its unpause timer expires, so sabotage
+     * effect timers don't tick and incoming lobby sabotage stays in Firebase until gameplay runs again.
+     */
+    void setGameplayPaused(boolean paused) {
+        model.gameplayPaused = paused;
+    }
+
+    /** Underlying HUD + game input (same order as {@link #show()}). */
+    InputMultiplexer getInputMultiplexer() {
+        return inputMux;
+    }
+
+    void restoreDefaultInput() {
+        if (inputMux != null) {
+            Gdx.input.setInputProcessor(inputMux);
+        }
+    }
+
+    /**
+     * Advances gameplay and lobby sync. Used by {@link GameState#update} and by {@link SabotageState} after the
+     * sabotage unpause timer so the match continues while the overlay stays open.
+     */
+    void updateGameplay(float dt) {
+        controller.update(dt);
+        if (inLobby) {
+            updateTimer += dt;
+            if (updateTimer >= UPDATE_INTERVAL) {
+                System.out.println("update time!");
+                updateTimer = 0;
+                lobbyHandler.sendHeartbeat();
+                lobbyHandler.updateScore(model.score);
+                updateGameStatus();
+
+                if (model.isGameOver()) {
+                    triggerGameOver();
+                }
+            }
+        }
+    }
+
+    /** After closing the pause overlay; HUD pause stays disabled for {@link Game#PAUSE_BUTTON_COOLDOWN_SECONDS}. */
+    void startPauseButtonCooldown() {
+        model.startPauseButtonCooldown();
+    }
+
     /** Offline "DEV GAME" from the menu ({@code !inLobby}); used for dev-only sabotage behavior. */
     boolean isDevGame() {
         return !inLobby;
@@ -136,21 +182,7 @@ public class GameState extends State {
 
     @Override
     public void update(float dt) {
-        controller.update(dt);
-        if (inLobby) {
-            updateTimer += dt;
-            if (updateTimer >= UPDATE_INTERVAL) {
-                System.out.println("update time!");
-                updateTimer = 0;
-                lobbyHandler.sendHeartbeat();
-                lobbyHandler.updateScore(model.score);
-                updateGameStatus();
-
-                if (model.isGameOver()) {
-                    triggerGameOver();
-                }
-            }
-        }
+        updateGameplay(dt);
     }
 
     private void deploySabotage(JsonValue sabotageR) {
@@ -202,6 +234,9 @@ public class GameState extends State {
 
                 JsonValue sabotage = player.get("sabotage");
                 if (sabotage != null) {
+                    if (model.gameplayPaused || model.menuOpen) {
+                        return;
+                    }
                     System.out.println("Sabotage found: " + sabotage.prettyPrint(JsonWriter.OutputType.json, 0));
                     delSabotage();
                     deploySabotage(sabotage);

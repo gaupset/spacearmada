@@ -1,6 +1,7 @@
 package com.invaders99.view.state;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
@@ -9,6 +10,7 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
@@ -24,7 +26,8 @@ import com.invaders99.view.GameStateManager;
 import java.util.Locale;
 
 public class SabotageState extends State {
-    private static final float SABOTAGE_SCREEN_MAX_DURATION = 10f;
+    /** Initial period: gameplay frozen; after this elapses the match runs behind the overlay until RETURN or charges are used. */
+    private static final float SABOTAGE_UNPAUSE_TIMER_SEC = 10f;
     private static final int SABOTAGE_EFFECT_DURATION_SEC = 10;
     /** Same height as {@link com.invaders99.view.GameHud} TextButtons (pause / menu / sabotage). */
     private static final float BUTTON_HEIGHT = 36f;
@@ -35,7 +38,9 @@ public class SabotageState extends State {
     private final Game model;
     private Stage stage;
     private Texture overlayTex;
-    private float timeLeft;
+    private float unpauseTimeLeft;
+    /** After {@link #unpauseTimeLeft} reaches zero: simulation and HUD input run; overlay stays until RETURN or all charges spent. */
+    private boolean gameplayRunningBehindOverlay;
     private Label timerLabel;
     private Label chargesLabel;
 
@@ -49,7 +54,8 @@ public class SabotageState extends State {
     public void show() {
         stage = new Stage(new ExtendViewport(Game.WORLD_WIDTH, Game.WORLD_HEIGHT));
         Gdx.input.setInputProcessor(stage);
-        timeLeft = SABOTAGE_SCREEN_MAX_DURATION;
+        unpauseTimeLeft = SABOTAGE_UNPAUSE_TIMER_SEC;
+        gameplayRunningBehindOverlay = false;
 
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         pixmap.setColor(new Color(0f, 0f, 0f, 0.6f));
@@ -58,6 +64,7 @@ public class SabotageState extends State {
         pixmap.dispose();
 
         buildLayout();
+        gameState.setGameplayPaused(true);
     }
 
     private void buildLayout() {
@@ -65,10 +72,11 @@ public class SabotageState extends State {
 
         Table root = new Table();
         root.setFillParent(true);
+        root.setTouchable(Touchable.childrenOnly);
         root.setBackground(new TextureRegionDrawable(overlayTex));
         root.top();
 
-        timerLabel = new Label(formatUnpauseTimer(timeLeft), skin);
+        timerLabel = new Label(formatUnpauseTimer(unpauseTimeLeft), skin);
         timerLabel.setFontScale(1.2f);
         root.add(timerLabel).padTop(28f).row();
 
@@ -153,15 +161,43 @@ public class SabotageState extends State {
         return String.format(Locale.US, "Unpause timer: %.1fs", Math.max(0f, seconds));
     }
 
+    private static final String GAME_NOT_PAUSED_LABEL = "Game not paused";
+
+    private void onUnpauseTimerFinished() {
+        unpauseTimeLeft = 0f;
+        gameplayRunningBehindOverlay = true;
+        if (timerLabel != null) {
+            timerLabel.setText(GAME_NOT_PAUSED_LABEL);
+        }
+        gameState.setGameplayPaused(false);
+        attachGameplayInputBehindOverlay();
+    }
+
+    /** Sabotage UI first, then normal game + HUD input so the player can play while the overlay is open. */
+    private void attachGameplayInputBehindOverlay() {
+        InputMultiplexer mux = gameState.getInputMultiplexer();
+        if (mux == null) {
+            Gdx.input.setInputProcessor(stage);
+            return;
+        }
+        InputMultiplexer combined = new InputMultiplexer();
+        combined.addProcessor(stage);
+        combined.addProcessor(mux);
+        Gdx.input.setInputProcessor(combined);
+    }
+
     @Override
     public void update(float dt) {
-        timeLeft -= dt;
-        if (timerLabel != null) {
-            timerLabel.setText(formatUnpauseTimer(timeLeft));
-        }
-        if (timeLeft <= 0f) {
-            gsm.pop();
-            return;
+        if (!gameplayRunningBehindOverlay) {
+            unpauseTimeLeft -= dt;
+            if (unpauseTimeLeft <= 0f) {
+                onUnpauseTimerFinished();
+                gameState.updateGameplay(dt);
+            } else if (timerLabel != null) {
+                timerLabel.setText(formatUnpauseTimer(unpauseTimeLeft));
+            }
+        } else {
+            gameState.updateGameplay(dt);
         }
         stage.act(dt);
     }
@@ -182,6 +218,8 @@ public class SabotageState extends State {
 
     @Override
     public void dispose() {
+        gameState.setGameplayPaused(false);
+        gameState.restoreDefaultInput();
         if (stage != null) {
             stage.dispose();
         }

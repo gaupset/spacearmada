@@ -7,6 +7,8 @@ public class Game {
     public static final float WORLD_HEIGHT = 640f;
     /** Score milestones: one sabotage charge earned per this many points (10, 20, 30, …). */
     public static final int SABOTAGE_POINTS_PER_CHARGE = 10;
+    /** After leaving the pause screen, the HUD pause button stays disabled for this many seconds of active play. */
+    public static final float PAUSE_BUTTON_COOLDOWN_SECONDS = 10f;
 
     public final Player player;
     public final Array<Bullet> bullets = new Array<>();
@@ -20,6 +22,16 @@ public class Game {
     public int lives = 3;
     public boolean invincible;
     public boolean menuOpen;
+    /**
+     * True while the pause screen or sabotage selection screen is stacked over gameplay.
+     * Incoming lobby sabotage is not applied until this is false; {@link #updateSabotageTimers} no-ops so effect
+     * timers only count down during active play (also skipped when {@link #menuOpen}).
+     */
+    public boolean gameplayPaused;
+    /**
+     * While &gt; 0, the HUD pause control is disabled (counts down only during active play, not while paused or in the in-game menu).
+     */
+    public float pauseButtonCooldownRemaining;
     public final Array<Bullet> enemyBullets = new Array<>();
 
     /** Seconds left for sabotage: enemies move faster (see {@link #ENEMY_SPEED_SABOTAGE_MULTIPLIER}). */
@@ -84,7 +96,31 @@ public class Game {
         alienSpawnBoostRemaining += durationSeconds;
     }
 
+    /** Decrements {@link #pauseButtonCooldownRemaining} when the player is actively playing (same window as sabotage timers). */
+    public void updatePauseButtonCooldown(float delta) {
+        if (gameplayPaused || menuOpen) {
+            return;
+        }
+        if (pauseButtonCooldownRemaining > 0f) {
+            pauseButtonCooldownRemaining -= delta;
+            if (pauseButtonCooldownRemaining <= 0f) {
+                pauseButtonCooldownRemaining = 0f;
+            }
+        }
+    }
+
+    public boolean isPauseButtonReady() {
+        return pauseButtonCooldownRemaining <= 0f;
+    }
+
+    public void startPauseButtonCooldown() {
+        pauseButtonCooldownRemaining = PAUSE_BUTTON_COOLDOWN_SECONDS;
+    }
+
     public void updateSabotageTimers(float delta) {
+        if (gameplayPaused || menuOpen) {
+            return;
+        }
         if (enemySpeedBoostRemaining > 0f) {
             enemySpeedBoostRemaining -= delta;
             if (enemySpeedBoostRemaining <= 0f) {

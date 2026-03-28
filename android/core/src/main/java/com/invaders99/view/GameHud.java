@@ -18,6 +18,8 @@ import com.invaders99.ui.UiFactory;
 import com.invaders99.util.Theme;
 
 public class GameHud {
+    private static final Color PAUSE_BUTTON_DISABLED_LABEL = new Color(0.45f, 0.45f, 0.48f, 1f);
+
     private final Stage stage;
     private final Game model;
     private final Table menuPanel;
@@ -43,6 +45,7 @@ public class GameHud {
     }
 
     private final TextButton sabotageButton;
+    private final TextButton pauseButton;
 
     public GameHud(
         Game model,
@@ -63,11 +66,14 @@ public class GameHud {
         overlayTex = new Texture(pixmap);
         pixmap.dispose();
 
-        TextButton pauseButton = new TextButton("PAUSE", skin);
+        pauseButton = new TextButton("PAUSE", skin);
         pauseButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
         pauseButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                if (!model.isPauseButtonReady()) {
+                    return;
+                }
                 if (pauseListener != null) {
                     pauseListener.onPause();
                 }
@@ -175,6 +181,13 @@ public class GameHud {
     public void act(float delta) {
         menuPanel.setVisible(model.menuOpen);
         sabotageButton.setVisible(model.isSabotageHudVisible());
+        boolean pauseReady = model.isPauseButtonReady();
+        pauseButton.setDisabled(!pauseReady);
+        if (pauseReady) {
+            pauseButton.getLabel().setColor(Color.WHITE);
+        } else {
+            pauseButton.getLabel().setColor(PAUSE_BUTTON_DISABLED_LABEL);
+        }
         stage.act(delta);
     }
 

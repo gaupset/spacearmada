@@ -48,6 +48,7 @@ public class PauseState extends State {
         pixmap.dispose();
 
         buildLayout();
+        gameState.setGameplayPaused(true);
     }
 
     private void buildLayout() {
@@ -127,6 +128,8 @@ public class PauseState extends State {
 
     @Override
     public void dispose() {
+        gameState.setGameplayPaused(false);
+        gameState.startPauseButtonCooldown();
         if (stage != null) stage.dispose();
         if (overlayTex != null) overlayTex.dispose();
     }

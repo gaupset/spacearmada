@@ -36,6 +36,7 @@ public class GameController extends InputAdapter {
         if (model.isGameOver()) return;
 
         model.updateSabotageTimers(delta);
+        model.updatePauseButtonCooldown(delta);
         updateInvincibility(delta);
         autoShoot(delta);
         waveController.update(delta, model);
