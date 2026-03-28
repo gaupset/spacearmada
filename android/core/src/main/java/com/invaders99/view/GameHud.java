@@ -46,15 +46,22 @@ public class GameHud {
 
     private final TextButton sabotageButton;
     private final TextButton pauseButton;
+    private final Runnable onMenuResumePressed;
 
+    /**
+     * @param onMenuResumePressed run after RESUME closes the menu — used to exit {@link com.invaders99.view.state.PauseState}
+     *                            when the menu was opened from the pause overlay ({@code null} ok)
+     */
     public GameHud(
         Game model,
         MenuToggleListener menuToggleListener,
         QuitListener quitListener,
         PauseListener pauseListener,
-        SabotageListener sabotageListener
+        SabotageListener sabotageListener,
+        Runnable onMenuResumePressed
     ) {
         this.model = model;
+        this.onMenuResumePressed = onMenuResumePressed;
         stage = new Stage(new ExtendViewport(Game.WORLD_WIDTH, Game.WORLD_HEIGHT));
 
         Skin skin = UiFactory.getInstance().getSkin();
@@ -151,6 +158,9 @@ public class GameHud {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 menuToggleListener.onMenuToggle(false);
+                if (GameHud.this.onMenuResumePressed != null) {
+                    GameHud.this.onMenuResumePressed.run();
+                }
             }
         });
         content.add(resumeButton).row();

@@ -2,6 +2,7 @@ package com.invaders99.view.state;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.JsonReader;
@@ -37,6 +38,11 @@ public class GameState extends State {
     private float updateTimer = 0;
     private static final float UPDATE_INTERVAL = 2.0f;
     private boolean inLobby = false;
+    /**
+     * While {@link PauseState} is shown: when the in-game menu closes ({@code menuOpen} becomes false), also pop the
+     * pause overlay so Resume returns to gameplay. Cleared when pause disposes.
+     */
+    private boolean exitPauseWhenMenuCloses;
 
     public GameState(GameStateManager gsm, MainController main) {
         super(gsm);
@@ -63,8 +69,18 @@ public class GameState extends State {
                 model,
                 open -> model.menuOpen = open,
                 () -> exitGame(),
-                () -> gsm.push(new PauseState(gsm, this)),
-                () -> gsm.push(new SabotageState(gsm, this, model))
+                () -> {
+                    if (!model.gameplayPaused) {
+                        gsm.push(new PauseState(gsm, this));
+                    }
+                },
+                () -> gsm.push(new SabotageState(gsm, this, model)),
+                () -> {
+                    if (exitPauseWhenMenuCloses) {
+                        exitPauseWhenMenuCloses = false;
+                        gsm.pop();
+                    }
+                }
             );
 
             inputMux = new InputMultiplexer();
@@ -76,6 +92,18 @@ public class GameState extends State {
 
     public LobbyHandler getLobbyHandler() {
         return lobbyHandler;
+    }
+
+    Game getModel() {
+        return model;
+    }
+
+    Stage getHudStage() {
+        return hud != null ? hud.getStage() : null;
+    }
+
+    void setExitPauseWhenMenuCloses(boolean exitPauseWhenMenuCloses) {
+        this.exitPauseWhenMenuCloses = exitPauseWhenMenuCloses;
     }
 
     /**
