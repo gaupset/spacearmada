@@ -1,22 +1,26 @@
 package no.ntnu.tdt4240.project;
 
+import com.badlogic.ashley.core.Engine;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
 
+import no.ntnu.tdt4240.project.state.GameState;
 import no.ntnu.tdt4240.project.state.StateManager;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Main extends ApplicationAdapter {
-    private StateManager sm;
     private SpriteBatch batch;
+    private StateManager sm;
 
     @Override
     public void create() {
-        sm = new StateManager();
         batch = new SpriteBatch();
+        sm = new StateManager();
+        // State entry point
+        sm.push(new GameState(sm, new Engine()));
     }
 
     @Override
@@ -33,7 +37,7 @@ public class Main extends ApplicationAdapter {
 
     @Override
     public void dispose() {
-        sm.dispose();
         batch.dispose();
+        sm.dispose();
     }
 }

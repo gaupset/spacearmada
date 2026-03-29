@@ -12,6 +12,7 @@ public class StateManager {
     }
 
     public void push(State state) {
+        state.setup();
         states.push(state);
     }
 
@@ -20,7 +21,10 @@ public class StateManager {
     }
 
     public void set(State state) {
+        // Pop
         states.pop().dispose();
+        // Push
+        state.setup();
         states.push(state);
     }
 
