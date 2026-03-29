@@ -1,32 +1,39 @@
 package no.ntnu.tdt4240.project;
 
 import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
 
+import no.ntnu.tdt4240.project.state.StateManager;
+
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Main extends ApplicationAdapter {
+    private StateManager sm;
     private SpriteBatch batch;
-    private Texture image;
 
     @Override
     public void create() {
+        sm = new StateManager();
         batch = new SpriteBatch();
-        image = new Texture("libgdx.png");
     }
 
     @Override
     public void render() {
-        ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
-        batch.begin();
-        batch.draw(image, 140, 210);
-        batch.end();
+        ScreenUtils.clear(Color.BLACK);
+        sm.update(Gdx.graphics.getDeltaTime());
+        sm.render(batch);
+    }
+
+    @Override
+    public void resize(int width, int height) {
+        sm.resize(width, height);
     }
 
     @Override
     public void dispose() {
+        sm.dispose();
         batch.dispose();
-        image.dispose();
     }
 }
