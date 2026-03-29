@@ -3,9 +3,6 @@ package no.ntnu.tdt4240.project.state;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.utils.viewport.ExtendViewport;
-
-import no.ntnu.tdt4240.project.AppConfig;
 
 public class GameState extends State {
     private Engine engine;
@@ -16,7 +13,6 @@ public class GameState extends State {
 
     @Override
     protected void setup() {
-        stage.setViewport(new ExtendViewport(AppConfig.WIDTH, AppConfig.HEIGHT));
         // TODO Use InputMultiplexer with input system
         Gdx.input.setInputProcessor(stage);
         resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());

@@ -18,6 +18,7 @@ public class StateManager {
 
     public void pop() {
         states.pop().dispose();
+        states.peek().setup();
     }
 
     public void set(State state) {
