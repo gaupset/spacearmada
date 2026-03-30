@@ -84,6 +84,14 @@ public class FirebaseService {
         sendRequest(Net.HttpMethods.DELETE, url, null, callback);
     }
 
+    public void callGameHandler(String lobbyId, String lobbyUserId, String action, final FirebaseCallback callback) {
+        String url = functionsBaseUrl + "/gameHandler";
+        String body = "{\"lobbyId\":\"" + lobbyId + "\",\"lobbyUserId\":\"" + lobbyUserId + "\""
+            + (action != null ? ",\"action\":\"" + action + "\"" : "")
+            + "}";
+        sendRequest("POST", url, body, callback);
+    }
+
     public void testConnection(final FirebaseCallback callback) {
         sendRequest(Net.HttpMethods.GET, functionsBaseUrl + "/helloWorld", null, callback);
     }

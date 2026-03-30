@@ -7,7 +7,6 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
-import com.badlogic.gdx.utils.JsonWriter;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.invaders99.controller.FirebaseController;
@@ -23,6 +22,8 @@ import com.invaders99.view.GameHud;
 import com.invaders99.view.GameRenderer;
 import com.invaders99.view.GameStateManager;
 
+import java.util.Random;
+
 public class GameState extends State {
     private final MainController main;
     private LobbyHandler lobbyHandler;
@@ -37,6 +38,8 @@ public class GameState extends State {
 
     private float updateTimer = 0;
     private static final float UPDATE_INTERVAL = 2.0f;
+    private float pingTimer = 0;
+    private float pingInterval = 5 + new Random().nextFloat() * 5;
     private boolean inLobby = false;
     /**
      * While {@link PauseState} is shown: when the in-game menu closes ({@code menuOpen} becomes false), also pop the
@@ -134,7 +137,6 @@ public class GameState extends State {
         if (inLobby) {
             updateTimer += dt;
             if (updateTimer >= UPDATE_INTERVAL) {
-                System.out.println("update time!");
                 updateTimer = 0;
                 lobbyHandler.sendHeartbeat();
                 lobbyHandler.updateScore(model.score);
@@ -143,6 +145,12 @@ public class GameState extends State {
                 if (model.isGameOver()) {
                     triggerGameOver();
                 }
+            }
+            pingTimer += dt;
+            if (pingTimer >= pingInterval) {
+                pingTimer = 0;
+                pingInterval = 5 + new Random().nextFloat() * 5;
+                lobbyHandler.pingGameHandler();
             }
         }
     }
@@ -241,35 +249,24 @@ public class GameState extends State {
             @Override
             public void onUpdate(JsonValue lobbyData) {
                 if (lobbyData.getBoolean("gameEnded", false)) {
-                    // go to GameOverScreen
-                    System.out.println("update GameStatus: gameEnded is already true, so I end my game");
                     triggerGameOver();
                     return;
                 }
-                String playerID = firebaseController.lobbyHandler().sessionPlayerID;
+                String playerID = firebaseController.lobbyHandler().lobbyUserID;
 
                 JsonValue players = lobbyData.get("players");
-                if (players == null) {
-                    System.out.println("No players node found");
-                    return;
-                }
+                if (players == null) return;
 
                 JsonValue player = players.get(playerID);
-                if (player == null) {
-                    System.out.println("Player not found: " + playerID);
-                    return;
-                }
+                if (player == null) return;
 
                 JsonValue sabotage = player.get("sabotage");
                 if (sabotage != null) {
                     if (model.gameplayPaused || model.menuOpen) {
                         return;
                     }
-                    System.out.println("Sabotage found: " + sabotage.prettyPrint(JsonWriter.OutputType.json, 0));
                     delSabotage();
                     deploySabotage(sabotage);
-                } else {
-                    System.out.println("No sabotage for player " + playerID);
                 }
             }
 
@@ -282,11 +279,9 @@ public class GameState extends State {
 
     private void triggerGameOver() {
         if (inLobby) {
-            System.out.println("triggerGameOver executed, inLobby");
-            lobbyHandler.setPlayerGameOver(model.score); // checkLobbyState is exc. if success
+            lobbyHandler.setPlayerGameOver(model.score);
             gsm.set(new GameOverState(gsm, main, model.score, firebaseController.lobbyHandler()));
-        }
-        else {
+        } else {
             gsm.set(new GameOverState(gsm, main, model.score));
         }
     }
