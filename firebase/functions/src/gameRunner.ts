@@ -90,6 +90,14 @@ async function handleStartGame(
     .filter(([, p]) => !p.leftLobby)
     .map(([id]) => id);
 
+  if (eligibleIds.length < 2) {
+    return {
+      status: "error",
+      isRunner: false,
+      message: "Need at least 2 players to start",
+    };
+  }
+
   const targets = assignTargets(eligibleIds);
 
   const updates: Record<string, unknown> = {
