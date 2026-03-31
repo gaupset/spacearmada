@@ -3,13 +3,13 @@ package no.ntnu.tdt4240.project.layout;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
-import no.ntnu.tdt4240.project.AppConfig;
+import no.ntnu.tdt4240.project.AppProperties;
 
 public abstract class Layout {
     protected Stage stage;
 
     protected Layout() {
-        stage = new Stage(new ExtendViewport(AppConfig.WIDTH, AppConfig.HEIGHT));
+        stage = new Stage(new ExtendViewport(AppProperties.WIDTH, AppProperties.HEIGHT));
         build();
     }
 
