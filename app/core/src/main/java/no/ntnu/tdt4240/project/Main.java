@@ -20,14 +20,14 @@ public class Main extends ApplicationAdapter {
         batch = new SpriteBatch();
         sm = new StateManager();
         // State entry point
-        sm.push(new GameState(sm, new Engine()));
+        sm.push(new GameState(sm, batch, new Engine()));
     }
 
     @Override
     public void render() {
         ScreenUtils.clear(Color.BLACK);
         sm.update(Gdx.graphics.getDeltaTime());
-        sm.render(batch);
+        sm.render();
     }
 
     @Override

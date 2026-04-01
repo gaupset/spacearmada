@@ -1,7 +1,5 @@
 package no.ntnu.tdt4240.project.state;
 
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-
 import java.util.Stack;
 
 public class StateManager {
@@ -33,8 +31,8 @@ public class StateManager {
         states.peek().update(dt);
     }
 
-    public void render(SpriteBatch sb) {
-        states.peek().render(sb);
+    public void render() {
+        states.peek().render();
     }
 
     public void resize(int width, int height) {
