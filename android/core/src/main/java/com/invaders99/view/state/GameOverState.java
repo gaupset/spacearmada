@@ -70,6 +70,7 @@ public class GameOverState extends State {
     }
 
     private void startLobbyStatusPolling() {
+        // Poll lobby status every 2s for score display
         Timer.schedule(new Timer.Task() {
             @Override
             public void run() {
@@ -87,6 +88,18 @@ public class GameOverState extends State {
                 }
             }
         }, 0, 2f);
+
+        // Ping game handler every 7s to keep runner alive for lobby cleanup
+        Timer.schedule(new Timer.Task() {
+            @Override
+            public void run() {
+                if (lobbyHandler != null && lobbyHandler.getLobbyID() != null) {
+                    lobbyHandler.pingGameHandler();
+                } else {
+                    this.cancel();
+                }
+            }
+        }, 5f, 7f);
     }
 
     private void updateScoresTable(JsonValue lobbyData) {

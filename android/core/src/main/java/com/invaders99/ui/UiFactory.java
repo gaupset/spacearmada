@@ -74,6 +74,12 @@ public class UiFactory {
         buttonStyle.fontColor = new Color(theme.primary);
         buttonStyle.overFontColor = new Color(1f, 0.2f, 0.6f, 1f);  // hot pink on hover
         buttonStyle.downFontColor = new Color(1f, 0.4f, 0.7f, 1f);  // lighter pink on press
+        buttonStyle.disabled = createBorderedDrawable(
+            theme.buttonIdle, new Color(theme.border.r, theme.border.g, theme.border.b, 0.3f),
+            (int) Theme.BUTTON_WIDTH, (int) Theme.BUTTON_HEIGHT,
+            (int) Theme.BORDER_THICKNESS
+        );
+        buttonStyle.disabledFontColor = new Color(theme.primary.r, theme.primary.g, theme.primary.b, 0.3f);
         skin.add("default", buttonStyle);
 
         // TextField style
