@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
@@ -14,6 +15,7 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.invaders99.controller.MainController;
 import com.invaders99.controller.state.MenuController;
+import com.invaders99.service.ScoreService;
 import com.invaders99.ui.SpaceButton;
 import com.invaders99.util.Assets;
 import com.invaders99.util.Theme;
@@ -56,6 +58,13 @@ public class MenuState extends State {
         Image logo = new Image(new TextureRegionDrawable(assets.getLogoCrop()));
         logo.setScaling(Scaling.fit);
         root.add(logo).expandX().fillX().height(VIEWPORT_MIN_HEIGHT / 3f).padTop(20f).row();
+
+        // High Score Display
+        int highScore = ScoreService.getInstance().getHighScore();
+        Label highLabel = new Label("PERSONAL HIGH SCORE: " + highScore,
+                new Label.LabelStyle(assets.getDefaultFont(), Color.GOLD));
+        highLabel.setFontScale(0.6f);
+        root.add(highLabel).padBottom(10f).row();
 
         Table buttons = new Table();
         String[] buttonLabels = {"DEV GAME", "LOBBY", "LOGIN", "SIGNUP", "SETTINGS"};

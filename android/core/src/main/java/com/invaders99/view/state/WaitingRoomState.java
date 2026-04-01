@@ -24,7 +24,9 @@ import com.invaders99.util.Assets;
 import com.invaders99.util.Theme;
 import com.invaders99.view.GameStateManager;
 
-public class LobbyState extends State {
+import java.util.Random;
+
+public class WaitingRoomState extends State {
     private final MainController main;
     private final FirebaseController firebaseController;
     private Stage stage;
@@ -32,10 +34,13 @@ public class LobbyState extends State {
     private Label playerCountLabel;
     private float updateTimer = 0;
     private static final float UPDATE_INTERVAL = 2.0f;
+    private float pingTimer = 0;
+    private float pingInterval = 5 + new Random().nextFloat() * 5;
+    private SpaceButton startBtn;
     private boolean inLobby = false;
     private boolean isHost = false;
 
-    public LobbyState(GameStateManager gsm, MainController main) {
+    public WaitingRoomState(GameStateManager gsm, MainController main) {
         super(gsm);
         this.main = main;
         this.firebaseController = new FirebaseController();
@@ -169,14 +174,16 @@ public class LobbyState extends State {
         root.add(playerCountLabel).pad(10).row();
 
         if (isHost) {
-            SpaceButton startBtn = new SpaceButton("START GAME");
+            startBtn = new SpaceButton("START GAME");
+            startBtn.setDisabled(true);
             startBtn.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
+                    if (startBtn.isDisabled()) return;
                     firebaseController.startGame(new LobbyHandler.LobbyCallback() {
                         @Override
                         public void onSuccess(String response) {
-                            gsm.set(new GameState(gsm, main));
+                            gsm.set(new GameState(gsm, main, firebaseController));
                         }
                         @Override
                         public void onFailure(String error) {
@@ -194,9 +201,10 @@ public class LobbyState extends State {
         leaveBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                firebaseController.leaveLobby(isHost, new LobbyHandler.LobbyCallback() {
+                firebaseController.leaveLobby(new LobbyHandler.LobbyCallback() {
                     @Override
                     public void onSuccess(String success) {
+                        inLobby = false;
                         showMainOptions();
                     }
 
@@ -215,11 +223,18 @@ public class LobbyState extends State {
         firebaseController.getLobbyStatus(new LobbyHandler.LobbyStatusCallback() {
             @Override
             public void onUpdate(JsonValue lobbyData) {
-                if (lobbyData.has("players")) {
-                    playerCountLabel.setText("Players: " + lobbyData.get("players").size);
-                }
-                if (lobbyData.getBoolean("gamestarted", false)) {
-                    gsm.set(new GameState(gsm, main));
+                if (inLobby) {
+                    if (lobbyData.has("players")) {
+                        int count = lobbyData.get("players").size;
+                        playerCountLabel.setText("Players: " + count);
+                        if (startBtn != null) {
+                            startBtn.setDisabled(count < 2);
+                        }
+                    }
+                    if (lobbyData.getBoolean("gameStarted", false)) {
+                        inLobby = false;
+                        gsm.set(new GameState(gsm, main, firebaseController));
+                    }
                 }
             }
 
@@ -237,7 +252,14 @@ public class LobbyState extends State {
             updateTimer += dt;
             if (updateTimer >= UPDATE_INTERVAL) {
                 updateTimer = 0;
+                firebaseController.lobbyHandler().sendHeartbeat();
                 updateLobbyStatus();
+            }
+            pingTimer += dt;
+            if (pingTimer >= pingInterval) {
+                pingTimer = 0;
+                pingInterval = 5 + new Random().nextFloat() * 5;
+                firebaseController.pingGameHandler();
             }
         }
         stage.act(dt);
