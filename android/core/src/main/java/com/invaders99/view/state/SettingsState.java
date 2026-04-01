@@ -28,9 +28,7 @@ public class SettingsState extends State {
 
     private final MainController main;
     private Stage stage;
-    private FirebaseTestWidget functionsWidget;
-    private FirebaseTestWidget firestoreWidget;
-    private FirebaseTestWidget databaseWidget;
+    private boolean showingFirebase = false;
 
     public SettingsState(GameStateManager gsm, MainController main) {
         super(gsm);
@@ -42,64 +40,126 @@ public class SettingsState extends State {
         stage = new Stage(new ExtendViewport(VIEWPORT_MIN_WIDTH, VIEWPORT_MIN_HEIGHT));
         Gdx.input.setInputProcessor(stage);
         buildLayout();
-        functionsWidget.autoTest();
-        firestoreWidget.autoTest();
-        databaseWidget.autoTest();
     }
 
     private void buildLayout() {
+        stage.clear();
         Table root = new Table();
         root.setFillParent(true);
         root.center();
+        stage.addActor(root);
 
         UiFactory ui = UiFactory.getInstance();
         AudioService audio = AudioService.getInstance();
 
-        Label titleLabel = new Label("SETTINGS", ui.getSkin());
-        titleLabel.setFontScale(FONT_SCALE_TITLE);
-        root.add(titleLabel).center().padBottom(40f).row();
+        if (!showingFirebase) {
+            // Main settings
 
-        root.add(new Label("MUSIC VOLUME", ui.getSkin(), "secondary")).padBottom(5f).row();
-        Slider musicSlider = new Slider(0f, 1f, 0.05f, false, ui.getSkin());
-        musicSlider.setValue(audio.getMusicVolume());
-        musicSlider.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                audio.setMusicVolume(musicSlider.getValue());
-            }
-        });
-        root.add(musicSlider).width(Theme.BUTTON_WIDTH).padBottom(20f).row();
+            // Title
+            Label titleLabel = new Label("SETTINGS", ui.getSkin());
+            titleLabel.setFontScale(FONT_SCALE_TITLE);
+            root.add(titleLabel).center().padBottom(40f).row();
 
-        root.add(new Label("SOUND VOLUME", ui.getSkin(), "secondary")).padBottom(5f).row();
-        Slider soundSlider = new Slider(0f, 1f, 0.05f, false, ui.getSkin());
-        soundSlider.setValue(audio.getSoundVolume());
-        soundSlider.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                audio.setSoundVolume(soundSlider.getValue());
-            }
-        });
-        root.add(soundSlider).width(Theme.BUTTON_WIDTH).padBottom(40f).row();
+            // Music
+            root.add(new Label("MUSIC VOLUME", ui.getSkin(), "secondary")).padBottom(5f).row();
+            Slider musicSlider = new Slider(0f, 1f, 0.05f, false, ui.getSkin());
+            musicSlider.setValue(audio.getMusicVolume());
+            musicSlider.addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    audio.setMusicVolume(musicSlider.getValue());
+                }
+            });
+            root.add(musicSlider).width(Theme.BUTTON_WIDTH).padBottom(20f).row();
 
-        functionsWidget = new FirebaseTestWidget("CLOUD FUNCTIONS", FirebaseTestWidget.SERVICE_FUNCTIONS);
-        root.add(functionsWidget).width(Theme.BUTTON_WIDTH).padBottom(BUTTON_SPACING).row();
+            // Sound
+            root.add(new Label("SOUND VOLUME", ui.getSkin(), "secondary")).padBottom(5f).row();
+            Slider soundSlider = new Slider(0f, 1f, 0.05f, false, ui.getSkin());
+            soundSlider.setValue(audio.getSoundVolume());
+            soundSlider.addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    audio.setSoundVolume(soundSlider.getValue());
+                }
+            });
+            root.add(soundSlider).width(Theme.BUTTON_WIDTH).padBottom(40f).row();
 
-        firestoreWidget = new FirebaseTestWidget("FIRESTORE", FirebaseTestWidget.SERVICE_FIRESTORE);
-        root.add(firestoreWidget).width(Theme.BUTTON_WIDTH).padBottom(BUTTON_SPACING).row();
+            // Firebase Tests button
+            SpaceButton firebaseBtn = new SpaceButton("FIREBASE TESTS");
+            firebaseBtn.addListener(new ClickListener() {
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    showingFirebase = true;
+                    buildLayout();
+                }
+            });
+            root.add(firebaseBtn)
+                .width(Theme.BUTTON_WIDTH)
+                .height(Theme.BUTTON_HEIGHT)
+                .padBottom(BUTTON_SPACING)
+                .row();
 
-        databaseWidget = new FirebaseTestWidget("REALTIME DATABASE", FirebaseTestWidget.SERVICE_DATABASE);
-        root.add(databaseWidget).width(Theme.BUTTON_WIDTH).padBottom(BUTTON_SPACING).row();
+            // Back button to Home
+            SpaceButton backButton = new SpaceButton("BACK");
+            backButton.addListener(new ClickListener() {
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    gsm.set(new MenuState(gsm, main));
+                }
+            });
+            root.add(backButton)
+                .width(Theme.BUTTON_WIDTH)
+                .height(Theme.BUTTON_HEIGHT)
+                .row();
 
-        SpaceButton backButton = new SpaceButton("BACK");
-        backButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                gsm.set(new MenuState(gsm, main));
-            }
-        });
-        root.add(backButton).width(Theme.BUTTON_WIDTH).height(Theme.BUTTON_HEIGHT).padTop(BUTTON_SPACING).row();
+        } else {
+            // Firebase Tests
 
-        stage.addActor(root);
+            Label titleLabel = new Label("FIREBASE TESTS", ui.getSkin());
+            titleLabel.setFontScale(FONT_SCALE_TITLE);
+            root.add(titleLabel)
+                .center()
+                .padBottom(30f)
+                .row();
+
+            FirebaseTestWidget functionsWidget = new FirebaseTestWidget("CLOUD FUNCTIONS", FirebaseTestWidget.SERVICE_FUNCTIONS);
+            root.add(functionsWidget)
+                .width(Theme.BUTTON_WIDTH)
+                .padBottom(BUTTON_SPACING)
+                .row();
+
+            FirebaseTestWidget firestoreWidget = new FirebaseTestWidget("FIRESTORE", FirebaseTestWidget.SERVICE_FIRESTORE);
+            root.add(firestoreWidget)
+                .width(Theme.BUTTON_WIDTH)
+                .padBottom(BUTTON_SPACING)
+                .row();
+
+            FirebaseTestWidget databaseWidget = new FirebaseTestWidget("REALTIME DATABASE", FirebaseTestWidget.SERVICE_DATABASE);
+            root.add(databaseWidget)
+                .width(Theme.BUTTON_WIDTH)
+                .padBottom(BUTTON_SPACING)
+                .row();
+
+            // Run tests
+            functionsWidget.autoTest();
+            firestoreWidget.autoTest();
+            databaseWidget.autoTest();
+
+            // Back button to main settings menu
+            SpaceButton backButton = new SpaceButton("BACK");
+            backButton.addListener(new ClickListener() {
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    showingFirebase = false;
+                    buildLayout();
+                }
+            });
+            root.add(backButton)
+                .width(Theme.BUTTON_WIDTH)
+                .height(Theme.BUTTON_HEIGHT)
+                .padTop(10f)
+                .row();
+        }
     }
 
     @Override

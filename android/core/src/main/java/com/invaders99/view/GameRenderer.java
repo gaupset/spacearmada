@@ -66,6 +66,7 @@ public class GameRenderer {
         font.getData().setScale(0.5f);
         font.draw(batch, "SCORE: " + model.score, 10f, Game.WORLD_HEIGHT - 10f);
         font.draw(batch, "LIVES: " + model.lives, 10f, Game.WORLD_HEIGHT - 30f);
+        font.getData().setScale(1f); // reset scale
 
         batch.end();
     }
