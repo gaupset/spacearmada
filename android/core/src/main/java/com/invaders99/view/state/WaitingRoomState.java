@@ -24,6 +24,8 @@ import com.invaders99.util.Assets;
 import com.invaders99.util.Theme;
 import com.invaders99.view.GameStateManager;
 
+import java.util.Random;
+
 public class WaitingRoomState extends State {
     private final MainController main;
     private final FirebaseController firebaseController;
@@ -32,6 +34,9 @@ public class WaitingRoomState extends State {
     private Label playerCountLabel;
     private float updateTimer = 0;
     private static final float UPDATE_INTERVAL = 2.0f;
+    private float pingTimer = 0;
+    private float pingInterval = 5 + new Random().nextFloat() * 5;
+    private SpaceButton startBtn;
     private boolean inLobby = false;
     private boolean isHost = false;
 
@@ -169,10 +174,12 @@ public class WaitingRoomState extends State {
         root.add(playerCountLabel).pad(10).row();
 
         if (isHost) {
-            SpaceButton startBtn = new SpaceButton("START GAME");
+            startBtn = new SpaceButton("START GAME");
+            startBtn.setDisabled(true);
             startBtn.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
+                    if (startBtn.isDisabled()) return;
                     firebaseController.startGame(new LobbyHandler.LobbyCallback() {
                         @Override
                         public void onSuccess(String response) {
@@ -194,7 +201,7 @@ public class WaitingRoomState extends State {
         leaveBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                firebaseController.leaveLobby(isHost, new LobbyHandler.LobbyCallback() {
+                firebaseController.leaveLobby(new LobbyHandler.LobbyCallback() {
                     @Override
                     public void onSuccess(String success) {
                         inLobby = false;
@@ -218,7 +225,11 @@ public class WaitingRoomState extends State {
             public void onUpdate(JsonValue lobbyData) {
                 if (inLobby) {
                     if (lobbyData.has("players")) {
-                        playerCountLabel.setText("Players: " + lobbyData.get("players").size);
+                        int count = lobbyData.get("players").size;
+                        playerCountLabel.setText("Players: " + count);
+                        if (startBtn != null) {
+                            startBtn.setDisabled(count < 2);
+                        }
                     }
                     if (lobbyData.getBoolean("gameStarted", false)) {
                         inLobby = false;
@@ -243,6 +254,12 @@ public class WaitingRoomState extends State {
                 updateTimer = 0;
                 firebaseController.lobbyHandler().sendHeartbeat();
                 updateLobbyStatus();
+            }
+            pingTimer += dt;
+            if (pingTimer >= pingInterval) {
+                pingTimer = 0;
+                pingInterval = 5 + new Random().nextFloat() * 5;
+                firebaseController.pingGameHandler();
             }
         }
         stage.act(dt);
