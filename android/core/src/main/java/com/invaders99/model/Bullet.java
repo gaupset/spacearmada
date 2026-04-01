@@ -3,8 +3,8 @@ package com.invaders99.model;
 import com.badlogic.gdx.math.Rectangle;
 
 public class Bullet {
-    public static final float WIDTH = 4f;
-    public static final float HEIGHT = 12f;
+    public static final float WIDTH = 60f;
+    public static final float HEIGHT = 60f;
     public static final float SPEED = 300f;
     public static final float ENEMY_SPEED = 150f;
 
@@ -25,7 +25,16 @@ public class Bullet {
     }
 
     public Rectangle getBounds() {
-        bounds.set(x - WIDTH / 2f, y - HEIGHT / 2f, WIDTH, HEIGHT);
+        float hitboxWidth = WIDTH * 0.3f;   // narrower
+        float hitboxHeight = HEIGHT * 0.1f; // slightly shorter
+
+        bounds.set(
+            x - hitboxWidth / 2f,
+            y - hitboxHeight / 2f,
+            hitboxWidth,
+            hitboxHeight
+        );
+
         return bounds;
     }
 }

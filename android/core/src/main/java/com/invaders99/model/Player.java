@@ -3,9 +3,8 @@ package com.invaders99.model;
 import com.badlogic.gdx.math.Rectangle;
 
 public class Player {
-    public static final float WIDTH = 32f;
-    public static final float HEIGHT = 24f;
-
+    public static final float WIDTH = 80f;
+    public static final float HEIGHT = 80f;
     public float x;
     public float y;
 
