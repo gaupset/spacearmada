@@ -1,0 +1,43 @@
+package no.ntnu.tdt4240.project;
+
+import com.badlogic.ashley.core.Engine;
+import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.utils.ScreenUtils;
+
+import no.ntnu.tdt4240.project.state.GameState;
+import no.ntnu.tdt4240.project.state.StateManager;
+
+/** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
+public class Main extends ApplicationAdapter {
+    private SpriteBatch batch;
+    private StateManager sm;
+
+    @Override
+    public void create() {
+        batch = new SpriteBatch();
+        sm = new StateManager();
+        // State entry point
+        sm.push(new GameState(sm, batch, new Engine()));
+    }
+
+    @Override
+    public void render() {
+        ScreenUtils.clear(Color.BLACK);
+        sm.update(Gdx.graphics.getDeltaTime());
+        sm.render();
+    }
+
+    @Override
+    public void resize(int width, int height) {
+        sm.resize(width, height);
+    }
+
+    @Override
+    public void dispose() {
+        batch.dispose();
+        sm.dispose();
+    }
+}
