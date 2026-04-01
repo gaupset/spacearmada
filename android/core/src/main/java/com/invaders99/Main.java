@@ -1,18 +1,13 @@
 package com.invaders99;
 
-import com.badlogic.gdx.Game;
-import com.invaders99.screen.HomeScreen;
-import com.invaders99.service.AudioService;
-import com.invaders99.service.FirebaseService;
-import com.invaders99.ui.UiFactory;
+import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Gdx;
+import com.invaders99.controller.MainController;
 import com.invaders99.util.AppConfig;
-import com.invaders99.util.Assets;
 
-/** Application entry point. Manages shared resources and screen navigation. */
-public class Main extends Game {
+public class Main extends ApplicationAdapter {
     private final AppConfig config;
-
-    private Assets assets;
+    private MainController mainController;
 
     public Main(AppConfig config) {
         this.config = config;
@@ -20,29 +15,22 @@ public class Main extends Game {
 
     @Override
     public void create() {
-        // Initialize the config
-        AppConfig.init(config);
+        mainController = new MainController(config);
+        mainController.create();
+    }
 
-        // Load assets
-        assets = new Assets();
-        assets.load();
+    @Override
+    public void render() {
+        mainController.render(Gdx.graphics.getDeltaTime());
+    }
 
-        // Initialize Firebase
-        FirebaseService.init();
-        UiFactory.init(assets.getDefaultFont());
-
-        // Start background music
-        AudioService.getInstance().playMusic("elevator_music.mp3", true);
-
-        // Go to home screen
-        setScreen(new HomeScreen(this, assets));
+    @Override
+    public void resize(int width, int height) {
+        mainController.resize(width, height);
     }
 
     @Override
     public void dispose() {
-        super.dispose();
-        UiFactory.getInstance().dispose();
-        if (assets != null) assets.dispose();
-        AudioService.getInstance().stopMusic();
+        mainController.dispose();
     }
 }

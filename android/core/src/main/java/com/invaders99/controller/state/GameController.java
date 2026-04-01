@@ -1,97 +1,88 @@
-package com.invaders99.game.controller;
+package com.invaders99.controller.state;
 
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import com.invaders99.game.model.Bullet;
-import com.invaders99.game.model.Enemy;
-import com.invaders99.game.model.GameModel;
-import com.invaders99.game.model.Player;
+import com.invaders99.controller.WaveController;
+import com.invaders99.model.Bullet;
+import com.invaders99.model.Enemy;
+import com.invaders99.model.Game;
+import com.invaders99.model.Player;
 import com.invaders99.service.AudioService;
 import com.invaders99.util.Assets;
 
 public class GameController extends InputAdapter {
     private static final float SHOOT_INTERVAL = 0.3f;
-    private static final float SPAWN_INTERVAL = 2.0f;
     private static final float INVINCIBLE_DURATION = 1.5f;
-    private static final float ENEMY_SHOOT_INTERVAL = 1.5f;
 
-    private final GameModel model;
+    private final Game model;
     private final Viewport viewport;
     private final Assets assets;
+    private final WaveController waveController;
     private final Vector3 touchPoint = new Vector3();
 
     private float shootTimer;
-    private float spawnTimer;
-    private boolean spawnLeft = true;
     private float invincibleTimer;
-    private float enemyShootTimer;
 
-    public GameController(GameModel model, Viewport viewport, Assets assets) {
+    public GameController(Game model, Viewport viewport, Assets assets, WaveController waveController) {
         this.model = model;
         this.viewport = viewport;
         this.assets = assets;
+        this.waveController = waveController;
     }
 
     public void update(float delta) {
         if (model.isGameOver()) return;
 
-        // Invincibility timer
+        model.updateSabotageTimers(delta);
+        model.updatePauseButtonCooldown(delta);
+        updateInvincibility(delta);
+        autoShoot(delta);
+        waveController.update(delta, model);
+        moveBullets(delta);
+        moveEnemies(delta);
+        checkCollisions();
+        cleanupOffscreen();
+    }
+
+    private void updateInvincibility(float delta) {
         if (model.invincible) {
             invincibleTimer -= delta;
             if (invincibleTimer <= 0) {
                 model.invincible = false;
             }
         }
+    }
 
-        // Auto-shoot
+    private void autoShoot(float delta) {
+        float interval = SHOOT_INTERVAL * model.getPlayerShootIntervalMultiplier();
         shootTimer += delta;
-        if (shootTimer >= SHOOT_INTERVAL) {
-            shootTimer -= SHOOT_INTERVAL;
+        if (shootTimer >= interval) {
+            shootTimer -= interval;
             model.bullets.add(new Bullet(model.player.x, model.player.y + Player.HEIGHT / 2f));
-            // Play laser sound
-            AudioService.getInstance().playSound(assets.getLaserSound());
         }
+    }
 
-        // Spawn enemies
-        spawnTimer += delta;
-        if (spawnTimer >= SPAWN_INTERVAL) {
-            spawnTimer -= SPAWN_INTERVAL;
-            float x;
-            if (spawnLeft) {
-                x = MathUtils.random(30f, 150f);
-            } else {
-                x = MathUtils.random(210f, 330f);
-            }
-            spawnLeft = !spawnLeft;
-            model.enemies.add(new Enemy(x, GameModel.WORLD_HEIGHT + Enemy.HEIGHT));
-        }
-
-        // Enemy shooting
-        enemyShootTimer += delta;
-        if (enemyShootTimer >= ENEMY_SHOOT_INTERVAL && model.enemies.size > 0) {
-            enemyShootTimer = 0;
-            Enemy shooter = model.enemies.random();
-            model.enemyBullets.add(new Bullet(shooter.x, shooter.y - Enemy.HEIGHT / 2f, true));
-        }
-
-        // Move player bullets
+    private void moveBullets(float delta) {
         for (Bullet b : model.bullets) {
             b.y += Bullet.SPEED * delta;
         }
-
-        // Move enemy bullets
+        float sabotageSpeedMul = model.getEnemyVerticalSpeedMultiplier();
         for (Bullet b : model.enemyBullets) {
-            b.y -= Bullet.ENEMY_SPEED * delta;
+            b.y -= Bullet.ENEMY_SPEED * sabotageSpeedMul * delta;
         }
+    }
 
-        // Move enemies
+    private void moveEnemies(float delta) {
+        float speedMul = model.getEnemyVerticalSpeedMultiplier();
         for (Enemy e : model.enemies) {
-            e.y -= Enemy.SPEED * delta;
+            e.y -= Enemy.SPEED * speedMul * delta;
         }
+    }
 
-        // Player bullet vs enemy collisions
+    private void checkCollisions() {
+        // Player bullet vs enemy
         for (int i = model.bullets.size - 1; i >= 0; i--) {
             Bullet b = model.bullets.get(i);
             for (int j = model.enemies.size - 1; j >= 0; j--) {
@@ -100,6 +91,7 @@ public class GameController extends InputAdapter {
                     model.bullets.removeIndex(i);
                     model.enemies.removeIndex(j);
                     model.score++;
+                    AudioService.getInstance().playSound(assets.getLaserSound());
                     break;
                 }
             }
@@ -117,7 +109,7 @@ public class GameController extends InputAdapter {
             }
         }
 
-        // Enemy bullet vs player collision
+        // Enemy bullet vs player
         if (!model.invincible) {
             for (int i = model.enemyBullets.size - 1; i >= 0; i--) {
                 Bullet b = model.enemyBullets.get(i);
@@ -128,22 +120,19 @@ public class GameController extends InputAdapter {
                 }
             }
         }
+    }
 
-        // Remove off-screen player bullets
+    private void cleanupOffscreen() {
         for (int i = model.bullets.size - 1; i >= 0; i--) {
-            if (model.bullets.get(i).y > GameModel.WORLD_HEIGHT + 20f) {
+            if (model.bullets.get(i).y > Game.WORLD_HEIGHT + 20f) {
                 model.bullets.removeIndex(i);
             }
         }
-
-        // Remove off-screen enemy bullets
         for (int i = model.enemyBullets.size - 1; i >= 0; i--) {
             if (model.enemyBullets.get(i).y < -20f) {
                 model.enemyBullets.removeIndex(i);
             }
         }
-
-        // Remove off-screen enemies (costs a life)
         for (int i = model.enemies.size - 1; i >= 0; i--) {
             if (model.enemies.get(i).y < -Enemy.HEIGHT) {
                 model.enemies.removeIndex(i);
@@ -173,6 +162,6 @@ public class GameController extends InputAdapter {
     private void movePlayerTo(int screenX, int screenY) {
         touchPoint.set(screenX, screenY, 0);
         viewport.unproject(touchPoint);
-        model.player.x = MathUtils.clamp(touchPoint.x, Player.WIDTH / 2f, GameModel.WORLD_WIDTH - Player.WIDTH / 2f);
+        model.player.x = MathUtils.clamp(touchPoint.x, Player.WIDTH / 2f, Game.WORLD_WIDTH - Player.WIDTH / 2f);
     }
 }

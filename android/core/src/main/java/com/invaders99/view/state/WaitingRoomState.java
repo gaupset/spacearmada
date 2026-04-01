@@ -1,8 +1,8 @@
-package com.invaders99.screen;
+package com.invaders99.view.state;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -11,21 +11,22 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.utils.JsonValue;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.JsonValue;
-import com.invaders99.Main;
+import com.invaders99.controller.FirebaseController;
+import com.invaders99.controller.MainController;
 import com.invaders99.service.LobbyHandler;
 import com.invaders99.ui.SpaceButton;
 import com.invaders99.ui.UiFactory;
 import com.invaders99.util.Assets;
 import com.invaders99.util.Theme;
+import com.invaders99.view.GameStateManager;
 
-public class LobbyScreen implements Screen {
-    private final Main game;
-    private final Assets assets;
-    private final LobbyHandler lobbyHandler;
+public class WaitingRoomState extends State {
+    private final MainController main;
+    private final FirebaseController firebaseController;
     private Stage stage;
     private Table root;
     private Label playerCountLabel;
@@ -34,11 +35,10 @@ public class LobbyScreen implements Screen {
     private boolean inLobby = false;
     private boolean isHost = false;
 
-    public LobbyScreen(Main game, Assets assets) {
-        this.game = game;
-        this.assets = assets;
-        this.lobbyHandler = new LobbyHandler();
-        this.lobbyHandler.setPlayerID("player_" + (System.currentTimeMillis() % 10000));
+    public WaitingRoomState(GameStateManager gsm, MainController main) {
+        super(gsm);
+        this.main = main;
+        this.firebaseController = new FirebaseController();
     }
 
     @Override
@@ -46,6 +46,7 @@ public class LobbyScreen implements Screen {
         stage = new Stage(new ExtendViewport(360, 640));
         Gdx.input.setInputProcessor(stage);
 
+        Assets assets = main.getAssets();
         Image bg = new Image(new TextureRegionDrawable(assets.getStarsBackground()));
         bg.setScaling(Scaling.fill);
         bg.setFillParent(true);
@@ -55,7 +56,7 @@ public class LobbyScreen implements Screen {
         root.setFillParent(true);
         stage.addActor(root);
 
-        lobbyHandler.checkDatabaseFormat(new LobbyHandler.LobbyCallback() {
+        firebaseController.checkDatabaseFormat(new LobbyHandler.LobbyCallback() {
             @Override
             public void onSuccess(String response) {
                 showMainOptions();
@@ -93,7 +94,7 @@ public class LobbyScreen implements Screen {
         backBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                game.setScreen(new HomeScreen(game, assets));
+                gsm.set(new MenuState(gsm, main));
             }
         });
 
@@ -103,7 +104,7 @@ public class LobbyScreen implements Screen {
     }
 
     private void createLobby() {
-        lobbyHandler.createLobby(new LobbyHandler.LobbyCallback() {
+        firebaseController.createLobby(new LobbyHandler.LobbyCallback() {
             @Override
             public void onSuccess(String response) {
                 isHost = true;
@@ -144,7 +145,7 @@ public class LobbyScreen implements Screen {
     }
 
     private void joinLobby(String code) {
-        lobbyHandler.joinLobby(code, new LobbyHandler.LobbyCallback() {
+        firebaseController.joinLobby(code, new LobbyHandler.LobbyCallback() {
             @Override
             public void onSuccess(String response) {
                 isHost = false;
@@ -162,7 +163,7 @@ public class LobbyScreen implements Screen {
         root.clear();
         inLobby = true;
         this.isHost = host;
-        root.add(new Label("LOBBY: " + lobbyHandler.getLobbyID(), UiFactory.getInstance().getSkin())).pad(20).row();
+        root.add(new Label("LOBBY: " + firebaseController.getLobbyID(), UiFactory.getInstance().getSkin())).pad(20).row();
 
         playerCountLabel = new Label("Players: ...", UiFactory.getInstance().getSkin());
         root.add(playerCountLabel).pad(10).row();
@@ -172,10 +173,10 @@ public class LobbyScreen implements Screen {
             startBtn.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
-                    lobbyHandler.startGame(new LobbyHandler.LobbyCallback() {
+                    firebaseController.startGame(new LobbyHandler.LobbyCallback() {
                         @Override
                         public void onSuccess(String response) {
-                            game.setScreen(new GameScreen(game, assets));
+                            gsm.set(new GameState(gsm, main, firebaseController));
                         }
                         @Override
                         public void onFailure(String error) {
@@ -193,9 +194,10 @@ public class LobbyScreen implements Screen {
         leaveBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                lobbyHandler.leaveLobby(isHost, new LobbyHandler.LobbyCallback() {
+                firebaseController.leaveLobby(isHost, new LobbyHandler.LobbyCallback() {
                     @Override
                     public void onSuccess(String success) {
+                        inLobby = false;
                         showMainOptions();
                     }
 
@@ -211,14 +213,17 @@ public class LobbyScreen implements Screen {
     }
 
     private void updateLobbyStatus() {
-        lobbyHandler.getLobbyStatus(new LobbyHandler.LobbyStatusCallback() {
+        firebaseController.getLobbyStatus(new LobbyHandler.LobbyStatusCallback() {
             @Override
             public void onUpdate(JsonValue lobbyData) {
-                if (lobbyData.has("players")) {
-                    playerCountLabel.setText("Players: " + lobbyData.get("players").size);
-                }
-                if (lobbyData.getBoolean("gamestarted", false)) {
-                    game.setScreen(new GameScreen(game, assets));
+                if (inLobby) {
+                    if (lobbyData.has("players")) {
+                        playerCountLabel.setText("Players: " + lobbyData.get("players").size);
+                    }
+                    if (lobbyData.getBoolean("gameStarted", false)) {
+                        inLobby = false;
+                        gsm.set(new GameState(gsm, main, firebaseController));
+                    }
                 }
             }
 
@@ -231,24 +236,36 @@ public class LobbyScreen implements Screen {
     }
 
     @Override
-    public void render(float delta) {
-        ScreenUtils.clear(Color.BLACK);
-
+    public void update(float dt) {
         if (inLobby) {
-            updateTimer += delta;
+            updateTimer += dt;
             if (updateTimer >= UPDATE_INTERVAL) {
                 updateTimer = 0;
+                firebaseController.lobbyHandler().sendHeartbeat();
                 updateLobbyStatus();
             }
         }
+        stage.act(dt);
+    }
 
-        stage.act(delta);
+    @Override
+    public void render(SpriteBatch batch) {
+        ScreenUtils.clear(Color.BLACK);
         stage.draw();
     }
 
-    @Override public void resize(int width, int height) { stage.getViewport().update(width, height, true); }
-    @Override public void pause() {}
-    @Override public void resume() {}
-    @Override public void hide() { inLobby = false; }
-    @Override public void dispose() { if (stage != null) stage.dispose(); }
+    @Override
+    public void resize(int width, int height) {
+        stage.getViewport().update(width, height, true);
+    }
+
+    @Override
+    public void hide() {
+        inLobby = false;
+    }
+
+    @Override
+    public void dispose() {
+        if (stage != null) stage.dispose();
+    }
 }

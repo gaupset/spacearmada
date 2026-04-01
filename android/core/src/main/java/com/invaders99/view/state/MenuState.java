@@ -1,62 +1,71 @@
-package com.invaders99.screen;
+package com.invaders99.view.state;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.invaders99.Main;
+import com.invaders99.controller.MainController;
+import com.invaders99.controller.state.MenuController;
+import com.invaders99.service.ScoreService;
 import com.invaders99.ui.SpaceButton;
 import com.invaders99.util.Assets;
 import com.invaders99.util.Theme;
+import com.invaders99.view.GameStateManager;
 
-public class HomeScreen implements Screen {
+public class MenuState extends State {
     private static final float VIEWPORT_MIN_WIDTH = 360f;
     private static final float VIEWPORT_MIN_HEIGHT = 640f;
     private static final float BUTTON_SPACING = 16f;
-    private final Main game;
-    private final Assets assets;
 
+    private final MainController main;
+    private final MenuController menuController;
     private Stage stage;
 
-    public HomeScreen(Main game, Assets assets) {
-        this.game = game;
-        this.assets = assets;
+    public MenuState(GameStateManager gsm, MainController main) {
+        super(gsm);
+        this.main = main;
+        this.menuController = new MenuController(gsm, main);
     }
 
     @Override
     public void show() {
         stage = new Stage(new ExtendViewport(VIEWPORT_MIN_WIDTH, VIEWPORT_MIN_HEIGHT));
         Gdx.input.setInputProcessor(stage);
-
         buildLayout();
     }
 
     private void buildLayout() {
-        // Stars background
+        Assets assets = main.getAssets();
+
         Image bg = new Image(new TextureRegionDrawable(assets.getStarsBackground()));
         bg.setScaling(Scaling.fill);
         bg.setFillParent(true);
         stage.addActor(bg);
 
-        // Content overlay
         Table root = new Table();
         root.setFillParent(true);
         root.top();
 
-        // Logo in top 1/3
         Image logo = new Image(new TextureRegionDrawable(assets.getLogoCrop()));
         logo.setScaling(Scaling.fit);
         root.add(logo).expandX().fillX().height(VIEWPORT_MIN_HEIGHT / 3f).padTop(20f).row();
 
-        // Buttons bottom 2/3
+        // High Score Display
+        int highScore = ScoreService.getInstance().getHighScore();
+        Label highLabel = new Label("PERSONAL HIGH SCORE: " + highScore,
+                new Label.LabelStyle(assets.getDefaultFont(), Color.GOLD));
+        highLabel.setFontScale(0.6f);
+        root.add(highLabel).padBottom(10f).row();
+
         Table buttons = new Table();
         String[] buttonLabels = {"DEV GAME", "LOBBY", "LOGIN", "SIGNUP", "SETTINGS"};
         for (String label : buttonLabels) {
@@ -65,21 +74,21 @@ public class HomeScreen implements Screen {
                 button.addListener(new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
-                        game.setScreen(new LobbyScreen(game, assets));
+                        menuController.onLobbyClicked();
                     }
                 });
             } else if ("SETTINGS".equals(label)) {
                 button.addListener(new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
-                        game.setScreen(new SettingsScreen(game, assets));
+                        menuController.onSettingsClicked();
                     }
                 });
             } else if ("DEV GAME".equals(label)) {
                 button.addListener(new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
-                        game.setScreen(new GameScreen(game, assets));
+                        menuController.onPlayClicked();
                     }
                 });
             }
@@ -95,27 +104,19 @@ public class HomeScreen implements Screen {
     }
 
     @Override
-    public void render(float delta) {
-        ScreenUtils.clear(Color.BLACK);
+    public void update(float dt) {
+        stage.act(dt);
+    }
 
-        stage.act(delta);
+    @Override
+    public void render(SpriteBatch batch) {
+        ScreenUtils.clear(Color.BLACK);
         stage.draw();
     }
 
     @Override
     public void resize(int width, int height) {
         stage.getViewport().update(width, height, true);
-    }
-
-    @Override
-    public void pause() {}
-
-    @Override
-    public void resume() {}
-
-    @Override
-    public void hide() {
-        dispose();
     }
 
     @Override
