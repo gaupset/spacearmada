@@ -4,6 +4,7 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
+import no.ntnu.tdt4240.project.config.Player;
 import no.ntnu.tdt4240.project.engine.entity.EntityAssembler;
 import no.ntnu.tdt4240.project.engine.system.BounceSystem;
 import no.ntnu.tdt4240.project.engine.system.BoundSystem;
@@ -20,8 +21,7 @@ import no.ntnu.tdt4240.project.event.EventListener;
 import no.ntnu.tdt4240.project.GameInputProcessor;
 import no.ntnu.tdt4240.project.layout.GameLayout;
 import no.ntnu.tdt4240.project.layout.Layout;
-import no.ntnu.tdt4240.project.util.Assets;
-import no.ntnu.tdt4240.project.util.PlayerAssembler;
+import no.ntnu.tdt4240.project.Assets;
 
 public class GameState extends State implements EventListener {
     private Engine engine;
@@ -44,8 +44,9 @@ public class GameState extends State implements EventListener {
         // Assets
         assets.load();
         // Player
+        Player player = new Player(assets.player);
         EntityAssembler assembler = new EntityAssembler(engine);
-        assembler.createPlayer(PlayerAssembler.create(assets.player));
+        assembler.createPlayer(player.create());
         // Systems
         engine.addSystem(new InputSystem(input, 0));
         engine.addSystem(new MovementSystem(0));
