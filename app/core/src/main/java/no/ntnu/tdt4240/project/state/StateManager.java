@@ -1,5 +1,7 @@
 package no.ntnu.tdt4240.project.state;
 
+import com.badlogic.gdx.Gdx;
+
 import java.util.Stack;
 
 public class StateManager {
@@ -11,6 +13,7 @@ public class StateManager {
 
     public void push(State state) {
         state.setup();
+        state.resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         states.push(state);
     }
 

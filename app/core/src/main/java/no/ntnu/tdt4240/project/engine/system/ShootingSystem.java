@@ -14,10 +14,12 @@ import no.ntnu.tdt4240.project.engine.component.PositionComponent;
 import no.ntnu.tdt4240.project.engine.component.ShooterComponent;
 import no.ntnu.tdt4240.project.engine.entity.EntityAssembler;
 import no.ntnu.tdt4240.project.data.NonPlayable;
+import no.ntnu.tdt4240.project.service.AudioService;
 
 public class ShootingSystem extends IntervalIteratingSystem {
     private final PlayerBullet playerBullet;
     private final EnemyBullet enemyBullet;
+    private final Assets assets;
 
     private PositionComponent pos;
     private DimensionComponent dim;
@@ -27,6 +29,7 @@ public class ShootingSystem extends IntervalIteratingSystem {
         super(Family.all(
             ShooterComponent.class
         ).get(), interval, priority);
+        this.assets = assets;
         this.playerBullet = new PlayerBullet(assets.playerBullet);
         this.enemyBullet = new EnemyBullet(assets.enemyBullet);
     }
@@ -49,6 +52,7 @@ public class ShootingSystem extends IntervalIteratingSystem {
         if (isPlayer) {
             config = playerBullet.create(posData, dimData);
             assembler.createPlayerBullet(config);
+            AudioService.getInstance().playSound(assets.getLaserSound());
         }
         else {
             config = enemyBullet.create(posData, dimData);

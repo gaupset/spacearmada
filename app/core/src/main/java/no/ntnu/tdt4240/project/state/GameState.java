@@ -1,8 +1,11 @@
 package no.ntnu.tdt4240.project.state;
 
 import com.badlogic.ashley.core.Engine;
+import com.badlogic.ashley.core.EntitySystem;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 
 import no.ntnu.tdt4240.project.config.Player;
 import no.ntnu.tdt4240.project.engine.entity.EntityAssembler;
@@ -22,18 +25,24 @@ import no.ntnu.tdt4240.project.GameInputProcessor;
 import no.ntnu.tdt4240.project.layout.GameLayout;
 import no.ntnu.tdt4240.project.layout.Layout;
 import no.ntnu.tdt4240.project.Assets;
+import no.ntnu.tdt4240.project.ui.view.GameHud;
+import no.ntnu.tdt4240.project.ui.UiFactory;
 
 public class GameState extends State implements EventListener {
     private Engine engine;
     private Layout layout;
-    private Assets assets;
     private boolean gameOver;
+    private GameHud hud;
+    private boolean menuOpen = false;
+    private boolean gameplayPaused = false;
+    private boolean isSabotageVisible = false;
+    private InputMultiplexer inputMux;
+    private boolean exitPauseWhenMenuCloses = false;
 
-    public GameState(StateManager sm, SpriteBatch batch, Engine engine) {
-        super(sm, batch);
+    public GameState(StateManager sm, SpriteBatch batch, Engine engine, Assets assets) {
+        super(sm, batch, assets);
         this.engine = engine;
         this.layout = new GameLayout();
-        this.assets = new Assets();
         this.gameOver = false;
     }
 
@@ -41,8 +50,7 @@ public class GameState extends State implements EventListener {
     public void setup() {
         // Input
         GameInputProcessor input = new GameInputProcessor();
-        // Assets
-        assets.load();
+
         // Player
         Player player = new Player(assets.player);
         EntityAssembler assembler = new EntityAssembler(engine);
@@ -58,8 +66,27 @@ public class GameState extends State implements EventListener {
         engine.addSystem(new ShootingSystem(assets, 1, 4));
         engine.addSystem(new RemovalSystem(5));
         engine.addSystem(new RenderSystem(batch, 6));
-        // TODO Use InputMultiplexer with input system
-        Gdx.input.setInputProcessor(input);
+
+        hud = new GameHud(
+            isOpen -> this.menuOpen = isOpen,
+            () -> sm.set(new MenuState(sm, batch, assets)),
+            () -> sm.push(new PauseState(sm, batch, assets, this)),
+            () -> System.out.println("Sabotage clicked!"),
+            () -> {
+                this.menuOpen = false;
+                if (exitPauseWhenMenuCloses) {
+                    exitPauseWhenMenuCloses = false;
+                    sm.pop();
+                    resumeInput();
+                }
+            }
+        );
+
+        InputMultiplexer inputMux = new InputMultiplexer();
+        inputMux.addProcessor(hud.getStage());
+        inputMux.addProcessor(input);
+        Gdx.input.setInputProcessor(inputMux);
+
         resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
 
@@ -76,20 +103,56 @@ public class GameState extends State implements EventListener {
         }
     }
 
+    Stage getHudStage() {
+        return hud != null ? hud.getStage() : null;
+    }
+
+    void setExitPauseWhenMenuCloses(boolean exitPauseWhenMenuCloses) {
+        this.exitPauseWhenMenuCloses = exitPauseWhenMenuCloses;
+    }
+
+    public boolean isMenuOpen() {
+        return menuOpen;
+    }
+
+    public void setMenuOpen(boolean open) {
+        this.menuOpen = open;
+    }
+
+    public void renderFrozen() {
+        engine.update(0f);
+        hud.act(0f, false, isSabotageVisible, true);
+        hud.draw();
+    }
+
+    public void resumeInput() {
+        Gdx.input.setInputProcessor(inputMux);
+    }
+
     @Override
     public void update(float dt) {
+        boolean isRunning = !gameOver;
+
+        for (EntitySystem system : engine.getSystems()) {
+            if(!(system instanceof RenderSystem)) {
+                system.setProcessing(isRunning);
+            }
+        }
         engine.update(dt);
+
         if (gameOver) {
             engine.removeAllEntities();
             engine.removeAllSystems();
 
-            sm.set(new GameState(sm, batch, engine));
+            sm.set(new GameState(sm, batch, engine, assets));
         }
     }
 
     @Override
     public void render() {
-        // layout.render()
+        // Background is now drawn in Main.render()
+        hud.act(Gdx.graphics.getDeltaTime(), menuOpen, isSabotageVisible, true);
+        hud.draw();
     }
 
     @Override
@@ -99,6 +162,6 @@ public class GameState extends State implements EventListener {
 
     @Override
     public void dispose() {
-        assets.dispose();
+        // Assets are now managed by Main
     }
 }
