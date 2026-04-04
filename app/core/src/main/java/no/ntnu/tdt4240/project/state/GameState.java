@@ -1,14 +1,21 @@
 package no.ntnu.tdt4240.project.state;
 
 import com.badlogic.ashley.core.Engine;
+import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.EntitySystem;
+import com.badlogic.ashley.core.Family;
+import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 
 import no.ntnu.tdt4240.project.config.Player;
+import no.ntnu.tdt4240.project.engine.component.HealthComponent;
+import no.ntnu.tdt4240.project.engine.component.PlayerComponent;
+import no.ntnu.tdt4240.project.engine.component.ScoreComponent;
 import no.ntnu.tdt4240.project.engine.entity.EntityAssembler;
+import no.ntnu.tdt4240.project.engine.Mapper;
 import no.ntnu.tdt4240.project.engine.system.BounceSystem;
 import no.ntnu.tdt4240.project.engine.system.BoundSystem;
 import no.ntnu.tdt4240.project.engine.system.CollisionSystem;
@@ -29,6 +36,9 @@ import no.ntnu.tdt4240.project.ui.view.GameHud;
 import no.ntnu.tdt4240.project.ui.UiFactory;
 
 public class GameState extends State implements EventListener {
+    // Pause button cooldown duration (prevents continuous pausing to cheat)
+    private static final float PAUSE_BUTTON_COOLDOWN_SECONDS = 10f;
+
     private Engine engine;
     private Layout layout;
     private boolean gameOver;
@@ -38,6 +48,8 @@ public class GameState extends State implements EventListener {
     private boolean isSabotageVisible = false;
     private InputMultiplexer inputMux;
     private boolean exitPauseWhenMenuCloses = false;
+    private boolean hasBeenSetup = false; // Track if setup has been called to prevent duplication
+    private float pauseButtonCooldownRemaining = 0f; // Time remaining until pause button is enabled again
 
     public GameState(StateManager sm, SpriteBatch batch, Engine engine, Assets assets) {
         super(sm, batch, assets);
@@ -48,6 +60,12 @@ public class GameState extends State implements EventListener {
 
     @Override
     public void setup() {
+        // Only run setup once to prevent player/system duplication when returning from pause
+        if (hasBeenSetup) {
+            return;
+        }
+        hasBeenSetup = true;
+
         // Input
         GameInputProcessor input = new GameInputProcessor();
 
@@ -87,7 +105,25 @@ public class GameState extends State implements EventListener {
         inputMux.addProcessor(input);
         Gdx.input.setInputProcessor(inputMux);
 
+        // Store inputMux for later restoration
+        this.inputMux = inputMux;
+
         resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+    }
+
+    @Override
+    protected void show() {
+        // Restore input processor when returning from pause
+        // This ensures the HUD and game input work properly after pausing
+        if (inputMux != null) {
+            Gdx.input.setInputProcessor(inputMux);
+        }
+    }
+
+    @Override
+    protected void hide() {
+        // Called when leaving this state (e.g., going to pause)
+        // No cleanup needed here as we want to preserve state
     }
 
     private EventSystem eventSystem() {
@@ -101,6 +137,48 @@ public class GameState extends State implements EventListener {
         if (event == Event.LOSE) {
             gameOver = true;
         }
+    }
+
+    /**
+     * Gets the player's current score from the ECS engine
+     * Searches for the player entity and retrieves its ScoreComponent
+     * @return Current score value, or 0 if player entity not found
+     */
+    private int getPlayerScore() {
+        // Get all entities with PlayerComponent and ScoreComponent
+        ImmutableArray<Entity> playerEntities = engine.getEntitiesFor(
+            Family.all(PlayerComponent.class, ScoreComponent.class).get()
+        );
+
+        // If player entity exists, return its score
+        if (playerEntities.size() > 0) {
+            Entity player = playerEntities.first();
+            ScoreComponent scoreComp = Mapper.score.get(player);
+            return scoreComp != null ? scoreComp.score : 0;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Gets the player's current health from the ECS engine
+     * Searches for the player entity and retrieves its HealthComponent
+     * @return Current health value, or 0 if player entity not found
+     */
+    private int getPlayerHealth() {
+        // Get all entities with PlayerComponent and HealthComponent
+        ImmutableArray<Entity> playerEntities = engine.getEntitiesFor(
+            Family.all(PlayerComponent.class, HealthComponent.class).get()
+        );
+
+        // If player entity exists, return its health
+        if (playerEntities.size() > 0) {
+            Entity player = playerEntities.first();
+            HealthComponent healthComp = Mapper.health.get(player);
+            return healthComp != null ? healthComp.health : 0;
+        }
+
+        return 0;
     }
 
     Stage getHudStage() {
@@ -119,9 +197,29 @@ public class GameState extends State implements EventListener {
         this.menuOpen = open;
     }
 
+    /**
+     * Starts the pause button cooldown after returning from pause.
+     * This prevents players from continuously pausing to gain an unfair advantage.
+     */
+    void startPauseButtonCooldown() {
+        pauseButtonCooldownRemaining = PAUSE_BUTTON_COOLDOWN_SECONDS;
+    }
+
+    /**
+     * Checks if the pause button is ready to be clicked (cooldown has expired).
+     * @return true if pause button can be clicked, false if still on cooldown
+     */
+    private boolean isPauseButtonReady() {
+        return pauseButtonCooldownRemaining <= 0f;
+    }
+
     public void renderFrozen() {
         engine.update(0f);
-        hud.act(0f, false, isSabotageVisible, true);
+        // Get current player stats for frozen render
+        int score = getPlayerScore();
+        int health = getPlayerHealth();
+        boolean pauseReady = isPauseButtonReady();
+        hud.act(0f, false, isSabotageVisible, pauseReady, score, health);
         hud.draw();
     }
 
@@ -140,18 +238,36 @@ public class GameState extends State implements EventListener {
         }
         engine.update(dt);
 
+        // Update pause button cooldown timer while game is running
+        if (isRunning && pauseButtonCooldownRemaining > 0f) {
+            pauseButtonCooldownRemaining -= dt;
+            if (pauseButtonCooldownRemaining <= 0f) {
+                pauseButtonCooldownRemaining = 0f;
+            }
+        }
+
+        // When game is over, transition to GameOverState
         if (gameOver) {
+            // Get final score before cleaning up entities
+            int finalScore = getPlayerScore();
+
+            // Clean up all entities and systems
             engine.removeAllEntities();
             engine.removeAllSystems();
 
-            sm.set(new GameState(sm, batch, engine, assets));
+            // Transition to GameOverState with final score
+            sm.set(new GameOverState(sm, batch, assets, engine, finalScore));
         }
     }
 
     @Override
     public void render() {
         // Background is now drawn in Main.render()
-        hud.act(Gdx.graphics.getDeltaTime(), menuOpen, isSabotageVisible, true);
+        // Get current player stats for HUD display
+        int score = getPlayerScore();
+        int health = getPlayerHealth();
+        boolean pauseReady = isPauseButtonReady();
+        hud.act(Gdx.graphics.getDeltaTime(), menuOpen, isSabotageVisible, pauseReady, score, health);
         hud.draw();
     }
 

@@ -25,6 +25,10 @@ import no.ntnu.tdt4240.project.ui.UiFactory;
 import no.ntnu.tdt4240.project.util.Theme;
 
 public class PauseState extends State {
+
+    private static final float VIEWPORT_MIN_WIDTH = 360f;
+    private static final float VIEWPORT_MIN_HEIGHT = 640f;
+
     private static final float PAUSE_DURATION = 10f;
     /** Same as {@link SabotageState} RETURN row. */
     private static final float RETURN_BUTTON_HEIGHT = 36f;
@@ -43,23 +47,32 @@ public class PauseState extends State {
 
     @Override
     protected void setup() {
-        stage = new Stage(new ExtendViewport(360, 640));
+        stage = new Stage(new ExtendViewport(VIEWPORT_MIN_WIDTH, VIEWPORT_MIN_HEIGHT));
         pauseTimeLeft = PAUSE_DURATION;
 
+        // Create semi-transparent overlay texture
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         pixmap.setColor(new Color(0f, 0f, 0f, 0.6f));
         pixmap.fill();
         overlayTex = new Texture(pixmap);
         pixmap.dispose();
 
+        buildLayout();
+    }
+
+    @Override
+    protected void show() {
+        // Set gameplay as paused
         gameState.setExitPauseWhenMenuCloses(true);
 
-        com.badlogic.gdx.InputMultiplexer mux = new com.badlogic.gdx.InputMultiplexer();
-        mux.addProcessor(gameState.getHudStage());
-        mux.addProcessor(stage);
-        Gdx.input.setInputProcessor(stage);
+        // Set up input multiplexer to handle both HUD and pause overlay
+        syncInputProcessor();
+    }
 
-        buildLayout();
+    @Override
+    protected void hide() {
+        // Clean up pause state when leaving
+        gameState.setExitPauseWhenMenuCloses(false);
     }
 
     /**
@@ -95,36 +108,14 @@ public class PauseState extends State {
         timerLabel.setFontScale(1.2f);
         center.add(timerLabel).padBottom(20f).row();
 
-        TextButton menuButton = new TextButton("MENU", skin);
-        menuButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
-        menuButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                gameState.setMenuOpen(!gameState.isMenuOpen());
-            }
-        });
-        center.add(menuButton)
-            .width(Theme.BUTTON_WIDTH)
-            .height(Theme.BUTTON_HEIGHT)
-            .padBottom(24f)
-            .row();
-
-//        if (gameState.getLobbyHandler() != null) {
-//            SpaceButton sabotageButton = new SpaceButton("SABOTAGE");
-//            sabotageButton.addListener(new ClickListener() {
-//                @Override
-//                public void clicked(InputEvent event, float x, float y) {
-//                    gameState.getLobbyHandler().setSabotage(new Sabotage());
-//                }
-//            });
-//            center.add(sabotageButton).padBottom(20f).row();
-//        }
-
+        // Return button - unpause and resume game
         TextButton returnButton = new TextButton("RETURN", skin);
         returnButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
         returnButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                // Start pause button cooldown to prevent continuous pausing
+                gameState.startPauseButtonCooldown();
                 sm.pop();
             }
         });
@@ -144,15 +135,21 @@ public class PauseState extends State {
 
     @Override
     public void update(float dt) {
-        pauseTimeLeft -= dt;
-        if (timerLabel != null) {
-            timerLabel.setText(formatUnpauseTimer(pauseTimeLeft));
+        // Only update timer and stage when menu is not open
+        // When menu is open, the GameHud handles all input
+        if (!gameState.isMenuOpen()) {
+            pauseTimeLeft -= dt;
+            if (timerLabel != null) {
+                timerLabel.setText(formatUnpauseTimer(pauseTimeLeft));
+            }
+            if (pauseTimeLeft <= 0f) {
+                // Start pause button cooldown to prevent continuous pausing
+                gameState.startPauseButtonCooldown();
+                sm.pop();
+                return;
+            }
+            stage.act(dt);
         }
-        if (pauseTimeLeft <= 0f) {
-            sm.pop();
-            return;
-        }
-        stage.act(dt);
     }
 
     @Override
@@ -174,7 +171,7 @@ public class PauseState extends State {
 
     @Override
     public void dispose() {
-        gameState.setExitPauseWhenMenuCloses(false);
+        // Cleanup resources
         if (stage != null) stage.dispose();
         if (overlayTex != null) overlayTex.dispose();
     }

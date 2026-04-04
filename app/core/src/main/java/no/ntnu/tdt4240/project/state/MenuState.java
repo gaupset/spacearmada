@@ -23,7 +23,8 @@ import no.ntnu.tdt4240.project.ui.UiFactory;
 public class MenuState extends State {
     private static final float VIEWPORT_MIN_WIDTH = 360f;
     private static final float VIEWPORT_MIN_HEIGHT = 640f;
-    private static final float BUTTON_SPACING = 16f;
+    // Reduced spacing to fit all buttons on screen (was 16f)
+    private static final float BUTTON_SPACING = 8f;
 
     private Stage stage;
 
@@ -45,39 +46,63 @@ public class MenuState extends State {
 
         Image logo = new Image(new TextureRegionDrawable(assets.getLogoCrop()));
         logo.setScaling(Scaling.fit);
-        root.add(logo).expandX().fillX().height(VIEWPORT_MIN_HEIGHT / 3f).padTop(20f).row();
+        root.add(logo).expandX().fillX().height(VIEWPORT_MIN_HEIGHT / 4f).padTop(10f).row();
 
         // High Score Display
         int highScore = ScoreService.getInstance().getHighScore();
         Label highLabel = new Label("PERSONAL HIGH SCORE: " + highScore,
             new Label.LabelStyle(assets.getDefaultFont(), Color.GOLD));
         highLabel.setFontScale(0.6f);
-        root.add(highLabel).padBottom(10f).row();
+        root.add(highLabel).padBottom(5f).row();
 
+        // Menu buttons table
         Table buttons = new Table();
-        String[] buttonLabels = {"DEV GAME", "LOBBY", "LOGIN", "SIGNUP", "SETTINGS"};
+        String[] buttonLabels = { "PLAY", "LOBBY", "LEADERBOARD", "HISTORY", "TUTORIAL", "SETTINGS" };
         for (String label : buttonLabels) {
             SpaceButton button = new SpaceButton(label);
-            if ("LOBBY".equals(label)) {
+
+            if (label.equals("PLAY")) {
                 button.addListener(new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
-//                        menuController.onLobbyClicked();
+                        // Create new engine and start game
+                        Engine engine = new Engine();
+                        sm.set(new GameState(sm, batch, engine, assets));
                     }
                 });
-            } else if ("SETTINGS".equals(label)) {
+            } else if (label.equals("LOBBY")) {
+                button.addListener(new ClickListener() {
+                    @Override
+                    public void clicked(InputEvent event, float x, float y) {
+                        sm.set(new WaitingRoomState(sm, batch, assets));
+                    }
+                });
+            } else if (label.equals("LEADERBOARD")) {
+                button.addListener(new ClickListener() {
+                    @Override
+                    public void clicked(InputEvent event, float x, float y) {
+                        sm.set(new LeaderboardState(sm, batch, assets));
+                    }
+                });
+            } else if (label.equals("HISTORY")) {
+                button.addListener(new ClickListener() {
+                    @Override
+                    public void clicked(InputEvent event, float x, float y) {
+                        sm.set(new HistoryState(sm, batch, assets));
+                    }
+                });
+            } else if (label.equals("TUTORIAL")) {
+                button.addListener(new ClickListener() {
+                    @Override
+                    public void clicked(InputEvent event, float x, float y) {
+                        sm.set(new TutorialState(sm, batch, assets));
+                    }
+                });
+            } else if (label.equals("SETTINGS")) {
                 button.addListener(new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
                         sm.set(new SettingsState(sm, batch, assets));
-                    }
-                });
-            } else if ("DEV GAME".equals(label)) {
-                button.addListener(new ClickListener() {
-                    @Override
-                    public void clicked(InputEvent event, float x, float y) {
-                        Engine engine = new Engine();
-                        sm.set(new GameState(sm, batch, engine, assets));
                     }
                 });
             }
@@ -86,6 +111,7 @@ public class MenuState extends State {
                 .height(Theme.BUTTON_HEIGHT)
                 .padBottom(BUTTON_SPACING)
                 .row();
+
         }
         root.add(buttons).expand().center().row();
 
