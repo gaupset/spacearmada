@@ -9,13 +9,15 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
 
-import no.ntnu.tdt4240.project.AppProperties;
+import java.util.HashMap;
+import java.util.Map;
+
 import no.ntnu.tdt4240.project.config.Player;
+import no.ntnu.tdt4240.project.model.Sabotage;
 import no.ntnu.tdt4240.project.engine.component.HealthComponent;
 import no.ntnu.tdt4240.project.engine.component.PlayerComponent;
+import no.ntnu.tdt4240.project.engine.component.SabotageEffectsComponent;
 import no.ntnu.tdt4240.project.engine.component.ScoreComponent;
 import no.ntnu.tdt4240.project.engine.entity.EntityAssembler;
 import no.ntnu.tdt4240.project.engine.Mapper;
@@ -27,6 +29,7 @@ import no.ntnu.tdt4240.project.engine.system.InputSystem;
 import no.ntnu.tdt4240.project.engine.system.MovementSystem;
 import no.ntnu.tdt4240.project.engine.system.RemovalSystem;
 import no.ntnu.tdt4240.project.engine.system.RenderSystem;
+import no.ntnu.tdt4240.project.engine.system.SabotageEffectSystem;
 import no.ntnu.tdt4240.project.engine.system.ShootingSystem;
 import no.ntnu.tdt4240.project.engine.system.SpawnSystem;
 import no.ntnu.tdt4240.project.event.Event;
@@ -35,16 +38,19 @@ import no.ntnu.tdt4240.project.GameInputProcessor;
 import no.ntnu.tdt4240.project.layout.GameLayout;
 import no.ntnu.tdt4240.project.layout.Layout;
 import no.ntnu.tdt4240.project.Assets;
+import no.ntnu.tdt4240.project.sabotage.strategy.DoubleAliensSabotageStrategy;
+import no.ntnu.tdt4240.project.sabotage.strategy.EnemySpeedSabotageStrategy;
+import no.ntnu.tdt4240.project.sabotage.strategy.HalfPlayerBulletsSabotageStrategy;
+import no.ntnu.tdt4240.project.sabotage.strategy.SabotageStrategy;
 import no.ntnu.tdt4240.project.ui.view.GameHud;
-import no.ntnu.tdt4240.project.ui.UiFactory;
 
 public class GameState extends State implements EventListener {
     // Pause button cooldown duration (prevents continuous pausing to cheat)
     private static final float PAUSE_BUTTON_COOLDOWN_SECONDS = 10f;
+    private static final int SABOTAGE_SCORE_THRESHOLD = 10;
 
     private Engine engine;
     private Layout layout;
-    private Viewport viewport;
     private boolean gameOver;
     private GameHud hud;
     private boolean menuOpen = false;
@@ -54,13 +60,17 @@ public class GameState extends State implements EventListener {
     private boolean exitPauseWhenMenuCloses = false;
     private boolean hasBeenSetup = false; // Track if setup has been called to prevent duplication
     private float pauseButtonCooldownRemaining = 0f; // Time remaining until pause button is enabled again
+    private int sabotagesUsedCount = 0;
+    private final Map<String, SabotageStrategy> sabotageStrategies = new HashMap<>();
 
     public GameState(StateManager sm, SpriteBatch batch, Engine engine, Assets assets) {
         super(sm, batch, assets);
         this.engine = engine;
         this.layout = new GameLayout();
-        this.viewport = new ExtendViewport(AppProperties.WIDTH, AppProperties.HEIGHT);
         this.gameOver = false;
+        sabotageStrategies.put(Sabotage.TYPE_ENEMY_SPEED, new EnemySpeedSabotageStrategy());
+        sabotageStrategies.put(Sabotage.TYPE_HALF_PLAYER_BULLETS, new HalfPlayerBulletsSabotageStrategy());
+        sabotageStrategies.put(Sabotage.TYPE_DOUBLE_ALIENS, new DoubleAliensSabotageStrategy());
     }
 
     @Override
@@ -78,6 +88,9 @@ public class GameState extends State implements EventListener {
         Player player = new Player(assets.player);
         EntityAssembler assembler = new EntityAssembler(engine);
         assembler.createPlayer(player.create());
+        Entity sabotageEffectsEntity = new Entity();
+        sabotageEffectsEntity.add(new SabotageEffectsComponent());
+        engine.addEntity(sabotageEffectsEntity);
         // Systems
         engine.addSystem(new InputSystem(input, 0));
         engine.addSystem(new MovementSystem(0));
@@ -86,15 +99,20 @@ public class GameState extends State implements EventListener {
         engine.addSystem(new CollisionSystem(2));
         engine.addSystem(eventSystem());
         engine.addSystem(new SpawnSystem(assets, 3, 4));
-        engine.addSystem(new ShootingSystem(assets, 1, 4));
+        engine.addSystem(new ShootingSystem(assets, 4));
+        engine.addSystem(new SabotageEffectSystem(4));
         engine.addSystem(new RemovalSystem(5));
-        engine.addSystem(new RenderSystem(batch, viewport, 6));
+        engine.addSystem(new RenderSystem(batch, 6));
 
         hud = new GameHud(
             isOpen -> this.menuOpen = isOpen,
             () -> sm.set(new MenuState(sm, batch, assets)),
             () -> sm.push(new PauseState(sm, batch, assets, this)),
-            () -> System.out.println("Sabotage clicked!"),
+            () -> {
+                if (getAvailableSabotageCount() > 0) {
+                    sm.push(new SabotageState(sm, batch, assets, this));
+                }
+            },
             () -> {
                 this.menuOpen = false;
                 if (exitPauseWhenMenuCloses) {
@@ -223,6 +241,7 @@ public class GameState extends State implements EventListener {
         // Get current player stats for frozen render
         int score = getPlayerScore();
         int health = getPlayerHealth();
+        isSabotageVisible = getAvailableSabotageCount() > 0;
         boolean pauseReady = isPauseButtonReady();
         hud.act(0f, false, isSabotageVisible, pauseReady, score, health);
         hud.draw();
@@ -234,11 +253,23 @@ public class GameState extends State implements EventListener {
 
     @Override
     public void update(float dt) {
+        updateGameplay(dt);
+    }
+
+    public void updateGameplay(float dt) {
+        if (gameplayPaused) {
+            return;
+        }
+
         boolean isRunning = !gameOver;
 
         for (EntitySystem system : engine.getSystems()) {
             if(!(system instanceof RenderSystem)) {
-                system.setProcessing(isRunning);
+                boolean shouldProcess = isRunning;
+                if (system instanceof SabotageEffectSystem && menuOpen) {
+                    shouldProcess = false;
+                }
+                system.setProcessing(shouldProcess);
             }
         }
         engine.update(dt);
@@ -271,15 +302,56 @@ public class GameState extends State implements EventListener {
         // Get current player stats for HUD display
         int score = getPlayerScore();
         int health = getPlayerHealth();
+        isSabotageVisible = getAvailableSabotageCount() > 0;
         boolean pauseReady = isPauseButtonReady();
         hud.act(Gdx.graphics.getDeltaTime(), menuOpen, isSabotageVisible, pauseReady, score, health);
         hud.draw();
     }
 
+    public int getAvailableSabotageCount() {
+        int earned = getPlayerScore() / SABOTAGE_SCORE_THRESHOLD;
+        return Math.max(0, earned - sabotagesUsedCount);
+    }
+
+    public void recordSabotageUse() {
+        sabotagesUsedCount += 1;
+    }
+
+    public InputMultiplexer getInputMultiplexer() {
+        return inputMux;
+    }
+
+    public void setGameplayPaused(boolean gameplayPaused) {
+        this.gameplayPaused = gameplayPaused;
+    }
+
+    public void restoreDefaultInput() {
+        resumeInput();
+    }
+
+    public void applySabotage(String type, float durationSeconds) {
+        SabotageEffectsComponent effects = getSabotageEffectsComponent();
+        if (effects == null) {
+            return;
+        }
+        SabotageStrategy strategy = sabotageStrategies.get(type);
+        if (strategy == null) {
+            strategy = sabotageStrategies.get(Sabotage.TYPE_ENEMY_SPEED);
+        }
+        strategy.apply(effects, durationSeconds);
+    }
+
+    private SabotageEffectsComponent getSabotageEffectsComponent() {
+        ImmutableArray<Entity> entities = engine.getEntitiesFor(Family.all(SabotageEffectsComponent.class).get());
+        if (entities.size() == 0) {
+            return null;
+        }
+        return Mapper.sabotageEffects.get(entities.first());
+    }
+
     @Override
     public void resize(int width, int height) {
         layout.resize(width, height);
-        viewport.update(width, height, true);
     }
 
     @Override

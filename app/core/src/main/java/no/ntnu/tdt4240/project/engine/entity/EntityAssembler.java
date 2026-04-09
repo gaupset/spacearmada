@@ -26,6 +26,8 @@ import no.ntnu.tdt4240.project.data.Playable;
  * to remove it when not used anymore).</p>
  */
 public class EntityAssembler {
+    private static final float PLAYER_SHOOT_BASE_INTERVAL = 1f;
+    private static final float ENEMY_SHOOT_BASE_INTERVAL = 1f;
     private Engine engine;
 
     public EntityAssembler(Engine engine) {
@@ -79,7 +81,7 @@ public class EntityAssembler {
         e.add(new HealthComponent(data.health));
         e.add(new ScoreComponent());
         e.add(new PlayerComponent());
-        e.add(new ShooterComponent());
+        e.add(new ShooterComponent(PLAYER_SHOOT_BASE_INTERVAL));
         // Add to engine
         engine.addEntity(e);
     }
@@ -155,7 +157,7 @@ public class EntityAssembler {
         // Components
         e.add(new VelocityComponent(data.vel.x, data.vel.y));
         e.add(new EnemyComponent());
-        e.add(new ShooterComponent());
+        e.add(new ShooterComponent(ENEMY_SHOOT_BASE_INTERVAL));
         // Add to engine
         engine.addEntity(e);
     }

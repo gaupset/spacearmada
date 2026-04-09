@@ -10,7 +10,7 @@ import no.ntnu.tdt4240.project.data.NonPlayable;
  * objects. All attributes controlling player bullet behavior are included here.
  */
 public class PlayerBullet extends Bullet {
-    private static final float PLAYER_BULLET_VEL = 500f;
+    private static final float PLAYER_BULLET_VEL = 300f;
 
     public PlayerBullet(Texture tex) {
         super(tex);
