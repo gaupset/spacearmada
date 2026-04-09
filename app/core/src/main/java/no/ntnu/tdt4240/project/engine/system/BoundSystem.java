@@ -102,9 +102,9 @@ public class BoundSystem extends EntitySystem {
     }
 
     /**
-     * Checks whether the entity is out of the bottom bound.
+     * Checks whether the entity is out of the top bound.
      *
-     * @return True if entity is out of bottom bound or false otherwise
+     * @return True if entity is out of top bound or false otherwise
      */
     private boolean isOutOfTopBound() {
         return pos.y > AppProperties.HEIGHT;
