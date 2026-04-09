@@ -7,6 +7,7 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 
@@ -16,6 +17,7 @@ import no.ntnu.tdt4240.project.engine.component.PlayerComponent;
 import no.ntnu.tdt4240.project.engine.component.ScoreComponent;
 import no.ntnu.tdt4240.project.engine.entity.EntityAssembler;
 import no.ntnu.tdt4240.project.engine.Mapper;
+import no.ntnu.tdt4240.project.engine.system.AnimationSystem;
 import no.ntnu.tdt4240.project.engine.system.BounceSystem;
 import no.ntnu.tdt4240.project.engine.system.BoundSystem;
 import no.ntnu.tdt4240.project.engine.system.CollisionSystem;
@@ -83,7 +85,8 @@ public class GameState extends State implements EventListener {
         engine.addSystem(new SpawnSystem(assets, 3, 4));
         engine.addSystem(new ShootingSystem(assets, 1, 4));
         engine.addSystem(new RemovalSystem(5));
-        engine.addSystem(new RenderSystem(batch, 6));
+        engine.addSystem(new AnimationSystem(1, 6));
+        engine.addSystem(new RenderSystem(batch, 7));
 
         hud = new GameHud(
             isOpen -> this.menuOpen = isOpen,

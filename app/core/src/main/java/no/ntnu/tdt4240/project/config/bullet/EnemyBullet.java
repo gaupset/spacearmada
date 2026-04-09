@@ -1,7 +1,9 @@
 package no.ntnu.tdt4240.project.config.bullet;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.Array;
 
 import no.ntnu.tdt4240.project.data.NonPlayable;
 
@@ -12,7 +14,7 @@ import no.ntnu.tdt4240.project.data.NonPlayable;
 public class EnemyBullet extends Bullet {
     private static final float ENEMY_BULLET_VEL = 300f;
 
-    public EnemyBullet(Texture tex) {
+    public EnemyBullet(Array<TextureRegion> tex) {
         super(tex);
     }
 

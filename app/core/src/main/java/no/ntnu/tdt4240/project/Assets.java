@@ -10,12 +10,14 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
+import com.badlogic.gdx.utils.Array;
 
 public class Assets {
-    public TextureRegion player;
-    public TextureRegion playerBullet;
-    public TextureRegion enemy;
-    public TextureRegion enemyBullet;
+
+    public Array<TextureRegion> player;
+    public Array<TextureRegion> playerBullet;
+    public Array<TextureRegion> enemy;
+    public Array<TextureRegion> enemyBullet;
     private Texture starsBackground;
     private Texture logoCrop;
     private BitmapFont defaultFont;
@@ -31,24 +33,13 @@ public class Assets {
      * Loads and initializes all textures as solid colors using {@link Pixmap}.
      */
     public void load() {
-        // Load sprite sheets and extract first frame
-        Texture playerSheet = new Texture("alien.png");
-        playerSheet.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
-        TextureRegion[][] playerFrames = TextureRegion.split(playerSheet, 32, 32);
-        TextureRegion playerFrame1 = playerFrames[0][0];
-        TextureRegion playerFrame2 = playerFrames.length > 1 ? playerFrames[1][0] : playerFrames[0][0];
+        player = getFrames(new Texture("player.png"), 2);
 
-        Texture bulletSheetTex = new Texture("bullet.png");
-        bulletSheetTex.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
-        TextureRegion[][] bulletFrames = TextureRegion.split(bulletSheetTex, 32, 32);
+        playerBullet = getFrames(new Texture("bullet.png"), 2);
 
-        Texture enemySheetTex = new Texture("enemy.png");
-        enemySheetTex.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
-        TextureRegion[][] enemyFrames = TextureRegion.split(enemySheetTex, 32, 32);
+        enemy = getFrames(new Texture("enemy.png"), 4);
 
-        Texture enemyBulletSheetTex = new Texture("enemy_bullet.png");
-        enemyBulletSheetTex.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
-        TextureRegion[][] enemyBulletFrames = TextureRegion.split(enemyBulletSheetTex, 32, 32);
+        enemyBullet = getFrames(new Texture("enemy_bullet.png"), 2);
 
         starsBackground = new Texture("stars2.jpg");
         starsBackground.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
@@ -66,26 +57,28 @@ public class Assets {
         laserSound = Gdx.audio.newSound(Gdx.files.internal("laser_sound.mp3"));
     }
 
+    private Array<TextureRegion> getFrames(Texture frame, int count) {
+        Array<TextureRegion> frames = new Array<TextureRegion>();
+        int frameWidth = frame.getWidth()/count;
+        for (int i = 0; i < count; i++) {
+            TextureRegion reg = new TextureRegion(
+                frame,
+                i*frameWidth,
+                0,
+                frameWidth,
+                frame.getHeight()
+            );
+
+            frames.add(reg);
+        }
+        return frames;
+
+    }
+
+
     public Texture getStarsBackground() {
         return starsBackground;
     }
-
-    public Texture getPlayer() {
-        return player;
-    }
-
-    public Texture getPlayerBullet() {
-        return playerBullet;
-    }
-
-    public Texture getEnemy() {
-        return enemy;
-    }
-
-    public Texture getEnemyBullet() {
-        return enemyBullet;
-    }
-
     public Texture getLogoCrop() {
         return logoCrop;
     }
@@ -112,10 +105,10 @@ public class Assets {
      */
     public void dispose() {
         // ECS
-        if (player != null) player.dispose();
-        if (playerBullet != null) playerBullet.dispose();
-        if (enemy != null) enemy.dispose();
-        if (enemyBullet != null) enemyBullet.dispose();
+//        if (player != null) player.dispose();
+//        if (bullet != null) bullet.dispose();
+//        if (enemy != null) enemy.dispose();
+//        if (enemyBullet != null) enemyBullet.dispose();
 
         // UI and sound
         if (starsBackground != null) starsBackground.dispose();
