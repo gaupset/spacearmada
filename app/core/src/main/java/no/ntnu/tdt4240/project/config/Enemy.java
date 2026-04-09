@@ -1,6 +1,7 @@
 package no.ntnu.tdt4240.project.config;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 
@@ -16,11 +17,11 @@ public class Enemy {
     private static final float ENEMY_HEIGHT = 20f;
     private static final float ENEMY_VEL = 120f;
 
-    private final Texture tex;
+    private final TextureRegion tex;
 
     private boolean spawnLeft;
 
-    public Enemy(Texture tex) {
+    public Enemy(TextureRegion tex) {
         this.tex = tex;
         this.spawnLeft = true;
     }

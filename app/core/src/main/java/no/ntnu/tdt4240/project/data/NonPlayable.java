@@ -1,6 +1,6 @@
 package no.ntnu.tdt4240.project.data;
 
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 
 /**
@@ -9,7 +9,7 @@ import com.badlogic.gdx.math.Vector2;
 public class NonPlayable extends Base {
     public Vector2 vel;
 
-    public NonPlayable(Vector2 pos, Vector2 vel, Vector2 dim, Texture tex) {
+    public NonPlayable(Vector2 pos, Vector2 vel, Vector2 dim, TextureRegion tex) {
         super(pos, dim, tex);
         this.vel = vel;
     }
