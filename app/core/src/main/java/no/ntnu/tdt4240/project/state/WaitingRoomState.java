@@ -1,118 +1,304 @@
 package no.ntnu.tdt4240.project.state;
 
+import com.badlogic.ashley.core.Engine;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.utils.JsonValue;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
-
 import no.ntnu.tdt4240.project.Assets;
+import no.ntnu.tdt4240.project.service.FirebaseController;
+import no.ntnu.tdt4240.project.service.LobbyService;
 import no.ntnu.tdt4240.project.ui.SpaceButton;
+import no.ntnu.tdt4240.project.ui.UiFactory;
 import no.ntnu.tdt4240.project.util.Theme;
+
+import java.util.Random;
 
 /**
  * WaitingRoomState is the multiplayer lobby screen.
- * Players can create or join lobbies to play together.
- * Currently shows a placeholder "coming soon" message until Firebase is integrated.
+ * Players can create or join lobbies to play together via Firebase.
  */
 public class WaitingRoomState extends State {
     private static final float VIEWPORT_MIN_WIDTH = 360f;
     private static final float VIEWPORT_MIN_HEIGHT = 640f;
+    private static final float UPDATE_INTERVAL = 2.0f;
 
+    private final FirebaseController firebaseController;
     private Stage stage;
+    private Table root;
+    private Label playerCountLabel;
+    private SpaceButton startBtn;
 
-    /**
-     * Constructor for WaitingRoomState
-     * @param sm StateManager for handling state transitions
-     * @param batch SpriteBatch for rendering
-     * @param assets Assets manager for textures and fonts
-     */
+    private float updateTimer = 0;
+    private float pingTimer = 0;
+    private float pingInterval = 5 + new Random().nextFloat() * 5;
+
+    private boolean inLobby = false;
+    private boolean isHost = false;
+
     public WaitingRoomState(StateManager sm, SpriteBatch batch, Assets assets) {
         super(sm, batch, assets);
+        this.firebaseController = new FirebaseController();
     }
 
     @Override
     protected void setup() {
-        // Create stage with viewport for UI rendering
         stage = new Stage(new ExtendViewport(VIEWPORT_MIN_WIDTH, VIEWPORT_MIN_HEIGHT));
         Gdx.input.setInputProcessor(stage);
-        buildLayout();
-    }
 
-    /**
-     * Builds the UI layout for the waiting room / lobby screen
-     */
-    private void buildLayout() {
-        // Background image
         Image bg = new Image(new TextureRegionDrawable(assets.getStarsBackground()));
         bg.setScaling(Scaling.fill);
         bg.setFillParent(true);
         stage.addActor(bg);
 
-        Table root = new Table();
+        root = new Table();
         root.setFillParent(true);
-        root.center();
+        stage.addActor(root);
 
-        // Title label
-        Label title = new Label("LOBBY", new Label.LabelStyle(assets.getDefaultFont(), Theme.CLASSIC.primary));
-        title.setFontScale(1.4f);
-        root.add(title).padBottom(40f).row();
-
-        // Placeholder message
-        Label placeholder = new Label("Coming soon...", new Label.LabelStyle(assets.getDefaultFont(), Theme.CLASSIC.textSecondary));
-        placeholder.setFontScale(1.0f);
-        root.add(placeholder).padBottom(20f).row();
-
-        // Info message
-        Label info = new Label("Firebase integration required for multiplayer", new Label.LabelStyle(assets.getDefaultFont(), Color.GRAY));
-        info.setFontScale(0.6f);
-        root.add(info).padBottom(40f).row();
-
-        // Back button - returns to main menu
-        SpaceButton backBtn = new SpaceButton("BACK");
-        backBtn.addListener(new ClickListener() {
+        firebaseController.checkDatabaseFormat(new LobbyService.LobbyCallback() {
             @Override
-            public void clicked(InputEvent event, float x, float y) {
-                // Navigate back to menu
-                sm.set(new MenuState(sm, batch, assets));
+            public void onSuccess(String response) {
+                showMainOptions();
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Gdx.app.error("Lobby", "DB check failed: " + error);
+                // Even if check fails, allow options for now or show error
+                showMainOptions();
             }
         });
-        root.add(backBtn)
-            .width(Theme.BUTTON_WIDTH)
-            .height(Theme.BUTTON_HEIGHT)
-            .row();
-
-        stage.addActor(root);
     }
 
     @Override
-    public void update(float dt) {
-        // Update stage animations
+    protected void show() {
+        if (stage != null) {
+            Gdx.input.setInputProcessor(stage);
+        }
+    }
+
+    private void showMainOptions() {
+        root.clear();
+        inLobby = false;
+        isHost = false;
+
+        Label title = new Label("MULTIPLAYER", UiFactory.getInstance().getSkin());
+        title.setFontScale(1.4f);
+        root.add(title).padBottom(40f).row();
+
+        SpaceButton createBtn = new SpaceButton("CREATE LOBBY");
+        SpaceButton joinBtn = new SpaceButton("JOIN LOBBY");
+        SpaceButton backBtn = new SpaceButton("BACK");
+
+        createBtn.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                createLobby();
+            }
+        });
+
+        joinBtn.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                showJoinInput();
+            }
+        });
+
+        backBtn.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                sm.set(new MenuState(sm, batch, assets));
+            }
+        });
+
+        root.add(createBtn).width(Theme.BUTTON_WIDTH).height(Theme.BUTTON_HEIGHT).pad(10).row();
+        root.add(joinBtn).width(Theme.BUTTON_WIDTH).height(Theme.BUTTON_HEIGHT).pad(10).row();
+        root.add(backBtn).width(Theme.BUTTON_WIDTH).height(Theme.BUTTON_HEIGHT).pad(10).row();
+    }
+
+    private void createLobby() {
+        firebaseController.createLobby(new LobbyService.LobbyCallback() {
+            @Override
+            public void onSuccess(String response) {
+                isHost = true;
+                showWaitingRoom(true);
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Gdx.app.error("Lobby", "Create failed: " + error);
+            }
+        });
+    }
+
+    private void showJoinInput() {
+        root.clear();
+        final TextField codeField = new TextField("", UiFactory.getInstance().getSkin());
+        SpaceButton confirmBtn = new SpaceButton("JOIN");
+        SpaceButton cancelBtn = new SpaceButton("CANCEL");
+
+        confirmBtn.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                joinLobby(codeField.getText());
+            }
+        });
+
+        cancelBtn.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                showMainOptions();
+            }
+        });
+
+        root.add(new Label("ENTER CODE:", UiFactory.getInstance().getSkin())).pad(10).row();
+        root.add(codeField).width(200).height(40).pad(10).row();
+        root.add(confirmBtn).width(Theme.BUTTON_WIDTH).height(Theme.BUTTON_HEIGHT).pad(10).row();
+        root.add(cancelBtn).width(Theme.BUTTON_WIDTH).height(Theme.BUTTON_HEIGHT).pad(10).row();
+    }
+
+    private void joinLobby(String code) {
+        firebaseController.joinLobby(code, new LobbyService.LobbyCallback() {
+            @Override
+            public void onSuccess(String response) {
+                isHost = false;
+                showWaitingRoom(false);
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Gdx.app.error("Lobby", "Join failed: " + error);
+            }
+        });
+    }
+
+    private void showWaitingRoom(boolean host) {
+        root.clear();
+        inLobby = true;
+        this.isHost = host;
+        root.add(new Label("LOBBY: " + firebaseController.getLobbyID(), UiFactory.getInstance().getSkin())).pad(20).row();
+
+        playerCountLabel = new Label("Players: ...", UiFactory.getInstance().getSkin());
+        root.add(playerCountLabel).pad(10).row();
+
+        if (isHost) {
+            startBtn = new SpaceButton("START GAME");
+            startBtn.setDisabled(true);
+            startBtn.addListener(new ClickListener() {
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    if (startBtn.isDisabled()) return;
+                    firebaseController.startGame(new LobbyService.LobbyCallback() {
+                        @Override
+                        public void onSuccess(String response) {
+                            sm.set(new GameState(sm, batch, new Engine(), assets));
+                        }
+                        @Override
+                        public void onFailure(String error) {
+                            Gdx.app.error("Lobby", "Start failed: " + error);
+                        }
+                    });
+                }
+            });
+            root.add(startBtn).width(Theme.BUTTON_WIDTH).height(Theme.BUTTON_HEIGHT).pad(10).row();
+        } else {
+            root.add(new Label("WAITING FOR HOST...", UiFactory.getInstance().getSkin())).pad(10).row();
+        }
+
+        SpaceButton leaveBtn = new SpaceButton("LEAVE");
+        leaveBtn.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                firebaseController.leaveLobby(new LobbyService.LobbyCallback() {
+                    @Override
+                    public void onSuccess(String success) {
+                        inLobby = false;
+                        showMainOptions();
+                    }
+
+                    @Override
+                    public void onFailure(String error) {
+                        Gdx.app.error("Lobby", "Leave failed: " + error);
+                        showMainOptions();
+                    }
+                });
+            }
+        });
+        root.add(leaveBtn).width(Theme.BUTTON_WIDTH).height(Theme.BUTTON_HEIGHT).pad(10).row();
+    }
+
+    private void updateLobbyStatus() {
+        firebaseController.getLobbyStatus(new LobbyService.LobbyStatusCallback() {
+            @Override
+            public void onUpdate(JsonValue lobbyData) {
+                if (inLobby) {
+                    if (lobbyData.has("players")) {
+                        int count = lobbyData.get("players").size;
+                        playerCountLabel.setText("Players: " + count);
+                        if (startBtn != null) {
+                            startBtn.setDisabled(count < 2);
+                        }
+                    }
+                    if (lobbyData.getBoolean("gameStarted", false)) {
+                        inLobby = false;
+                        sm.set(new GameState(sm, batch, new Engine(), assets));
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Gdx.app.error("Lobby", "Status update failed: " + error);
+                showMainOptions();
+            }
+        });
+    }
+
+    @Override
+    protected void update(float dt) {
+        if (inLobby) {
+            updateTimer += dt;
+            if (updateTimer >= UPDATE_INTERVAL) {
+                updateTimer = 0;
+                firebaseController.lobbyHandler().sendHeartbeat();
+                updateLobbyStatus();
+            }
+            pingTimer += dt;
+            if (pingTimer >= pingInterval) {
+                pingTimer = 0;
+                pingInterval = 5 + new Random().nextFloat() * 5;
+                firebaseController.pingGameHandler();
+            }
+        }
         stage.act(dt);
     }
 
     @Override
     protected void render() {
-        // Draw the UI
         stage.draw();
     }
 
     @Override
-    public void resize(int width, int height) {
-        // Update viewport on screen resize
+    protected void resize(int width, int height) {
         stage.getViewport().update(width, height, true);
     }
 
     @Override
+    protected void hide() {
+        inLobby = false;
+    }
+
+    @Override
     public void dispose() {
-        // Cleanup resources
         if (stage != null) stage.dispose();
     }
 }

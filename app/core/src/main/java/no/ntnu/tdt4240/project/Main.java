@@ -7,9 +7,11 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 import no.ntnu.tdt4240.project.service.AudioService;
+import no.ntnu.tdt4240.project.service.FirebaseService;
 import no.ntnu.tdt4240.project.state.StateManager;
 import no.ntnu.tdt4240.project.state.MenuState;
 import no.ntnu.tdt4240.project.ui.UiFactory;
+import no.ntnu.tdt4240.project.util.AppConfig;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Main extends ApplicationAdapter {
@@ -19,6 +21,17 @@ public class Main extends ApplicationAdapter {
 
     @Override
     public void create() {
+        // Initialize Firebase with default config if not already initialized
+        if (AppConfig.get() == null) {
+            AppConfig.init(new AppConfig(
+                "https://us-central1-spacearmada-12345.cloudfunctions.net",
+                "https://firestore.googleapis.com",
+                "https://spacearmada-12345-default-rtdb.firebaseio.com",
+                "spacearmada-12345"
+            ));
+        }
+        FirebaseService.init();
+
         batch = new SpriteBatch();
 
         assets = new Assets();

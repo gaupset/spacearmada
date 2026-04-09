@@ -1,6 +1,4 @@
-package no.ntnu.tdt4240.project.data;
-
-import no.ntnu.tdt4240.project.model.Sabotage;
+package no.ntnu.tdt4240.project.model;
 
 public class LobbyPlayer {
     public String actualName;

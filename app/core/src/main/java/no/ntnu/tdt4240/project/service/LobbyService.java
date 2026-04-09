@@ -5,12 +5,12 @@ import com.badlogic.gdx.utils.JsonValue;
 import com.badlogic.gdx.Gdx;
 import java.util.Random;
 import java.util.UUID;
-import no.ntnu.tdt4240.project.service.FirebaseService;
+import no.ntnu.tdt4240.project.model.Sabotage;
 import no.ntnu.tdt4240.project.data.LobbyPlayer;
 import no.ntnu.tdt4240.project.util.FirebaseJson;
 
 
-public class LobbyHandler {
+public class LobbyService {
     private String lobbyID;
     public String lobbyUserID; // Unique per lobby session
     private String playerID;       // Persistent player ID
