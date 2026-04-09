@@ -14,8 +14,8 @@ import no.ntnu.tdt4240.project.data.NonPlayable;
  * attributes controlling enemy behavior is included here.
  */
 public class Enemy {
-    private static final float ENEMY_WIDTH = 28f;
-    private static final float ENEMY_HEIGHT = 20f;
+    private static final float ENEMY_WIDTH = 56f;
+    private static final float ENEMY_HEIGHT = 40f;
     private static final float ENEMY_VEL = 120f;
 
     private final Array<TextureRegion> tex;

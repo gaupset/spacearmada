@@ -5,7 +5,6 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
@@ -18,6 +17,10 @@ public class Assets {
     public Array<TextureRegion> playerBullet;
     public Array<TextureRegion> enemy;
     public Array<TextureRegion> enemyBullet;
+    private Texture playerTex;
+    private Texture playerBulletTex;
+    private Texture enemyTex;
+    private Texture enemyBulletTex;
     private Texture starsBackground;
     private Texture logoCrop;
     private BitmapFont defaultFont;
@@ -33,13 +36,17 @@ public class Assets {
      * Loads and initializes all textures as solid colors using {@link Pixmap}.
      */
     public void load() {
-        player = getFrames(new Texture("player.png"), 2);
+        playerTex = new Texture("player.png");
+        player = getFrames(playerTex, 2);
 
-        playerBullet = getFrames(new Texture("bullet.png"), 2);
+        playerBulletTex = new Texture("bullet.png");
+        playerBullet = getFrames(playerBulletTex, 2);
 
-        enemy = getFrames(new Texture("enemy.png"), 4);
+        enemyTex = new Texture("enemy.png");
+        enemy = getFrames(enemyTex, 4);
 
-        enemyBullet = getFrames(new Texture("enemy_bullet.png"), 2);
+        enemyBulletTex = new Texture("enemy_bullet.png");
+        enemyBullet = getFrames(enemyBulletTex, 2);
 
         starsBackground = new Texture("stars2.jpg");
         starsBackground.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
@@ -105,10 +112,10 @@ public class Assets {
      */
     public void dispose() {
         // ECS
-//        if (player != null) player.dispose();
-//        if (bullet != null) bullet.dispose();
-//        if (enemy != null) enemy.dispose();
-//        if (enemyBullet != null) enemyBullet.dispose();
+        if (playerTex != null) playerTex.dispose();
+        if (playerBulletTex != null) playerBulletTex.dispose();
+        if (enemyTex != null) enemyTex.dispose();
+        if (enemyBulletTex != null) enemyBulletTex.dispose();
 
         // UI and sound
         if (starsBackground != null) starsBackground.dispose();

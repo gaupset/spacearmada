@@ -12,8 +12,8 @@ import no.ntnu.tdt4240.project.data.NonPlayable;
  * attributes controlling general bullet behavior are included here.
  */
 public abstract class Bullet {
-    protected static final float BULLET_WIDTH = 4f;
-    protected static final float BULLET_HEIGHT = 12f;
+    protected static final float BULLET_WIDTH = 40f;
+    protected static final float BULLET_HEIGHT = 48f;
 
     protected final Array<TextureRegion> tex;
 

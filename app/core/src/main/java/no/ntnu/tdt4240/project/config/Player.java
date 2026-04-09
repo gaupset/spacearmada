@@ -14,8 +14,8 @@ import no.ntnu.tdt4240.project.data.Playable;
  */
 public class Player {
     private static final float PLAYER_MARGIN_BOTTOM = 40f;
-    private static final float PLAYER_WIDTH = 32f;
-    private static final float PLAYER_HEIGHT = 24f;
+    private static final float PLAYER_WIDTH = 64f;
+    private static final float PLAYER_HEIGHT = 48f;
     private static final int HEALTH = 3;
 
     private final Array<TextureRegion> tex;
