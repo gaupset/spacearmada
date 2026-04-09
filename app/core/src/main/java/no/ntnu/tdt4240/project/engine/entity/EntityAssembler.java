@@ -13,9 +13,9 @@ import no.ntnu.tdt4240.project.engine.component.ScoreComponent;
 import no.ntnu.tdt4240.project.engine.component.ShooterComponent;
 import no.ntnu.tdt4240.project.engine.component.TextureComponent;
 import no.ntnu.tdt4240.project.engine.component.VelocityComponent;
-import no.ntnu.tdt4240.project.engine.entity.config.Base;
-import no.ntnu.tdt4240.project.engine.entity.config.Movable;
-import no.ntnu.tdt4240.project.engine.entity.config.Player;
+import no.ntnu.tdt4240.project.data.Base;
+import no.ntnu.tdt4240.project.data.NonPlayable;
+import no.ntnu.tdt4240.project.data.Playable;
 
 /**
  * The EntityAssembler class represents a utility for creating entities. Each <code>create()</code>
@@ -44,15 +44,15 @@ public class EntityAssembler {
      *     <li>{@link TextureComponent}</li>
      * </ul>
      *
-     * @param config Configuration containing all initial entity values
+     * @param data Data object containing all initial entity values
      * @return Entity containing all base components
      */
-    public Entity create(Base config) {
+    public Entity create(Base data) {
         Entity e = new Entity();
         // Components
-        e.add(new PositionComponent(config.pos.x, config.pos.y));
-        e.add(new DimensionComponent(config.dim.x, config.dim.y));
-        e.add(new TextureComponent(config.tex));
+        e.add(new PositionComponent(data.pos.x, data.pos.y));
+        e.add(new DimensionComponent(data.dim.x, data.dim.y));
+        e.add(new TextureComponent(data.tex));
         return e;
     }
 
@@ -71,12 +71,12 @@ public class EntityAssembler {
      *     <li>{@link ShooterComponent}</li>
      * </ul>
      *
-     * @param config Configuration containing all initial entity values
+     * @param data Data object containing all initial entity values
      */
-    public void createPlayer(Player config) {
-        Entity e = create(config);
+    public void createPlayer(Playable data) {
+        Entity e = create(data);
         // Components
-        e.add(new HealthComponent(config.health));
+        e.add(new HealthComponent(data.health));
         e.add(new ScoreComponent());
         e.add(new PlayerComponent());
         e.add(new ShooterComponent());
@@ -98,12 +98,12 @@ public class EntityAssembler {
      *     <li>{@link BulletComponent}</li>
      * </ul>
      *
-     * @param config Configuration containing all initial entity values
+     * @param data Data object containing all initial entity values
      */
-    public void createPlayerBullet(Movable config) {
-        Entity e = create(config);
+    public void createPlayerBullet(NonPlayable data) {
+        Entity e = create(data);
         // Components
-        e.add(new VelocityComponent(config.vel.x, config.vel.y));
+        e.add(new VelocityComponent(data.vel.x, data.vel.y));
         e.add(new PlayerComponent());
         e.add(new BulletComponent());
         // Add to engine
@@ -123,12 +123,12 @@ public class EntityAssembler {
      *     <li>{@link EnemyComponent}</li>
      * </ul>
      *
-     * @param config Configuration containing all initial entity values
+     * @param data Data object containing all initial entity values
      */
-    public void createEnemy(Movable config) {
-        Entity e = create(config);
+    public void createEnemy(NonPlayable data) {
+        Entity e = create(data);
         // Components
-        e.add(new VelocityComponent(config.vel.x, config.vel.y));
+        e.add(new VelocityComponent(data.vel.x, data.vel.y));
         e.add(new EnemyComponent());
         // Add to engine
         engine.addEntity(e);
@@ -148,12 +148,12 @@ public class EntityAssembler {
      *     <li>{@link ShooterComponent}</li>
      * </ul>
      *
-     * @param config Configuration containing all initial entity values
+     * @param data Data object containing all initial entity values
      */
-    public void createEnemyShooter(Movable config) {
-        Entity e = create(config);
+    public void createEnemyShooter(NonPlayable data) {
+        Entity e = create(data);
         // Components
-        e.add(new VelocityComponent(config.vel.x, config.vel.y));
+        e.add(new VelocityComponent(data.vel.x, data.vel.y));
         e.add(new EnemyComponent());
         e.add(new ShooterComponent());
         // Add to engine
@@ -174,12 +174,12 @@ public class EntityAssembler {
      *     <li>{@link BulletComponent}</li>
      * </ul>
      *
-     * @param config Configuration containing all initial entity values
+     * @param data Data object containing all initial entity values
      */
-    public void createEnemyBullet(Movable config) {
-        Entity e = create(config);
+    public void createEnemyBullet(NonPlayable data) {
+        Entity e = create(data);
         // Components
-        e.add(new VelocityComponent(config.vel.x, config.vel.y));
+        e.add(new VelocityComponent(data.vel.x, data.vel.y));
         e.add(new EnemyComponent());
         e.add(new BulletComponent());
         // Add to engine
