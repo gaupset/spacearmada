@@ -4,6 +4,7 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.utils.viewport.Viewport;
 
 import no.ntnu.tdt4240.project.engine.Mapper;
 import no.ntnu.tdt4240.project.engine.component.DimensionComponent;
@@ -16,8 +17,9 @@ public class RenderSystem extends IteratingSystem {
     private PositionComponent pos;
     private DimensionComponent dim;
     private SpriteBatch batch;
+    private Viewport viewport;
 
-    public RenderSystem(SpriteBatch batch, int priority) {
+    public RenderSystem(SpriteBatch batch, Viewport viewport, int priority) {
         super(Family
             .all(TextureComponent.class)
             .exclude(RemoveComponent.class)
@@ -25,6 +27,15 @@ public class RenderSystem extends IteratingSystem {
             priority
         );
         this.batch = batch;
+        this.viewport = viewport;
+    }
+
+    @Override
+    public void update(float deltaTime) {
+        batch.setProjectionMatrix(viewport.getCamera().combined);
+        batch.begin();
+        super.update(deltaTime);
+        batch.end();
     }
 
     @Override
@@ -32,11 +43,7 @@ public class RenderSystem extends IteratingSystem {
         tex = Mapper.texture.get(e);
         pos = Mapper.position.get(e);
         dim = Mapper.dimension.get(e);
-        process();
-    }
 
-    private void process() {
-        batch.begin();
         batch.draw(
             tex.texture,
             centerHorizontal(),
@@ -44,13 +51,11 @@ public class RenderSystem extends IteratingSystem {
             dim.width,
             dim.height
         );
-        batch.end();
     }
 
     /**
      * Calculates the <code>x</code> coordinate needed to render the entity horizontally centered
-     * relative to its position. This is necessary as the {@link SpriteBatch} draws textures
-     * starting from the bottom left corner.
+     * relative to its position.
      *
      * @return Calculated <code>x</code> coordinate for horizontal centering
      */
@@ -60,8 +65,7 @@ public class RenderSystem extends IteratingSystem {
 
     /**
      * Calculates the <code>y</code> coordinate needed to render the entity vertically centered
-     * relative to its position. This is necessary as the {@link SpriteBatch} draws textures
-     * starting from the bottom left corner.
+     * relative to its position.
      *
      * @return Calculated <code>y</code> coordinate for vertical centering
      */

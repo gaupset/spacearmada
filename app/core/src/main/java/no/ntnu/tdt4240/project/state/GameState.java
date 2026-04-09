@@ -9,7 +9,10 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 
+import no.ntnu.tdt4240.project.AppProperties;
 import no.ntnu.tdt4240.project.config.Player;
 import no.ntnu.tdt4240.project.engine.component.HealthComponent;
 import no.ntnu.tdt4240.project.engine.component.PlayerComponent;
@@ -41,6 +44,7 @@ public class GameState extends State implements EventListener {
 
     private Engine engine;
     private Layout layout;
+    private Viewport viewport;
     private boolean gameOver;
     private GameHud hud;
     private boolean menuOpen = false;
@@ -55,6 +59,7 @@ public class GameState extends State implements EventListener {
         super(sm, batch, assets);
         this.engine = engine;
         this.layout = new GameLayout();
+        this.viewport = new ExtendViewport(AppProperties.WIDTH, AppProperties.HEIGHT);
         this.gameOver = false;
     }
 
@@ -83,7 +88,7 @@ public class GameState extends State implements EventListener {
         engine.addSystem(new SpawnSystem(assets, 3, 4));
         engine.addSystem(new ShootingSystem(assets, 1, 4));
         engine.addSystem(new RemovalSystem(5));
-        engine.addSystem(new RenderSystem(batch, 6));
+        engine.addSystem(new RenderSystem(batch, viewport, 6));
 
         hud = new GameHud(
             isOpen -> this.menuOpen = isOpen,
@@ -274,6 +279,7 @@ public class GameState extends State implements EventListener {
     @Override
     public void resize(int width, int height) {
         layout.resize(width, height);
+        viewport.update(width, height, true);
     }
 
     @Override
