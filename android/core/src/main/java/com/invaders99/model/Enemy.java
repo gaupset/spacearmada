@@ -3,8 +3,8 @@ package com.invaders99.model;
 import com.badlogic.gdx.math.Rectangle;
 
 public class Enemy {
-    public static final float WIDTH = 28f;
-    public static final float HEIGHT = 20f;
+    public static final float WIDTH = 64f;
+    public static final float HEIGHT = 64f;
     public static final float SPEED = 60f;
 
     public float x;
