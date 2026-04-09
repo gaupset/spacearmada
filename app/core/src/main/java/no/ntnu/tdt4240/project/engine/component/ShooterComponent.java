@@ -7,5 +7,15 @@ import com.badlogic.ashley.core.Component;
  * that may be used to mark entities as shooters.
  */
 public class ShooterComponent implements Component {
-    // Intentionally left blank
+    public float baseInterval;
+    public float timer;
+
+    public ShooterComponent() {
+        this(1f);
+    }
+
+    public ShooterComponent(float baseInterval) {
+        this.baseInterval = baseInterval;
+        this.timer = 0f;
+    }
 }
