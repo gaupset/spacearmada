@@ -305,9 +305,16 @@ public class GameState extends State implements EventListener {
                 lobbyPollTimer = 0f;
                 lobbyService.updateScore(getPlayerScore());
                 lobbyService.sendHeartbeat();
+                lobbyService.pingGameHandler();
                 lobbyService.getLobbyStatus(new LobbyService.LobbyStatusCallback() {
                     @Override
                     public void onUpdate(JsonValue lobbyData) {
+                        // Check if server ended the game (last player standing)
+                        if (lobbyData.getBoolean("gameEnded", false)) {
+                            gameOver = true;
+                            return;
+                        }
+
                         JsonValue players = lobbyData.get("players");
                         if (players == null) return;
                         JsonValue me = players.get(lobbyService.lobbyUserID);
@@ -327,15 +334,16 @@ public class GameState extends State implements EventListener {
 
         // When game is over, transition to GameOverState
         if (gameOver) {
-            // Get final score before cleaning up entities
             int finalScore = getPlayerScore();
 
-            // Clean up all entities and systems
+            if (lobbyService != null) {
+                lobbyService.setPlayerGameOver(finalScore);
+            }
+
             engine.removeAllEntities();
             engine.removeAllSystems();
 
-            // Transition to GameOverState with final score
-            sm.set(new GameOverState(sm, batch, assets, engine, finalScore));
+            sm.set(new GameOverState(sm, batch, assets, engine, finalScore, lobbyService));
         }
     }
 
