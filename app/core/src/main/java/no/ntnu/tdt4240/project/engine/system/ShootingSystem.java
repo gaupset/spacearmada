@@ -10,32 +10,24 @@ import no.ntnu.tdt4240.project.config.bullet.EnemyBullet;
 import no.ntnu.tdt4240.project.config.bullet.PlayerBullet;
 import no.ntnu.tdt4240.project.Assets;
 import no.ntnu.tdt4240.project.engine.Mapper;
-import no.ntnu.tdt4240.project.engine.component.DimensionComponent;
+import no.ntnu.tdt4240.project.engine.component.BulletComponent;
+import no.ntnu.tdt4240.project.engine.component.PlayerComponent;
 import no.ntnu.tdt4240.project.engine.component.PositionComponent;
 import no.ntnu.tdt4240.project.engine.component.PowerupEffectsComponent;
 import no.ntnu.tdt4240.project.engine.component.SabotageEffectsComponent;
 import no.ntnu.tdt4240.project.engine.component.ShooterComponent;
 import no.ntnu.tdt4240.project.engine.entity.EntityAssembler;
 import no.ntnu.tdt4240.project.data.NonPlayable;
-import no.ntnu.tdt4240.project.service.AudioService;
 
 public class ShootingSystem extends IteratingSystem {
     private final PlayerBullet playerBullet;
     private final EnemyBullet enemyBullet;
-    private final Assets assets;
     private ImmutableArray<Entity> sabotageEntities;
     private ImmutableArray<Entity> powerupEntities;
-
-    private PositionComponent pos;
-    private DimensionComponent dim;
-    private ShooterComponent shooter;
-    private boolean isPlayer;
+    private ImmutableArray<Entity> players;
 
     public ShootingSystem(Assets assets, int priority) {
-        super(Family.all(
-            ShooterComponent.class
-        ).get(), priority);
-        this.assets = assets;
+        super(Family.all(ShooterComponent.class).get(), priority);
         this.playerBullet = new PlayerBullet(assets.playerBullet, assets.playerBulletFrames);
         this.enemyBullet = new EnemyBullet(assets.enemyBullet, assets.enemyBulletFrames);
     }
@@ -45,31 +37,31 @@ public class ShootingSystem extends IteratingSystem {
         super.addedToEngine(engine);
         sabotageEntities = engine.getEntitiesFor(Family.all(SabotageEffectsComponent.class).get());
         powerupEntities = engine.getEntitiesFor(Family.all(PowerupEffectsComponent.class).get());
+        players = engine.getEntitiesFor(Family.all(PlayerComponent.class).exclude(BulletComponent.class).get());
     }
 
     @Override
     protected void processEntity(Entity e, float dt) {
-        pos = Mapper.position.get(e);
-        dim = Mapper.dimension.get(e);
-        shooter = Mapper.shooter.get(e);
-        isPlayer = Mapper.player.has(e);
-        process(dt);
-    }
+        PositionComponent pos = Mapper.position.get(e);
+        ShooterComponent shooter = Mapper.shooter.get(e);
+        boolean isPlayer = Mapper.player.has(e);
 
-    private void process(float dt) {
         float interval = shooter.baseInterval;
-        if (isPlayer && sabotageEntities != null && sabotageEntities.size() > 0) {
-            SabotageEffectsComponent effects = Mapper.sabotageEffects.get(sabotageEntities.first());
-            if (effects.playerFireRateSlowRemaining > 0f) {
-                interval *= SabotageEffectsComponent.PLAYER_SHOOT_INTERVAL_MULTIPLIER;
+        if (isPlayer) {
+            if (sabotageEntities != null && sabotageEntities.size() > 0) {
+                SabotageEffectsComponent effects = Mapper.sabotageEffects.get(sabotageEntities.first());
+                if (effects.playerFireRateSlowRemaining > 0f) {
+                    interval *= SabotageEffectsComponent.PLAYER_SHOOT_INTERVAL_MULTIPLIER;
+                }
+            }
+            if (powerupEntities != null && powerupEntities.size() > 0) {
+                PowerupEffectsComponent pwr = Mapper.powerupEffects.get(powerupEntities.first());
+                if (pwr.rapidFireRemaining > 0f) {
+                    interval *= PowerupEffectsComponent.PLAYER_SHOOT_INTERVAL_MULTIPLIER;
+                }
             }
         }
-        if (isPlayer && powerupEntities != null && powerupEntities.size() > 0) {
-            PowerupEffectsComponent pwr = Mapper.powerupEffects.get(powerupEntities.first());
-            if (pwr.rapidFireRemaining > 0f) {
-                interval *= PowerupEffectsComponent.PLAYER_SHOOT_INTERVAL_MULTIPLIER;
-            }
-        }
+
         shooter.timer += dt;
         if (shooter.timer < interval) {
             return;
@@ -77,17 +69,19 @@ public class ShootingSystem extends IteratingSystem {
         shooter.timer -= interval;
 
         EntityAssembler assembler = new EntityAssembler(getEngine());
-        // Create data transfer variables
         Vector2 posData = new Vector2(pos.x, pos.y);
-        Vector2 dimData = new Vector2(dim.width, dim.height);
-        // Create entity based on config
-        NonPlayable config;
+        Vector2 dimData = new Vector2(Mapper.dimension.get(e).width, Mapper.dimension.get(e).height);
+
         if (isPlayer) {
-            config = playerBullet.create(posData, dimData);
-            assembler.createPlayerBullet(config);
-        }
-        else {
-            config = enemyBullet.create(posData, dimData);
+            assembler.createPlayerBullet(playerBullet.create(posData, dimData));
+        } else {
+            NonPlayable config;
+            if (players != null && players.size() > 0) {
+                PositionComponent playerPos = Mapper.position.get(players.first());
+                config = enemyBullet.create(posData, dimData, new Vector2(playerPos.x, playerPos.y));
+            } else {
+                config = enemyBullet.create(posData, dimData);
+            }
             assembler.createEnemyBullet(config);
         }
     }

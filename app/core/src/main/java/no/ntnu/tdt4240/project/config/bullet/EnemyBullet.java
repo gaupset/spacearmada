@@ -24,11 +24,20 @@ public class EnemyBullet extends Bullet {
      * @param originDim Dimension of origin object
      * @return Enemy bullet data object
      */
+    // Shoot straight down by default
     @Override
     public NonPlayable create(Vector2 originPos, Vector2 originDim) {
         Vector2 dim = new Vector2(BULLET_WIDTH, BULLET_HEIGHT);
         Vector2 vel = new Vector2(0f, -ENEMY_BULLET_VEL);
         Vector2 pos = calculatePosition(originPos, originDim, dim.y);
+        return new NonPlayable(pos, vel, dim, tex, frames);
+    }
+    // Aims at player if possible
+    public NonPlayable create(Vector2 originPos, Vector2 originDim, Vector2 targetPos) {
+        Vector2 dim = new Vector2(BULLET_WIDTH, BULLET_HEIGHT);
+        Vector2 pos = calculatePosition(originPos, originDim, dim.y);
+        Vector2 dir = new Vector2(targetPos.x - pos.x, targetPos.y - pos.y).nor();
+        Vector2 vel = dir.scl(ENEMY_BULLET_VEL);
         return new NonPlayable(pos, vel, dim, tex, frames);
     }
 
