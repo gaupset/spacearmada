@@ -123,7 +123,7 @@ public class GameState extends State implements EventListener {
         engine.addSystem(new MovementSystem(0));
         engine.addSystem(new BounceSystem(1));
         engine.addSystem(new BoundSystem(1));
-        engine.addSystem(new CollisionSystem(2));
+        engine.addSystem(new CollisionSystem(assets, 2));
         engine.addSystem(eventSystem());
         engine.addSystem(new SpawnSystem(assets, 3, 4)); 
         engine.addSystem(new ShootingSystem(assets, 4));

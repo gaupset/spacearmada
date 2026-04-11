@@ -15,6 +15,7 @@ import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import no.ntnu.tdt4240.project.Assets;
+import no.ntnu.tdt4240.project.service.AudioService;
 import no.ntnu.tdt4240.project.service.ScoreService;
 import no.ntnu.tdt4240.project.ui.SpaceButton;
 import no.ntnu.tdt4240.project.util.Theme;
@@ -36,6 +37,7 @@ public class MenuState extends State {
     protected void setup() {
         stage = new Stage(new ExtendViewport(VIEWPORT_MIN_WIDTH, VIEWPORT_MIN_HEIGHT));
         Gdx.input.setInputProcessor(stage);
+        AudioService.getInstance().playMusic("audio/elevator_music.mp3", true);
         buildLayout();
     }
 
@@ -54,7 +56,7 @@ public class MenuState extends State {
         highLabel.setFontScale(0.6f);
         root.add(highLabel).padBottom(2f).row();
 
-        Label winsLabel = new Label("ONLINE WINS: " + ScoreService.getInstance().getOnlineWins(),
+        Label winsLabel = new Label("MULTIPLAYER WINS: " + ScoreService.getInstance().getOnlineWins(),
             new Label.LabelStyle(assets.getDefaultFont(), Color.GOLD));
         winsLabel.setFontScale(0.6f);
         root.add(winsLabel).padBottom(5f).row();

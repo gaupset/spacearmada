@@ -18,16 +18,20 @@ import no.ntnu.tdt4240.project.engine.component.PlayerComponent;
 import no.ntnu.tdt4240.project.engine.component.PositionComponent;
 import no.ntnu.tdt4240.project.engine.component.PowerupEffectsComponent;
 import no.ntnu.tdt4240.project.engine.component.RemoveComponent;
+import no.ntnu.tdt4240.project.Assets;
+import no.ntnu.tdt4240.project.service.AudioService;
 
 public class CollisionSystem extends EntitySystem {
+    private final Assets assets;
     private ImmutableArray<Entity> players; // Only one player
     private ImmutableArray<Entity> playerBullets;
     private ImmutableArray<Entity> enemies;
     private ImmutableArray<Entity> enemyBullets;
     private ImmutableArray<Entity> powerupEntities;
 
-    public CollisionSystem(int priority) {
+    public CollisionSystem(Assets assets, int priority) {
         super(priority);
+        this.assets = assets;
     }
 
     @Override
@@ -110,6 +114,7 @@ public class CollisionSystem extends EntitySystem {
                 Entity p = players.get(i);
                 Mapper.score.get(p).score++;
             }
+            AudioService.getInstance().playSound(assets.getLaserSound());
             enemy.add(new RemoveComponent());
             player.add(new RemoveComponent());
         });

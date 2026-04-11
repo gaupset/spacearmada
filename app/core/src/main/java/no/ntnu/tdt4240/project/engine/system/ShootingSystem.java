@@ -85,7 +85,6 @@ public class ShootingSystem extends IteratingSystem {
         if (isPlayer) {
             config = playerBullet.create(posData, dimData);
             assembler.createPlayerBullet(config);
-            AudioService.getInstance().playSound(assets.getLaserSound());
         }
         else {
             config = enemyBullet.create(posData, dimData);

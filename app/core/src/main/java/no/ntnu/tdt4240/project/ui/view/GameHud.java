@@ -12,7 +12,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import no.ntnu.tdt4240.project.service.AudioService;
 import no.ntnu.tdt4240.project.ui.UiFactory;
 import no.ntnu.tdt4240.project.util.Theme;
 
@@ -25,8 +24,6 @@ public class GameHud {
     private final Table menuPanel;
     private final Texture overlayTex;
 
-    private final TextButton soundButton;
-    private final TextButton musicButton;
 
     private final Label scoreLabel;
     private final Label healthLabel;
@@ -76,7 +73,6 @@ public class GameHud {
         stage = new Stage(new ExtendViewport(VIEWPORT_MIN_WIDTH, VIEWPORT_MIN_HEIGHT));
 
         Skin skin = UiFactory.getInstance().getSkin();
-        AudioService audio = AudioService.getInstance();
 
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         pixmap.setColor(new Color(0f, 0f, 0f, 0.7f));
@@ -211,30 +207,6 @@ public class GameHud {
         title.setFontScale(1.2f);
         content.add(title).padBottom(24f).row();
 
-        soundButton = new TextButton(getSoundText(audio.isSoundEnabled()), skin);
-        soundButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
-        soundButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                boolean enabled = !audio.isSoundEnabled();
-                audio.setSoundEnabled(enabled);
-                soundButton.setText(getSoundText(enabled));
-            }
-        });
-        content.add(soundButton).row();
-
-        musicButton = new TextButton(getMusicText(audio.isMusicEnabled()), skin);
-        musicButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
-        musicButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                boolean enabled = !audio.isMusicEnabled();
-                audio.setMusicEnabled(enabled);
-                musicButton.setText(getMusicText(enabled));
-            }
-        });
-        content.add(musicButton).row();
-
         TextButton resumeButton = new TextButton("RESUME", skin);
         resumeButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
         resumeButton.addListener(new ClickListener() {
@@ -261,14 +233,6 @@ public class GameHud {
 
         menuPanel.add(content);
         stage.addActor(menuPanel);
-    }
-
-    private String getSoundText(boolean enabled) {
-        return "SOUND: " + (enabled ? "ON" : "OFF");
-    }
-
-    private String getMusicText(boolean enabled) {
-        return "MUSIC: " + (enabled ? "ON" : "OFF");
     }
 
     public void act(float delta, boolean isMenuOpen, boolean isSabotageVisible, boolean isPowerupVisible,
