@@ -11,14 +11,17 @@ import no.ntnu.tdt4240.project.engine.Mapper;
 import no.ntnu.tdt4240.project.engine.component.BulletComponent;
 import no.ntnu.tdt4240.project.engine.component.DimensionComponent;
 import no.ntnu.tdt4240.project.engine.component.EnemyComponent;
+import no.ntnu.tdt4240.project.engine.component.HealthComponent;
 import no.ntnu.tdt4240.project.engine.component.PlayerComponent;
 import no.ntnu.tdt4240.project.engine.component.PositionComponent;
 import no.ntnu.tdt4240.project.engine.component.RemoveComponent;
+import no.ntnu.tdt4240.project.engine.component.WaveComponent;
 
 public class BoundSystem extends EntitySystem {
     ImmutableArray<Entity> players; // Only one player
     ImmutableArray<Entity> enemies;
     ImmutableArray<Entity> bullets;
+    ImmutableArray<Entity> waveEntities;
 
     private PositionComponent pos;
     private DimensionComponent dim;
@@ -43,6 +46,7 @@ public class BoundSystem extends EntitySystem {
             .all(BulletComponent.class)
             .get()
         );
+        waveEntities = engine.getEntitiesFor(Family.all(WaveComponent.class).get());
     }
 
     @Override
@@ -87,6 +91,10 @@ public class BoundSystem extends EntitySystem {
     private void enemyOutOfBounds(Entity e) {
         if (isOutOfBottomBound()) {
             decrementPlayerHealth();
+            if (waveEntities != null && waveEntities.size() > 0) {
+                WaveComponent wave = Mapper.wave.get(waveEntities.first());
+                wave.enemiesAlive = Math.max(0, wave.enemiesAlive - 1);
+            }
             e.add(new RemoveComponent());
         }
     }
@@ -120,12 +128,16 @@ public class BoundSystem extends EntitySystem {
     }
 
     /**
-     * Decrements the health of each player.
+     * Decrements the health of each player, unless they are currently invincible.
+     * Triggers invincibility on hit to prevent multiple simultaneous losses.
      */
     private void decrementPlayerHealth() {
         for (int i = 0; i < players.size(); i++) {
             Entity p = players.get(i);
-            Mapper.health.get(p).health--;
+            HealthComponent h = Mapper.health.get(p);
+            if (h.isInvincible()) return;
+            h.health--;
+            h.invincibilityRemaining = HealthComponent.INVINCIBILITY_DURATION;
         }
     }
 }

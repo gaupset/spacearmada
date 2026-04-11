@@ -3,6 +3,7 @@ package no.ntnu.tdt4240.project.engine.entity;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 
+import no.ntnu.tdt4240.project.engine.component.AnimationComponent;
 import no.ntnu.tdt4240.project.engine.component.BulletComponent;
 import no.ntnu.tdt4240.project.engine.component.DimensionComponent;
 import no.ntnu.tdt4240.project.engine.component.EnemyComponent;
@@ -28,6 +29,7 @@ import no.ntnu.tdt4240.project.data.Playable;
 public class EntityAssembler {
     private static final float PLAYER_SHOOT_BASE_INTERVAL = 1f;
     private static final float ENEMY_SHOOT_BASE_INTERVAL = 1f;
+    private static final float ANIMATION_FRAME_DURATION = 0.5f;
     private Engine engine;
 
     public EntityAssembler(Engine engine) {
@@ -55,6 +57,9 @@ public class EntityAssembler {
         e.add(new PositionComponent(data.pos.x, data.pos.y));
         e.add(new DimensionComponent(data.dim.x, data.dim.y));
         e.add(new TextureComponent(data.tex));
+        if (data.frames != null && data.frames.length > 1) {
+            e.add(new AnimationComponent(data.frames, ANIMATION_FRAME_DURATION));
+        }
         return e;
     }
 

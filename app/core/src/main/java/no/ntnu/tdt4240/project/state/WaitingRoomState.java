@@ -200,7 +200,7 @@ public class WaitingRoomState extends State {
                     firebaseController.startGame(new LobbyService.LobbyCallback() {
                         @Override
                         public void onSuccess(String response) {
-                            sm.set(new GameState(sm, batch, new Engine(), assets));
+                            sm.set(new GameState(sm, batch, new Engine(), assets, firebaseController.lobbyHandler()));
                         }
                         @Override
                         public void onFailure(String error) {
@@ -250,7 +250,7 @@ public class WaitingRoomState extends State {
                     }
                     if (lobbyData.getBoolean("gameStarted", false)) {
                         inLobby = false;
-                        sm.set(new GameState(sm, batch, new Engine(), assets));
+                        sm.set(new GameState(sm, batch, new Engine(), assets, firebaseController.lobbyHandler()));
                     }
                 }
             }

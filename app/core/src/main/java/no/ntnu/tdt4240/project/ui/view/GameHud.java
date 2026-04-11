@@ -12,7 +12,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import no.ntnu.tdt4240.project.service.AudioService;
 import no.ntnu.tdt4240.project.ui.UiFactory;
 import no.ntnu.tdt4240.project.util.Theme;
 
@@ -25,11 +24,16 @@ public class GameHud {
     private final Table menuPanel;
     private final Texture overlayTex;
 
-    private final TextButton soundButton;
-    private final TextButton musicButton;
 
     private final Label scoreLabel;
     private final Label healthLabel;
+    private final Label waveLabel;
+    private final Label enemySpeedLabel;
+    private final Label fireRateLabel;
+    private final Label alienSpawnLabel;
+    private final Label shieldLabel;
+    private final Label rapidFireLabel;
+    private final Label slowEnemiesLabel;
 
     public interface MenuToggleListener {
         void onMenuToggle(boolean open);
@@ -47,7 +51,12 @@ public class GameHud {
         void onSabotage();
     }
 
+    public interface PowerupListener {
+        void onPowerup();
+    }
+
     private final TextButton sabotageButton;
+    private final TextButton powerupButton;
     private final TextButton pauseButton;
     private final Runnable onMenuResumePressed;
 
@@ -58,13 +67,13 @@ public class GameHud {
         QuitListener quitListener,
         PauseListener pauseListener,
         SabotageListener sabotageListener,
+        PowerupListener powerupListener,
         Runnable onMenuResumePressed
     ) {
         this.onMenuResumePressed = onMenuResumePressed;
         stage = new Stage(new ExtendViewport(VIEWPORT_MIN_WIDTH, VIEWPORT_MIN_HEIGHT));
 
         Skin skin = UiFactory.getInstance().getSkin();
-        AudioService audio = AudioService.getInstance();
 
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         pixmap.setColor(new Color(0f, 0f, 0f, 0.7f));
@@ -95,6 +104,16 @@ public class GameHud {
                 }
             }
         });
+        powerupButton = new TextButton("POWERUP", skin);
+        powerupButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
+        powerupButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                if (powerupListener != null) {
+                    powerupListener.onPowerup();
+                }
+            }
+        });
         TextButton menuButton = new TextButton("MENU", skin);
         menuButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
         menuButton.addListener(new ClickListener() {
@@ -111,7 +130,9 @@ public class GameHud {
         topBar.add(pauseButton).width(80f).height(36f).pad(8f);
         topBar.add(menuButton).width(80f).height(36f).pad(8f);
         topBar.row();
-        topBar.add(sabotageButton).colspan(2).right().padTop(2f).padBottom(8f).padLeft(8f).padRight(8f).height(36f).width(170f);
+        topBar.add(sabotageButton).colspan(2).right().padTop(2f).padLeft(8f).padRight(8f).height(36f).width(170f);
+        topBar.row();
+        topBar.add(powerupButton).colspan(2).right().padTop(2f).padBottom(8f).padLeft(8f).padRight(8f).height(36f).width(170f);
         stage.addActor(topBar);
 
         // Top-left: Score and Health display
@@ -123,11 +144,60 @@ public class GameHud {
         healthLabel.setFontScale(0.5f);
         healthLabel.setColor(Color.WHITE);
 
+        waveLabel = new Label("WAVE: 1", skin);
+        waveLabel.setFontScale(0.5f);
+        waveLabel.setColor(Color.WHITE);
+
+        // Custom label style with white fontColor so actor color is displayed as-is
+        // (default skin uses cyan fontColor which zeroes out the red channel)
+        Label.LabelStyle effectStyle = new Label.LabelStyle(skin.get(Label.LabelStyle.class));
+        effectStyle.fontColor = new Color(Color.WHITE);
+
+        Color sabotageColor = new Color(1f, 0.3f, 0.3f, 1f);
+        Color powerupColor = new Color(0.3f, 1f, 0.3f, 1f);
+
+        enemySpeedLabel = new Label("", effectStyle);
+        enemySpeedLabel.setFontScale(0.5f);
+        enemySpeedLabel.setColor(sabotageColor);
+        enemySpeedLabel.setVisible(false);
+
+        fireRateLabel = new Label("", effectStyle);
+        fireRateLabel.setFontScale(0.5f);
+        fireRateLabel.setColor(sabotageColor);
+        fireRateLabel.setVisible(false);
+
+        alienSpawnLabel = new Label("", effectStyle);
+        alienSpawnLabel.setFontScale(0.5f);
+        alienSpawnLabel.setColor(sabotageColor);
+        alienSpawnLabel.setVisible(false);
+
+        shieldLabel = new Label("", effectStyle);
+        shieldLabel.setFontScale(0.5f);
+        shieldLabel.setColor(powerupColor);
+        shieldLabel.setVisible(false);
+
+        rapidFireLabel = new Label("", effectStyle);
+        rapidFireLabel.setFontScale(0.5f);
+        rapidFireLabel.setColor(powerupColor);
+        rapidFireLabel.setVisible(false);
+
+        slowEnemiesLabel = new Label("", effectStyle);
+        slowEnemiesLabel.setFontScale(0.5f);
+        slowEnemiesLabel.setColor(powerupColor);
+        slowEnemiesLabel.setVisible(false);
+
         Table statsBar = new Table();
         statsBar.setFillParent(true);
         statsBar.top().left();
         statsBar.add(scoreLabel).padLeft(10f).padTop(10f).row();
-        statsBar.add(healthLabel).padLeft(10f).padTop(5f);
+        statsBar.add(healthLabel).padLeft(10f).padTop(5f).row();
+        statsBar.add(waveLabel).padLeft(10f).padTop(5f).row();
+        statsBar.add(shieldLabel).padLeft(10f).padTop(8f).row();
+        statsBar.add(enemySpeedLabel).padLeft(10f).padTop(2f).row();
+        statsBar.add(slowEnemiesLabel).padLeft(10f).padTop(2f).row();
+        statsBar.add(fireRateLabel).padLeft(10f).padTop(2f).row();
+        statsBar.add(rapidFireLabel).padLeft(10f).padTop(2f).row();
+        statsBar.add(alienSpawnLabel).padLeft(10f).padTop(2f);
         stage.addActor(statsBar);
 
         menuPanel = new Table();
@@ -142,30 +212,6 @@ public class GameHud {
         Label title = new Label("MENU", skin);
         title.setFontScale(1.2f);
         content.add(title).padBottom(24f).row();
-
-        soundButton = new TextButton(getSoundText(audio.isSoundEnabled()), skin);
-        soundButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
-        soundButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                boolean enabled = !audio.isSoundEnabled();
-                audio.setSoundEnabled(enabled);
-                soundButton.setText(getSoundText(enabled));
-            }
-        });
-        content.add(soundButton).row();
-
-        musicButton = new TextButton(getMusicText(audio.isMusicEnabled()), skin);
-        musicButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
-        musicButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                boolean enabled = !audio.isMusicEnabled();
-                audio.setMusicEnabled(enabled);
-                musicButton.setText(getMusicText(enabled));
-            }
-        });
-        content.add(musicButton).row();
 
         TextButton resumeButton = new TextButton("RESUME", skin);
         resumeButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
@@ -195,27 +241,14 @@ public class GameHud {
         stage.addActor(menuPanel);
     }
 
-    private String getSoundText(boolean enabled) {
-        return "SOUND: " + (enabled ? "ON" : "OFF");
-    }
-
-    private String getMusicText(boolean enabled) {
-        return "MUSIC: " + (enabled ? "ON" : "OFF");
-    }
-
-    /**
-     * Updates the HUD state and displays.
-     * @param delta Time since last frame
-     * @param isMenuOpen Whether the menu panel is visible
-     * @param isSabotageVisible Whether sabotage button should be shown
-     * @param isPauseReady Whether pause button is clickable
-     * @param score Current player score
-     * @param health Current player health/lives
-     */
-    public void act(float delta, boolean isMenuOpen, boolean isSabotageVisible, boolean isPauseReady, int score, int health) {
+    public void act(float delta, boolean isMenuOpen, boolean isSabotageVisible, boolean isPowerupVisible,
+                    boolean isPauseReady, int score, int health, int wave,
+                    float enemySpeedRemaining, float fireRateRemaining, float alienSpawnRemaining,
+                    float shieldRemaining, float rapidFireRemaining, float slowEnemiesRemaining) {
         this.isMenuOpen = isMenuOpen;
         menuPanel.setVisible(isMenuOpen);
         sabotageButton.setVisible(isSabotageVisible);
+        powerupButton.setVisible(isPowerupVisible);
         pauseButton.setDisabled(!isPauseReady);
         if (isPauseReady) {
             pauseButton.getLabel().setColor(Color.WHITE);
@@ -223,11 +256,27 @@ public class GameHud {
             pauseButton.getLabel().setColor(PAUSE_BUTTON_DISABLED_LABEL);
         }
 
-        // Update score and health display
         scoreLabel.setText("SCORE: " + score);
+        waveLabel.setText("WAVE: " + wave);
         healthLabel.setText("LIVES: " + health);
 
+        updateEffectLabel(enemySpeedLabel, "2x ENEMY SPEED", enemySpeedRemaining);
+        updateEffectLabel(fireRateLabel, "0.5x FIRE RATE", fireRateRemaining);
+        updateEffectLabel(alienSpawnLabel, "2x ALIEN SPAWN", alienSpawnRemaining);
+        updateEffectLabel(shieldLabel, "SHIELD", shieldRemaining);
+        updateEffectLabel(rapidFireLabel, "2x FIRE RATE", rapidFireRemaining);
+        updateEffectLabel(slowEnemiesLabel, "0.5x ENEMY SPEED", slowEnemiesRemaining);
+
         stage.act(delta);
+    }
+
+    private void updateEffectLabel(Label label, String name, float remaining) {
+        if (remaining > 0f) {
+            label.setText(name + " (" + ((int) remaining + 1) + "s)");
+            label.setVisible(true);
+        } else {
+            label.setVisible(false);
+        }
     }
 
     public void draw() {

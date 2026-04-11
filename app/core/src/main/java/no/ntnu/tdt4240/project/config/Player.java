@@ -1,6 +1,6 @@
 package no.ntnu.tdt4240.project.config;
 
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 
 import no.ntnu.tdt4240.project.AppProperties;
@@ -12,14 +12,16 @@ import no.ntnu.tdt4240.project.data.Playable;
  */
 public class Player {
     private static final float PLAYER_MARGIN_BOTTOM = 40f;
-    private static final float PLAYER_WIDTH = 32f;
-    private static final float PLAYER_HEIGHT = 24f;
+    private static final float PLAYER_WIDTH = 64f;
+    private static final float PLAYER_HEIGHT = 64f;
     private static final int HEALTH = 3;
 
-    private final Texture tex;
+    private final TextureRegion tex;
+    private final TextureRegion[] frames;
 
-    public Player(Texture tex) {
+    public Player(TextureRegion tex, TextureRegion[] frames) {
         this.tex = tex;
+        this.frames = frames;
     }
 
     /**
@@ -30,7 +32,7 @@ public class Player {
     public Playable create() {
         Vector2 dim = new Vector2(PLAYER_WIDTH, PLAYER_HEIGHT);
         Vector2 pos = calculatePosition(dim.y);
-        return new Playable(pos, dim, HEALTH, tex);
+        return new Playable(pos, dim, HEALTH, tex, frames);
     }
 
     /**

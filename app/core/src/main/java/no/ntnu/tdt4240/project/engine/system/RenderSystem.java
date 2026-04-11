@@ -7,7 +7,10 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 import no.ntnu.tdt4240.project.engine.Mapper;
+import no.ntnu.tdt4240.project.engine.component.AnimationComponent;
 import no.ntnu.tdt4240.project.engine.component.DimensionComponent;
+import no.ntnu.tdt4240.project.engine.component.HealthComponent;
+import no.ntnu.tdt4240.project.engine.component.PlayerComponent;
 import no.ntnu.tdt4240.project.engine.component.PositionComponent;
 import no.ntnu.tdt4240.project.engine.component.RemoveComponent;
 import no.ntnu.tdt4240.project.engine.component.TextureComponent;
@@ -44,13 +47,33 @@ public class RenderSystem extends IteratingSystem {
         pos = Mapper.position.get(e);
         dim = Mapper.dimension.get(e);
 
+        AnimationComponent anim = Mapper.animation.get(e);
+        if (anim != null) {
+            anim.stateTime += dt;
+            int frameIndex = (int) (anim.stateTime / anim.frameDuration) % anim.frames.length;
+            tex.region = anim.frames[frameIndex];
+        }
+
+        boolean faded = false;
+        if (Mapper.player.has(e)) {
+            HealthComponent hp = Mapper.health.get(e);
+            if (hp != null && hp.isInvincible()) {
+                batch.setColor(1f, 1f, 1f, 0.4f);
+                faded = true;
+            }
+        }
+
         batch.draw(
-            tex.texture,
+            tex.region,
             centerHorizontal(),
             centerVertical(),
             dim.width,
             dim.height
         );
+
+        if (faded) {
+            batch.setColor(1f, 1f, 1f, 1f);
+        }
     }
 
     /**

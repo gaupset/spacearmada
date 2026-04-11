@@ -1,6 +1,6 @@
 package no.ntnu.tdt4240.project.data;
 
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 
 /**
@@ -8,11 +8,17 @@ import com.badlogic.gdx.math.Vector2;
  */
 public class Base {
     public Vector2 pos, dim;
-    public Texture tex;
+    public TextureRegion tex;
+    public TextureRegion[] frames;
 
-    public Base(Vector2 pos, Vector2 dim, Texture tex) {
+    public Base(Vector2 pos, Vector2 dim, TextureRegion tex) {
+        this(pos, dim, tex, null);
+    }
+
+    public Base(Vector2 pos, Vector2 dim, TextureRegion tex, TextureRegion[] frames) {
         this.pos = pos;
         this.dim = dim;
         this.tex = tex;
+        this.frames = frames;
     }
 }

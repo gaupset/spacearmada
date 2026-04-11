@@ -1,6 +1,6 @@
 package no.ntnu.tdt4240.project.config.bullet;
 
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 
 import no.ntnu.tdt4240.project.data.NonPlayable;
@@ -12,8 +12,8 @@ import no.ntnu.tdt4240.project.data.NonPlayable;
 public class PlayerBullet extends Bullet {
     private static final float PLAYER_BULLET_VEL = 300f;
 
-    public PlayerBullet(Texture tex) {
-        super(tex);
+    public PlayerBullet(TextureRegion tex, TextureRegion[] frames) {
+        super(tex, frames);
     }
 
     /**
@@ -29,7 +29,7 @@ public class PlayerBullet extends Bullet {
         Vector2 dim = new Vector2(BULLET_WIDTH, BULLET_HEIGHT);
         Vector2 vel = new Vector2(0f, PLAYER_BULLET_VEL);
         Vector2 pos = calculatePosition(originPos, originDim, dim.y);
-        return new NonPlayable(pos, vel, dim, tex);
+        return new NonPlayable(pos, vel, dim, tex, frames);
     }
 
     /**

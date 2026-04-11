@@ -1,6 +1,6 @@
 package no.ntnu.tdt4240.project.config;
 
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 
@@ -12,16 +12,18 @@ import no.ntnu.tdt4240.project.data.NonPlayable;
  * attributes controlling enemy behavior is included here.
  */
 public class Enemy {
-    private static final float ENEMY_WIDTH = 28f;
-    private static final float ENEMY_HEIGHT = 20f;
+    private static final float ENEMY_WIDTH = 48f;
+    private static final float ENEMY_HEIGHT = 48f;
     private static final float ENEMY_VEL = 120f;
 
-    private final Texture tex;
+    private final TextureRegion tex;
+    private final TextureRegion[] frames;
 
     private boolean spawnLeft;
 
-    public Enemy(Texture tex) {
+    public Enemy(TextureRegion tex, TextureRegion[] frames) {
         this.tex = tex;
+        this.frames = frames;
         this.spawnLeft = true;
     }
 
@@ -34,7 +36,7 @@ public class Enemy {
         Vector2 dim = new Vector2(ENEMY_WIDTH, ENEMY_HEIGHT);
         Vector2 vel = new Vector2(0f, -ENEMY_VEL);
         Vector2 pos = calculatePosition(dim.x);
-        return new NonPlayable(pos, vel, dim, tex);
+        return new NonPlayable(pos, vel, dim, tex, frames);
     }
 
     /**

@@ -19,16 +19,16 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import java.util.Locale;
 
 import no.ntnu.tdt4240.project.Assets;
-import no.ntnu.tdt4240.project.model.Sabotage;
+import no.ntnu.tdt4240.project.model.Powerup;
 import no.ntnu.tdt4240.project.ui.SpaceButton;
 import no.ntnu.tdt4240.project.ui.UiFactory;
 import no.ntnu.tdt4240.project.util.Theme;
 
-public class SabotageState extends State {
+public class PowerupState extends State {
     private static final float VIEWPORT_MIN_WIDTH = 360f;
     private static final float VIEWPORT_MIN_HEIGHT = 640f;
-    private static final float SABOTAGE_UNPAUSE_TIMER_SEC = 10f;
-    private static final int SABOTAGE_EFFECT_DURATION_SEC = 10;
+    private static final float POWERUP_UNPAUSE_TIMER_SEC = 10f;
+    private static final int POWERUP_EFFECT_DURATION_SEC = 10;
     private static final float BUTTON_HEIGHT = 36f;
     private static final float BUTTON_GAP = 8f;
     private static final float RETURN_BOTTOM_PAD = 16f;
@@ -42,12 +42,7 @@ public class SabotageState extends State {
     private Label timerLabel;
     private Label chargesLabel;
 
-    public SabotageState(StateManager sm, Assets assets, GameState gameState) {
-        super(sm, null, assets);
-        this.gameState = gameState;
-    }
-
-    public SabotageState(StateManager sm, com.badlogic.gdx.graphics.g2d.SpriteBatch batch, Assets assets, GameState gameState) {
+    public PowerupState(StateManager sm, com.badlogic.gdx.graphics.g2d.SpriteBatch batch, Assets assets, GameState gameState) {
         super(sm, batch, assets);
         this.gameState = gameState;
     }
@@ -55,7 +50,7 @@ public class SabotageState extends State {
     @Override
     protected void setup() {
         stage = new Stage(new ExtendViewport(VIEWPORT_MIN_WIDTH, VIEWPORT_MIN_HEIGHT));
-        unpauseTimeLeft = SABOTAGE_UNPAUSE_TIMER_SEC;
+        unpauseTimeLeft = POWERUP_UNPAUSE_TIMER_SEC;
         gameplayRunningBehindOverlay = false;
 
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
@@ -91,9 +86,9 @@ public class SabotageState extends State {
         root.add(chargesLabel).padTop(6f).padBottom(8f).row();
 
         Table stack = new Table();
-        addSabotageRow(stack, Sabotage.TYPE_ENEMY_SPEED, "2x enemy speed", true);
-        addSabotageRow(stack, Sabotage.TYPE_HALF_PLAYER_BULLETS, "0.5x player bullets", true);
-        addSabotageRow(stack, Sabotage.TYPE_DOUBLE_ALIENS, "2x number of aliens", true);
+        addPowerupRow(stack, Powerup.TYPE_SHIELD, "Shield (invincibility)", true);
+        addPowerupRow(stack, Powerup.TYPE_RAPID_FIRE, "2x fire rate", true);
+        addPowerupRow(stack, Powerup.TYPE_SLOW_ENEMIES, "0.5x enemy speed", true);
         root.add(stack).expand().center().width(VIEWPORT_MIN_WIDTH).row();
 
         TextButton returnButton = new TextButton("RETURN", skin);
@@ -112,13 +107,13 @@ public class SabotageState extends State {
         stage.addActor(root);
     }
 
-    private void addSabotageRow(Table parent, String sabotageType, String label, boolean gapBelow) {
+    private void addPowerupRow(Table parent, String powerupType, String label, boolean gapBelow) {
         SpaceButton button = new SpaceButton(label);
         button.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
         button.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                onSabotageChosen(sabotageType);
+                onPowerupChosen(powerupType);
             }
         });
         parent.add(button)
@@ -128,12 +123,12 @@ public class SabotageState extends State {
             .row();
     }
 
-    private void onSabotageChosen(String sabotageType) {
+    private void onPowerupChosen(String powerupType) {
         if (gameState.getAvailableAbilityCount() <= 0) {
             return;
         }
-        gameState.sendSabotage(sabotageType);
-        gameState.recordSabotageUse();
+        gameState.applyPowerup(powerupType, POWERUP_EFFECT_DURATION_SEC);
+        gameState.recordPowerupUse();
         if (gameState.getAvailableAbilityCount() <= 0) {
             sm.pop();
         } else {
@@ -149,7 +144,7 @@ public class SabotageState extends State {
 
     private String formatChargesLine() {
         int n = gameState.getAvailableAbilityCount();
-        return n == 1 ? "1 sabotage available" : n + " sabotages available";
+        return n == 1 ? "1 powerup available" : n + " powerups available";
     }
 
     private static String formatUnpauseTimer(float seconds) {

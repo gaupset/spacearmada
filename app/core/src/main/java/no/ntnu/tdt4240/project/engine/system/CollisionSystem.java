@@ -13,18 +13,27 @@ import no.ntnu.tdt4240.project.engine.Mapper;
 import no.ntnu.tdt4240.project.engine.component.BulletComponent;
 import no.ntnu.tdt4240.project.engine.component.DimensionComponent;
 import no.ntnu.tdt4240.project.engine.component.EnemyComponent;
+import no.ntnu.tdt4240.project.engine.component.HealthComponent;
 import no.ntnu.tdt4240.project.engine.component.PlayerComponent;
 import no.ntnu.tdt4240.project.engine.component.PositionComponent;
+import no.ntnu.tdt4240.project.engine.component.PowerupEffectsComponent;
 import no.ntnu.tdt4240.project.engine.component.RemoveComponent;
+import no.ntnu.tdt4240.project.engine.component.WaveComponent;
+import no.ntnu.tdt4240.project.Assets;
+import no.ntnu.tdt4240.project.service.AudioService;
 
 public class CollisionSystem extends EntitySystem {
+    private final Assets assets;
     private ImmutableArray<Entity> players; // Only one player
     private ImmutableArray<Entity> playerBullets;
     private ImmutableArray<Entity> enemies;
     private ImmutableArray<Entity> enemyBullets;
+    private ImmutableArray<Entity> powerupEntities;
+    private ImmutableArray<Entity> waveEntities;
 
-    public CollisionSystem(int priority) {
+    public CollisionSystem(Assets assets, int priority) {
         super(priority);
+        this.assets = assets;
     }
 
     @Override
@@ -47,11 +56,17 @@ public class CollisionSystem extends EntitySystem {
             .all(EnemyComponent.class, BulletComponent.class)
             .get()
         );
+        powerupEntities = engine.getEntitiesFor(Family.all(PowerupEffectsComponent.class).get());
+        waveEntities = engine.getEntitiesFor(Family.all(WaveComponent.class).get());
     }
 
     @Override
     public void update(float dt) {
         for (Entity e : players) {
+            HealthComponent hp = Mapper.health.get(e);
+            if (hp != null && hp.invincibilityRemaining > 0f) {
+                hp.invincibilityRemaining = Math.max(0f, hp.invincibilityRemaining - dt);
+            }
             playerCollision(e, enemies);
             playerCollision(e, enemyBullets);
         }
@@ -68,13 +83,36 @@ public class CollisionSystem extends EntitySystem {
      * @param entities Specified entity collection
      */
     private void playerCollision(Entity e, ImmutableArray<Entity> entities) {
-        handleCollision(e, entities, (player, enemy) -> {
+        handleCollision(e, entities, (player, other) -> {
+            boolean isEnemyBody = Mapper.enemy.has(other) && !Mapper.bullet.has(other);
+            if (powerupEntities != null && powerupEntities.size() > 0) {
+                PowerupEffectsComponent pwr = Mapper.powerupEffects.get(powerupEntities.first());
+                if (pwr.shieldRemaining > 0f) {
+                    if (isEnemyBody) decrementEnemiesAlive();
+                    other.add(new RemoveComponent());
+                    return;
+                }
+            }
+            HealthComponent hp = Mapper.health.get(player);
+            if (hp != null && hp.isInvincible()) {
+                return;
+            }
             for (int i = 0; i < players.size(); i++) {
                 Entity p = players.get(i);
-                Mapper.health.get(p).health--;
+                HealthComponent h = Mapper.health.get(p);
+                h.health--;
+                h.invincibilityRemaining = HealthComponent.INVINCIBILITY_DURATION;
             }
-            enemy.add(new RemoveComponent());
+            if (isEnemyBody) decrementEnemiesAlive();
+            other.add(new RemoveComponent());
         });
+    }
+
+    private void decrementEnemiesAlive() {
+        if (waveEntities != null && waveEntities.size() > 0) {
+            WaveComponent wave = Mapper.wave.get(waveEntities.first());
+            wave.enemiesAlive = Math.max(0, wave.enemiesAlive - 1);
+        }
     }
 
     /**
@@ -89,6 +127,8 @@ public class CollisionSystem extends EntitySystem {
                 Entity p = players.get(i);
                 Mapper.score.get(p).score++;
             }
+            AudioService.getInstance().playSound(assets.getLaserSound());
+            decrementEnemiesAlive();
             enemy.add(new RemoveComponent());
             player.add(new RemoveComponent());
         });

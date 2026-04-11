@@ -15,6 +15,7 @@ import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import no.ntnu.tdt4240.project.Assets;
+import no.ntnu.tdt4240.project.service.AudioService;
 import no.ntnu.tdt4240.project.service.ScoreService;
 import no.ntnu.tdt4240.project.ui.SpaceButton;
 import no.ntnu.tdt4240.project.util.Theme;
@@ -36,6 +37,7 @@ public class MenuState extends State {
     protected void setup() {
         stage = new Stage(new ExtendViewport(VIEWPORT_MIN_WIDTH, VIEWPORT_MIN_HEIGHT));
         Gdx.input.setInputProcessor(stage);
+        AudioService.getInstance().playMusic("audio/elevator_music.mp3", true);
         buildLayout();
     }
 
@@ -48,20 +50,24 @@ public class MenuState extends State {
         logo.setScaling(Scaling.fit);
         root.add(logo).expandX().fillX().height(VIEWPORT_MIN_HEIGHT / 4f).padTop(10f).row();
 
-        // High Score Display
-        int highScore = ScoreService.getInstance().getHighScore();
-        Label highLabel = new Label("PERSONAL HIGH SCORE: " + highScore,
+        // Stats display
+        Label highLabel = new Label("SINGLEPLAYER HIGH SCORE: " + ScoreService.getInstance().getHighScore(),
             new Label.LabelStyle(assets.getDefaultFont(), Color.GOLD));
         highLabel.setFontScale(0.6f);
-        root.add(highLabel).padBottom(5f).row();
+        root.add(highLabel).padBottom(2f).row();
+
+        Label winsLabel = new Label("MULTIPLAYER WINS: " + ScoreService.getInstance().getOnlineWins(),
+            new Label.LabelStyle(assets.getDefaultFont(), Color.GOLD));
+        winsLabel.setFontScale(0.6f);
+        root.add(winsLabel).padBottom(5f).row();
 
         // Menu buttons table
         Table buttons = new Table();
-        String[] buttonLabels = { "PLAY", "LOBBY", "LEADERBOARD", "HISTORY", "TUTORIAL", "SETTINGS" };
+        String[] buttonLabels = { "SINGLEPLAYER", "MULTIPLAYER", "LEADERBOARD", "HISTORY", "TUTORIAL", "SETTINGS" };
         for (String label : buttonLabels) {
             SpaceButton button = new SpaceButton(label);
 
-            if (label.equals("PLAY")) {
+            if (label.equals("SINGLEPLAYER")) {
                 button.addListener(new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
@@ -70,7 +76,7 @@ public class MenuState extends State {
                         sm.set(new GameState(sm, batch, engine, assets));
                     }
                 });
-            } else if (label.equals("LOBBY")) {
+            } else if (label.equals("MULTIPLAYER")) {
                 button.addListener(new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {

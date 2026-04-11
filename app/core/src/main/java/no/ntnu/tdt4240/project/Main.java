@@ -25,7 +25,7 @@ public class Main extends ApplicationAdapter {
         if (AppConfig.get() == null) {
             AppConfig.init(new AppConfig(
                 "http://10.0.2.2:5001/invaders99-3f807/us-central1",
-                "http://10.0.2.2:8080",
+                "http://10.0.2.2:8082",
                 "http://10.0.2.2:9000",
                 "invaders99-3f807"
             ));
@@ -39,7 +39,7 @@ public class Main extends ApplicationAdapter {
 
         UiFactory.init(assets.getDefaultFont());
 
-        AudioService.getInstance().playMusic("elevator_music.mp3", true);
+        AudioService.getInstance().playMusic("audio/elevator_music.mp3", true);
 
         sm = new StateManager();
         // State entry point - passing assets to the state
