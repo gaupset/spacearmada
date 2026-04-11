@@ -13,6 +13,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import no.ntnu.tdt4240.project.Assets;
 import no.ntnu.tdt4240.project.service.AudioService;
+import no.ntnu.tdt4240.project.ui.FirebaseTestWidget;
 import no.ntnu.tdt4240.project.ui.SpaceButton;
 import no.ntnu.tdt4240.project.ui.UiFactory;
 import no.ntnu.tdt4240.project.util.Theme;
@@ -117,6 +118,13 @@ public class SettingsState extends State {
                 .center()
                 .padBottom(30f)
                 .row();
+
+            root.add(new FirebaseTestWidget("FUNCTIONS", FirebaseTestWidget.SERVICE_FUNCTIONS))
+                .width(Theme.BUTTON_WIDTH).padBottom(12f).row();
+            root.add(new FirebaseTestWidget("FIRESTORE", FirebaseTestWidget.SERVICE_FIRESTORE))
+                .width(Theme.BUTTON_WIDTH).padBottom(12f).row();
+            root.add(new FirebaseTestWidget("DATABASE", FirebaseTestWidget.SERVICE_DATABASE))
+                .width(Theme.BUTTON_WIDTH).padBottom(12f).row();
 
             // Back button to main settings menu
             SpaceButton backButton = new SpaceButton("BACK");
