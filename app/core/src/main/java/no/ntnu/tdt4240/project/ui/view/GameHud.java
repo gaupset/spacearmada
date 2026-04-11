@@ -27,6 +27,7 @@ public class GameHud {
 
     private final Label scoreLabel;
     private final Label healthLabel;
+    private final Label waveLabel;
     private final Label enemySpeedLabel;
     private final Label fireRateLabel;
     private final Label alienSpawnLabel;
@@ -143,6 +144,10 @@ public class GameHud {
         healthLabel.setFontScale(0.5f);
         healthLabel.setColor(Color.WHITE);
 
+        waveLabel = new Label("WAVE: 1", skin);
+        waveLabel.setFontScale(0.5f);
+        waveLabel.setColor(Color.WHITE);
+
         // Custom label style with white fontColor so actor color is displayed as-is
         // (default skin uses cyan fontColor which zeroes out the red channel)
         Label.LabelStyle effectStyle = new Label.LabelStyle(skin.get(Label.LabelStyle.class));
@@ -186,6 +191,7 @@ public class GameHud {
         statsBar.top().left();
         statsBar.add(scoreLabel).padLeft(10f).padTop(10f).row();
         statsBar.add(healthLabel).padLeft(10f).padTop(5f).row();
+        statsBar.add(waveLabel).padLeft(10f).padTop(5f).row();
         statsBar.add(shieldLabel).padLeft(10f).padTop(8f).row();
         statsBar.add(enemySpeedLabel).padLeft(10f).padTop(2f).row();
         statsBar.add(slowEnemiesLabel).padLeft(10f).padTop(2f).row();
@@ -236,7 +242,7 @@ public class GameHud {
     }
 
     public void act(float delta, boolean isMenuOpen, boolean isSabotageVisible, boolean isPowerupVisible,
-                    boolean isPauseReady, int score, int health,
+                    boolean isPauseReady, int score, int health, int wave,
                     float enemySpeedRemaining, float fireRateRemaining, float alienSpawnRemaining,
                     float shieldRemaining, float rapidFireRemaining, float slowEnemiesRemaining) {
         this.isMenuOpen = isMenuOpen;
@@ -251,6 +257,7 @@ public class GameHud {
         }
 
         scoreLabel.setText("SCORE: " + score);
+        waveLabel.setText("WAVE: " + wave);
         healthLabel.setText("LIVES: " + health);
 
         updateEffectLabel(enemySpeedLabel, "2x ENEMY SPEED", enemySpeedRemaining);

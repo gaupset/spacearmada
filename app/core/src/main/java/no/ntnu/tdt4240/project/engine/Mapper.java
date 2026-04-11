@@ -3,6 +3,8 @@ package no.ntnu.tdt4240.project.engine;
 import com.badlogic.ashley.core.ComponentMapper;
 
 import no.ntnu.tdt4240.project.engine.component.AnimationComponent;
+import no.ntnu.tdt4240.project.engine.component.BulletComponent;
+import no.ntnu.tdt4240.project.engine.component.WaveComponent;
 import no.ntnu.tdt4240.project.engine.component.DimensionComponent;
 import no.ntnu.tdt4240.project.engine.component.EnemyComponent;
 import no.ntnu.tdt4240.project.engine.component.HealthComponent;
@@ -30,7 +32,9 @@ public class Mapper {
     public static final ComponentMapper<PlayerComponent> player = ComponentMapper.getFor(PlayerComponent.class);
     public static final ComponentMapper<EnemyComponent> enemy = ComponentMapper.getFor(EnemyComponent.class);
     public static final ComponentMapper<ShooterComponent> shooter = ComponentMapper.getFor(ShooterComponent.class);
+    public static final ComponentMapper<BulletComponent> bullet = ComponentMapper.getFor(BulletComponent.class);
     public static final ComponentMapper<SabotageEffectsComponent> sabotageEffects = ComponentMapper.getFor(SabotageEffectsComponent.class);
     public static final ComponentMapper<PowerupEffectsComponent> powerupEffects = ComponentMapper.getFor(PowerupEffectsComponent.class);
     public static final ComponentMapper<AnimationComponent> animation = ComponentMapper.getFor(AnimationComponent.class);
+    public static final ComponentMapper<WaveComponent> wave = ComponentMapper.getFor(WaveComponent.class);
 }

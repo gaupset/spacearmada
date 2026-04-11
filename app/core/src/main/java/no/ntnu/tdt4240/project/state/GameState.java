@@ -24,6 +24,7 @@ import no.ntnu.tdt4240.project.engine.component.HealthComponent;
 import no.ntnu.tdt4240.project.engine.component.PlayerComponent;
 import no.ntnu.tdt4240.project.engine.component.PowerupEffectsComponent;
 import no.ntnu.tdt4240.project.engine.component.SabotageEffectsComponent;
+import no.ntnu.tdt4240.project.engine.component.WaveComponent;
 import no.ntnu.tdt4240.project.engine.component.ScoreComponent;
 import no.ntnu.tdt4240.project.engine.entity.EntityAssembler;
 import no.ntnu.tdt4240.project.engine.Mapper;
@@ -39,6 +40,7 @@ import no.ntnu.tdt4240.project.engine.system.RenderSystem;
 import no.ntnu.tdt4240.project.engine.system.SabotageEffectSystem;
 import no.ntnu.tdt4240.project.engine.system.ShootingSystem;
 import no.ntnu.tdt4240.project.engine.system.SpawnSystem;
+import no.ntnu.tdt4240.project.engine.system.WaveSystem;
 import no.ntnu.tdt4240.project.event.Event;
 import no.ntnu.tdt4240.project.event.EventListener;
 import no.ntnu.tdt4240.project.GameInputProcessor;
@@ -57,7 +59,7 @@ import no.ntnu.tdt4240.project.ui.view.GameHud;
 
 public class GameState extends State implements EventListener {
     private static final float PAUSE_BUTTON_COOLDOWN_SECONDS = 10f;
-    private static final int SABOTAGE_SCORE_THRESHOLD = 1;
+    private static final int SABOTAGE_SCORE_THRESHOLD = 5;
     private static final int SABOTAGE_EFFECT_DURATION_SEC = 10;
     private static final int POWERUP_EFFECT_DURATION_SEC = 10;
     private static final float LOBBY_POLL_INTERVAL = 2f;
@@ -118,6 +120,9 @@ public class GameState extends State implements EventListener {
         Entity powerupEffectsEntity = new Entity();
         powerupEffectsEntity.add(new PowerupEffectsComponent());
         engine.addEntity(powerupEffectsEntity);
+        Entity waveEntity = new Entity();
+        waveEntity.add(new WaveComponent(System.currentTimeMillis()));
+        engine.addEntity(waveEntity);
         // Systems
         engine.addSystem(new InputSystem(input, 0));
         engine.addSystem(new MovementSystem(0));
@@ -125,7 +130,8 @@ public class GameState extends State implements EventListener {
         engine.addSystem(new BoundSystem(1));
         engine.addSystem(new CollisionSystem(assets, 2));
         engine.addSystem(eventSystem());
-        engine.addSystem(new SpawnSystem(assets, 3, 4)); 
+        engine.addSystem(new WaveSystem(3));
+        engine.addSystem(new SpawnSystem(assets, 3, 4));
         engine.addSystem(new ShootingSystem(assets, 4));
         engine.addSystem(new SabotageEffectSystem(4));
         engine.addSystem(new PowerupEffectSystem(4));
@@ -279,7 +285,8 @@ public class GameState extends State implements EventListener {
         boolean pauseReady = isPauseButtonReady();
         SabotageEffectsComponent effects = getSabotageEffectsComponent();
         PowerupEffectsComponent pEffects = getPowerupEffectsComponent();
-        hud.act(0f, false, sabotageVisible, powerupVisible, pauseReady, score, health,
+        int waveNum = getWaveNumber();
+        hud.act(0f, false, sabotageVisible, powerupVisible, pauseReady, score, health, waveNum,
             effects != null ? effects.enemySpeedBoostRemaining : 0f,
             effects != null ? effects.playerFireRateSlowRemaining : 0f,
             effects != null ? effects.alienSpawnBoostRemaining : 0f,
@@ -287,6 +294,12 @@ public class GameState extends State implements EventListener {
             pEffects != null ? pEffects.rapidFireRemaining : 0f,
             pEffects != null ? pEffects.slowEnemiesRemaining : 0f);
         hud.draw();
+    }
+
+    private int getWaveNumber() {
+        ImmutableArray<Entity> entities = engine.getEntitiesFor(Family.all(WaveComponent.class).get());
+        if (entities.size() == 0) return 1;
+        return Mapper.wave.get(entities.first()).waveNumber;
     }
 
     public void resumeInput() {
@@ -352,7 +365,7 @@ public class GameState extends State implements EventListener {
         for (EntitySystem system : engine.getSystems()) {
             if(!(system instanceof RenderSystem)) {
                 boolean shouldProcess = isRunning;
-                if ((system instanceof SabotageEffectSystem || system instanceof PowerupEffectSystem) && menuOpen) {
+                if ((system instanceof SabotageEffectSystem || system instanceof PowerupEffectSystem || system instanceof WaveSystem) && menuOpen) {
                     shouldProcess = false;
                 }
                 system.setProcessing(shouldProcess);
@@ -395,7 +408,8 @@ public class GameState extends State implements EventListener {
         boolean pauseReady = isPauseButtonReady();
         SabotageEffectsComponent effects = getSabotageEffectsComponent();
         PowerupEffectsComponent pEffects = getPowerupEffectsComponent();
-        hud.act(Gdx.graphics.getDeltaTime(), menuOpen, sabotageVisible, powerupVisible, pauseReady, score, health,
+        int waveNum = getWaveNumber();
+        hud.act(Gdx.graphics.getDeltaTime(), menuOpen, sabotageVisible, powerupVisible, pauseReady, score, health, waveNum,
             effects != null ? effects.enemySpeedBoostRemaining : 0f,
             effects != null ? effects.playerFireRateSlowRemaining : 0f,
             effects != null ? effects.alienSpawnBoostRemaining : 0f,
