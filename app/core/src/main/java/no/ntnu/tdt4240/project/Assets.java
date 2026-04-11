@@ -6,19 +6,19 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 
 public class Assets {
-    public static final Color PLAYER_COLOR = new Color(0f, 1f, 1f, 1f);
-    public static final Color PLAYER_BULLET_COLOR = new Color(1f, 1f, 0.4f, 1f);
-    public static final Color ENEMY_COLOR = new Color(1f, 0.2f, 0.5f, 1f);
-    public static final Color ENEMY_BULLET_COLOR = new Color(1f, 0.4f, 0.1f, 1f);
-
-    public Texture player;
-    public Texture playerBullet;
-    public Texture enemy;
-    public Texture enemyBullet;
+    public TextureRegion player;
+    public TextureRegion playerBullet;
+    public TextureRegion enemy;
+    public TextureRegion enemyBullet;
+    private Texture playerSheet;
+    private Texture playerBulletSheet;
+    private Texture enemySheet;
+    private Texture enemyBulletSheet;
     private Texture starsBackground;
     private Texture logoCrop;
     private BitmapFont defaultFont;
@@ -34,29 +34,22 @@ public class Assets {
      * Loads and initializes all textures as solid colors using {@link Pixmap}.
      */
     public void load() {
-        Pixmap pix = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        // Sprites — load sprite sheets and extract first 32x32 frame
+        playerSheet = new Texture("sprites/alien.png");
+        playerSheet.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+        player = TextureRegion.split(playerSheet, 32, 32)[0][0];
 
-        // Player
-        pix.setColor(PLAYER_COLOR);
-        pix.fill();
-        player = new Texture(pix);
+        playerBulletSheet = new Texture("sprites/bullet.png");
+        playerBulletSheet.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+        playerBullet = TextureRegion.split(playerBulletSheet, 32, 32)[0][0];
 
-        // Player bullet
-        pix.setColor(PLAYER_BULLET_COLOR);
-        pix.fill();
-        playerBullet = new Texture(pix);
+        enemySheet = new Texture("sprites/enemy.png");
+        enemySheet.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+        enemy = TextureRegion.split(enemySheet, 32, 32)[0][0];
 
-        // Enemy
-        pix.setColor(ENEMY_COLOR);
-        pix.fill();
-        enemy = new Texture(pix);
-
-        // Enemy bullet
-        pix.setColor(ENEMY_BULLET_COLOR);
-        pix.fill();
-        enemyBullet = new Texture(pix);
-
-        pix.dispose();
+        enemyBulletSheet = new Texture("sprites/enemy_bullet.png");
+        enemyBulletSheet.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+        enemyBullet = TextureRegion.split(enemyBulletSheet, 32, 32)[0][0];
 
         starsBackground = new Texture("ui/stars2.jpg");
         starsBackground.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
@@ -103,11 +96,11 @@ public class Assets {
      * Disposes all textures.
      */
     public void dispose() {
-        // ECS
-        if (player != null) player.dispose();
-        if (playerBullet != null) playerBullet.dispose();
-        if (enemy != null) enemy.dispose();
-        if (enemyBullet != null) enemyBullet.dispose();
+        // Sprite sheets
+        if (playerSheet != null) playerSheet.dispose();
+        if (playerBulletSheet != null) playerBulletSheet.dispose();
+        if (enemySheet != null) enemySheet.dispose();
+        if (enemyBulletSheet != null) enemyBulletSheet.dispose();
 
         // UI and sound
         if (starsBackground != null) starsBackground.dispose();

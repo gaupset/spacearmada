@@ -14,8 +14,11 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.badlogic.gdx.utils.JsonValue;
+
 import no.ntnu.tdt4240.project.config.Player;
 import no.ntnu.tdt4240.project.model.Sabotage;
+import no.ntnu.tdt4240.project.service.LobbyService;
 import no.ntnu.tdt4240.project.engine.component.HealthComponent;
 import no.ntnu.tdt4240.project.engine.component.PlayerComponent;
 import no.ntnu.tdt4240.project.engine.component.SabotageEffectsComponent;
@@ -46,12 +49,14 @@ import no.ntnu.tdt4240.project.sabotage.strategy.SabotageStrategy;
 import no.ntnu.tdt4240.project.ui.view.GameHud;
 
 public class GameState extends State implements EventListener {
-    // Pause button cooldown duration (prevents continuous pausing to cheat)
     private static final float PAUSE_BUTTON_COOLDOWN_SECONDS = 10f;
-    private static final int SABOTAGE_SCORE_THRESHOLD = 10;
+    private static final int SABOTAGE_SCORE_THRESHOLD = 1;
+    private static final int SABOTAGE_EFFECT_DURATION_SEC = 10;
+    private static final float LOBBY_POLL_INTERVAL = 2f;
 
     private Engine engine;
     private Layout layout;
+    private final LobbyService lobbyService;
     private boolean gameOver;
     private GameHud hud;
     private boolean menuOpen = false;
@@ -59,14 +64,20 @@ public class GameState extends State implements EventListener {
     private boolean isSabotageVisible = false;
     private InputMultiplexer inputMux;
     private boolean exitPauseWhenMenuCloses = false;
-    private boolean hasBeenSetup = false; // Track if setup has been called to prevent duplication
-    private float pauseButtonCooldownRemaining = 0f; // Time remaining until pause button is enabled again
+    private boolean hasBeenSetup = false;
+    private float pauseButtonCooldownRemaining = 0f;
+    private float lobbyPollTimer = 0f;
     private int sabotagesUsedCount = 0;
     private final Map<String, SabotageStrategy> sabotageStrategies = new HashMap<>();
 
     public GameState(StateManager sm, SpriteBatch batch, Engine engine, Assets assets) {
+        this(sm, batch, engine, assets, null);
+    }
+
+    public GameState(StateManager sm, SpriteBatch batch, Engine engine, Assets assets, LobbyService lobbyService) {
         super(sm, batch, assets);
         this.engine = engine;
+        this.lobbyService = lobbyService;
         this.layout = new GameLayout();
         this.gameOver = false;
         sabotageStrategies.put(Sabotage.TYPE_ENEMY_SPEED, new EnemySpeedSabotageStrategy());
@@ -83,7 +94,7 @@ public class GameState extends State implements EventListener {
         hasBeenSetup = true;
 
         // Input
-        GameInputProcessor input = new GameInputProcessor();
+        GameInputProcessor input = new GameInputProcessor(layout.get().getViewport());
 
         // Player
         Player player = new Player(assets.player);
@@ -99,7 +110,7 @@ public class GameState extends State implements EventListener {
         engine.addSystem(new BoundSystem(1));
         engine.addSystem(new CollisionSystem(2));
         engine.addSystem(eventSystem());
-        engine.addSystem(new SpawnSystem(assets, 3, 4));
+        engine.addSystem(new SpawnSystem(assets, 3, 4)); 
         engine.addSystem(new ShootingSystem(assets, 4));
         engine.addSystem(new SabotageEffectSystem(4));
         engine.addSystem(new RemovalSystem(5));
@@ -239,12 +250,15 @@ public class GameState extends State implements EventListener {
 
     public void renderFrozen() {
         engine.update(0f);
-        // Get current player stats for frozen render
         int score = getPlayerScore();
         int health = getPlayerHealth();
         isSabotageVisible = getAvailableSabotageCount() > 0;
         boolean pauseReady = isPauseButtonReady();
-        hud.act(0f, false, isSabotageVisible, pauseReady, score, health);
+        SabotageEffectsComponent effects = getSabotageEffectsComponent();
+        hud.act(0f, false, isSabotageVisible, pauseReady, score, health,
+            effects != null ? effects.enemySpeedBoostRemaining : 0f,
+            effects != null ? effects.playerFireRateSlowRemaining : 0f,
+            effects != null ? effects.alienSpawnBoostRemaining : 0f);
         hud.draw();
     }
 
@@ -283,6 +297,34 @@ public class GameState extends State implements EventListener {
             }
         }
 
+        // Poll Firebase for incoming sabotages, sync score and heartbeat
+        // TODO: Move to a service
+        if (isRunning && lobbyService != null) {
+            lobbyPollTimer += dt;
+            if (lobbyPollTimer >= LOBBY_POLL_INTERVAL) {
+                lobbyPollTimer = 0f;
+                lobbyService.updateScore(getPlayerScore());
+                lobbyService.sendHeartbeat();
+                lobbyService.getLobbyStatus(new LobbyService.LobbyStatusCallback() {
+                    @Override
+                    public void onUpdate(JsonValue lobbyData) {
+                        JsonValue players = lobbyData.get("players");
+                        if (players == null) return;
+                        JsonValue me = players.get(lobbyService.lobbyUserID);
+                        if (me == null || !me.has("sabotage")) return;
+                        JsonValue sab = me.get("sabotage");
+                        String type = sab.getString("type", Sabotage.TYPE_ENEMY_SPEED);
+                        int duration = sab.getInt("duration", SABOTAGE_EFFECT_DURATION_SEC);
+                        applySabotage(type, duration);
+                        lobbyService.delSabotage();
+                    }
+
+                    @Override
+                    public void onFailure(String error) {}
+                });
+            }
+        }
+
         // When game is over, transition to GameOverState
         if (gameOver) {
             // Get final score before cleaning up entities
@@ -305,7 +347,11 @@ public class GameState extends State implements EventListener {
         int health = getPlayerHealth();
         isSabotageVisible = getAvailableSabotageCount() > 0;
         boolean pauseReady = isPauseButtonReady();
-        hud.act(Gdx.graphics.getDeltaTime(), menuOpen, isSabotageVisible, pauseReady, score, health);
+        SabotageEffectsComponent effects = getSabotageEffectsComponent();
+        hud.act(Gdx.graphics.getDeltaTime(), menuOpen, isSabotageVisible, pauseReady, score, health,
+            effects != null ? effects.enemySpeedBoostRemaining : 0f,
+            effects != null ? effects.playerFireRateSlowRemaining : 0f,
+            effects != null ? effects.alienSpawnBoostRemaining : 0f);
         hud.draw();
     }
 
@@ -330,6 +376,16 @@ public class GameState extends State implements EventListener {
         resumeInput();
     }
 
+    /** Sends a sabotage to the assigned opponent via Firebase. */
+    public void sendSabotage(String type) {
+        if (lobbyService == null) return;
+        Sabotage sabotage = new Sabotage();
+        sabotage.type = type;
+        sabotage.duration = SABOTAGE_EFFECT_DURATION_SEC;
+        lobbyService.setSabotage(sabotage);
+    }
+
+    /** Applies an incoming sabotage effect to this player's game. */
     public void applySabotage(String type, float durationSeconds) {
         SabotageEffectsComponent effects = getSabotageEffectsComponent();
         if (effects == null) {

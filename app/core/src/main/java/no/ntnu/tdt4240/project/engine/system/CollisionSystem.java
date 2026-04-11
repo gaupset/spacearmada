@@ -13,6 +13,7 @@ import no.ntnu.tdt4240.project.engine.Mapper;
 import no.ntnu.tdt4240.project.engine.component.BulletComponent;
 import no.ntnu.tdt4240.project.engine.component.DimensionComponent;
 import no.ntnu.tdt4240.project.engine.component.EnemyComponent;
+import no.ntnu.tdt4240.project.engine.component.HealthComponent;
 import no.ntnu.tdt4240.project.engine.component.PlayerComponent;
 import no.ntnu.tdt4240.project.engine.component.PositionComponent;
 import no.ntnu.tdt4240.project.engine.component.RemoveComponent;
@@ -52,6 +53,10 @@ public class CollisionSystem extends EntitySystem {
     @Override
     public void update(float dt) {
         for (Entity e : players) {
+            HealthComponent hp = Mapper.health.get(e);
+            if (hp != null && hp.invincibilityRemaining > 0f) {
+                hp.invincibilityRemaining = Math.max(0f, hp.invincibilityRemaining - dt);
+            }
             playerCollision(e, enemies);
             playerCollision(e, enemyBullets);
         }
@@ -68,12 +73,18 @@ public class CollisionSystem extends EntitySystem {
      * @param entities Specified entity collection
      */
     private void playerCollision(Entity e, ImmutableArray<Entity> entities) {
-        handleCollision(e, entities, (player, enemy) -> {
+        handleCollision(e, entities, (player, other) -> {
+            HealthComponent hp = Mapper.health.get(player);
+            if (hp != null && hp.isInvincible()) {
+                return;
+            }
             for (int i = 0; i < players.size(); i++) {
                 Entity p = players.get(i);
-                Mapper.health.get(p).health--;
+                HealthComponent h = Mapper.health.get(p);
+                h.health--;
+                h.invincibilityRemaining = HealthComponent.INVINCIBILITY_DURATION;
             }
-            enemy.add(new RemoveComponent());
+            other.add(new RemoveComponent());
         });
     }
 

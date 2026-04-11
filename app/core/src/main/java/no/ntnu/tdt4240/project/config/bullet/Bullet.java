@@ -1,6 +1,6 @@
 package no.ntnu.tdt4240.project.config.bullet;
 
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 
 import no.ntnu.tdt4240.project.data.NonPlayable;
@@ -10,12 +10,12 @@ import no.ntnu.tdt4240.project.data.NonPlayable;
  * attributes controlling general bullet behavior are included here.
  */
 public abstract class Bullet {
-    protected static final float BULLET_WIDTH = 4f;
-    protected static final float BULLET_HEIGHT = 12f;
+    protected static final float BULLET_WIDTH = 64f;
+    protected static final float BULLET_HEIGHT = 96f;
 
-    protected final Texture tex;
+    protected final TextureRegion tex;
 
-    protected Bullet(Texture tex) {
+    protected Bullet(TextureRegion tex) {
         this.tex = tex;
     }
 

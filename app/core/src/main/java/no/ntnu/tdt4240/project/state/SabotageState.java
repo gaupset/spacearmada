@@ -132,7 +132,7 @@ public class SabotageState extends State {
         if (gameState.getAvailableSabotageCount() <= 0) {
             return;
         }
-        gameState.applySabotage(sabotageType, SABOTAGE_EFFECT_DURATION_SEC);
+        gameState.sendSabotage(sabotageType);
         gameState.recordSabotageUse();
         if (gameState.getAvailableSabotageCount() <= 0) {
             sm.pop();

@@ -30,6 +30,9 @@ public class GameHud {
 
     private final Label scoreLabel;
     private final Label healthLabel;
+    private final Label enemySpeedLabel;
+    private final Label fireRateLabel;
+    private final Label alienSpawnLabel;
 
     public interface MenuToggleListener {
         void onMenuToggle(boolean open);
@@ -123,11 +126,31 @@ public class GameHud {
         healthLabel.setFontScale(0.5f);
         healthLabel.setColor(Color.WHITE);
 
+        Color effectColor = new Color(1f, 0.3f, 0.3f, 1f);
+
+        enemySpeedLabel = new Label("", skin);
+        enemySpeedLabel.setFontScale(0.4f);
+        enemySpeedLabel.setColor(effectColor);
+        enemySpeedLabel.setVisible(false);
+
+        fireRateLabel = new Label("", skin);
+        fireRateLabel.setFontScale(0.4f);
+        fireRateLabel.setColor(effectColor);
+        fireRateLabel.setVisible(false);
+
+        alienSpawnLabel = new Label("", skin);
+        alienSpawnLabel.setFontScale(0.4f);
+        alienSpawnLabel.setColor(effectColor);
+        alienSpawnLabel.setVisible(false);
+
         Table statsBar = new Table();
         statsBar.setFillParent(true);
         statsBar.top().left();
         statsBar.add(scoreLabel).padLeft(10f).padTop(10f).row();
-        statsBar.add(healthLabel).padLeft(10f).padTop(5f);
+        statsBar.add(healthLabel).padLeft(10f).padTop(5f).row();
+        statsBar.add(enemySpeedLabel).padLeft(10f).padTop(8f).row();
+        statsBar.add(fireRateLabel).padLeft(10f).padTop(2f).row();
+        statsBar.add(alienSpawnLabel).padLeft(10f).padTop(2f);
         stage.addActor(statsBar);
 
         menuPanel = new Table();
@@ -211,8 +234,13 @@ public class GameHud {
      * @param isPauseReady Whether pause button is clickable
      * @param score Current player score
      * @param health Current player health/lives
+     * @param enemySpeedRemaining Seconds remaining for enemy speed sabotage
+     * @param fireRateRemaining Seconds remaining for fire rate sabotage
+     * @param alienSpawnRemaining Seconds remaining for alien spawn sabotage
      */
-    public void act(float delta, boolean isMenuOpen, boolean isSabotageVisible, boolean isPauseReady, int score, int health) {
+    public void act(float delta, boolean isMenuOpen, boolean isSabotageVisible, boolean isPauseReady,
+                    int score, int health,
+                    float enemySpeedRemaining, float fireRateRemaining, float alienSpawnRemaining) {
         this.isMenuOpen = isMenuOpen;
         menuPanel.setVisible(isMenuOpen);
         sabotageButton.setVisible(isSabotageVisible);
@@ -223,11 +251,23 @@ public class GameHud {
             pauseButton.getLabel().setColor(PAUSE_BUTTON_DISABLED_LABEL);
         }
 
-        // Update score and health display
         scoreLabel.setText("SCORE: " + score);
         healthLabel.setText("LIVES: " + health);
 
+        updateEffectLabel(enemySpeedLabel, "2x ENEMY SPEED", enemySpeedRemaining);
+        updateEffectLabel(fireRateLabel, "0.5x FIRE RATE", fireRateRemaining);
+        updateEffectLabel(alienSpawnLabel, "2x ALIEN SPAWN", alienSpawnRemaining);
+
         stage.act(delta);
+    }
+
+    private void updateEffectLabel(Label label, String name, float remaining) {
+        if (remaining > 0f) {
+            label.setText(name + " (" + ((int) remaining + 1) + "s)");
+            label.setVisible(true);
+        } else {
+            label.setVisible(false);
+        }
     }
 
     public void draw() {
