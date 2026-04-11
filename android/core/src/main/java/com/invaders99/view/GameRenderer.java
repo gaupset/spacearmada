@@ -146,6 +146,23 @@ public class GameRenderer {
         font.getData().setScale(0.5f);
         font.draw(batch, "SCORE: " + model.score, 10f, Game.WORLD_HEIGHT - 10f);
         font.draw(batch, "LIVES: " + model.lives, 10f, Game.WORLD_HEIGHT - 30f);
+
+        // Active sabotage effects
+        font.getData().setScale(0.4f);
+        font.setColor(1f, 0.3f, 0.3f, 1f);
+        float effectY = Game.WORLD_HEIGHT - 55f;
+        if (model.enemySpeedBoostRemaining > 0f) {
+            font.draw(batch, "2x ENEMY SPEED (" + ((int) model.enemySpeedBoostRemaining + 1) + "s)", 10f, effectY);
+            effectY -= 18f;
+        }
+        if (model.playerFireRateSlowRemaining > 0f) {
+            font.draw(batch, "0.5x FIRE RATE (" + ((int) model.playerFireRateSlowRemaining + 1) + "s)", 10f, effectY);
+            effectY -= 18f;
+        }
+        if (model.alienSpawnBoostRemaining > 0f) {
+            font.draw(batch, "2x ALIEN SPAWN (" + ((int) model.alienSpawnBoostRemaining + 1) + "s)", 10f, effectY);
+        }
+        font.setColor(1f, 1f, 1f, 1f);
         font.getData().setScale(1f); // reset scale
 
         batch.end();
