@@ -20,15 +20,15 @@ public class Assets {
 
     public void load() {
         // Stars background
-        starsBackground = new Texture("stars2.jpg");
+        starsBackground = new Texture("ui/stars2.jpg");
         starsBackground.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
 
         // Logo
-        logoCrop = new Texture("invaders99-logo-crop.png");
+        logoCrop = new Texture("ui/invaders99-logo-crop.png");
         logoCrop.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
 
         // Font
-        fontGenerator = new FreeTypeFontGenerator(Gdx.files.internal("Roboto-Bold.ttf"));
+        fontGenerator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/Roboto-Bold.ttf"));
         FreeTypeFontParameter param = new FreeTypeFontParameter();
         param.size = 32;
         param.minFilter = Texture.TextureFilter.Linear;
@@ -36,7 +36,7 @@ public class Assets {
         defaultFont = fontGenerator.generateFont(param);
 
         // Sounds
-        laserSound = Gdx.audio.newSound(Gdx.files.internal("laser_sound.mp3"));
+        laserSound = Gdx.audio.newSound(Gdx.files.internal("audio/laser_sound.mp3"));
     }
 
     public Texture getStarsBackground() {

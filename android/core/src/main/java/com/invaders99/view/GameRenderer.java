@@ -39,13 +39,13 @@ public class GameRenderer {
         this.background = assets.getStarsBackground();
         this.font = assets.getDefaultFont();
 
-        this.playerSheet = new Texture("alien.png");
+        this.playerSheet = new Texture("sprites/alien.png");
         this.playerSheet.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
         TextureRegion[][] playerFrames = TextureRegion.split(playerSheet, 32, 32);
         this.playerFrame1 = playerFrames[0][0];
         this.playerFrame2 = playerFrames.length > 1 ? playerFrames[1][0] : playerFrames[0][0];
 
-        this.enemySheet = new Texture("enemy.png"); // rename to your actual filename
+        this.enemySheet = new Texture("sprites/enemy.png");
         this.enemySheet.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
         TextureRegion[][] enemyGrid = TextureRegion.split(enemySheet, 32, 32);
         this.enemyFrames = new TextureRegion[] {
@@ -55,13 +55,13 @@ public class GameRenderer {
             enemyGrid[1][1]
         };
 
-        this.bulletSheet = new Texture("bullet.png");
+        this.bulletSheet = new Texture("sprites/bullet.png");
         this.bulletSheet.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
         TextureRegion[][] bulletFrames = TextureRegion.split(bulletSheet, 32, 32);
         this.bulletFrame1 = bulletFrames[0][0];
         this.bulletFrame2 = bulletFrames.length > 1 ? bulletFrames[1][0] : bulletFrames[0][0];
 
-        this.enemyBulletSheet = new Texture("enemy_bullet.png");
+        this.enemyBulletSheet = new Texture("sprites/enemy_bullet.png");
         this.enemyBulletSheet.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
         TextureRegion[][] enemyBulletFrames = TextureRegion.split(enemyBulletSheet, 32, 32);
         this.enemyBulletFrame1 = enemyBulletFrames[0][0];

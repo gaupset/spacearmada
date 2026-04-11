@@ -29,7 +29,7 @@ public class MainController {
         FirebaseService.init();
         UiFactory.init(assets.getDefaultFont());
 
-        AudioService.getInstance().playMusic("elevator_music.mp3", true);
+        AudioService.getInstance().playMusic("audio/elevator_music.mp3", true);
 
         batch = new SpriteBatch();
         gsm = new GameStateManager();
