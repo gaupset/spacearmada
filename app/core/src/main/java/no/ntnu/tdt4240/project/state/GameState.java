@@ -109,7 +109,7 @@ public class GameState extends State implements EventListener {
         GameInputProcessor input = new GameInputProcessor(layout.get().getViewport());
 
         // Player
-        Player player = new Player(assets.player);
+        Player player = new Player(assets.player, assets.playerFrames);
         EntityAssembler assembler = new EntityAssembler(engine);
         assembler.createPlayer(player.create());
         Entity sabotageEffectsEntity = new Entity();

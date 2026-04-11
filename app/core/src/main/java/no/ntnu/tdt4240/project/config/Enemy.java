@@ -12,16 +12,18 @@ import no.ntnu.tdt4240.project.data.NonPlayable;
  * attributes controlling enemy behavior is included here.
  */
 public class Enemy {
-    private static final float ENEMY_WIDTH = 56f;
-    private static final float ENEMY_HEIGHT = 40f;
+    private static final float ENEMY_WIDTH = 48f;
+    private static final float ENEMY_HEIGHT = 48f;
     private static final float ENEMY_VEL = 120f;
 
     private final TextureRegion tex;
+    private final TextureRegion[] frames;
 
     private boolean spawnLeft;
 
-    public Enemy(TextureRegion tex) {
+    public Enemy(TextureRegion tex, TextureRegion[] frames) {
         this.tex = tex;
+        this.frames = frames;
         this.spawnLeft = true;
     }
 
@@ -34,7 +36,7 @@ public class Enemy {
         Vector2 dim = new Vector2(ENEMY_WIDTH, ENEMY_HEIGHT);
         Vector2 vel = new Vector2(0f, -ENEMY_VEL);
         Vector2 pos = calculatePosition(dim.x);
-        return new NonPlayable(pos, vel, dim, tex);
+        return new NonPlayable(pos, vel, dim, tex, frames);
     }
 
     /**

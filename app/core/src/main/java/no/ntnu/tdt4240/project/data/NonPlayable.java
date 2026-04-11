@@ -13,4 +13,9 @@ public class NonPlayable extends Base {
         super(pos, dim, tex);
         this.vel = vel;
     }
+
+    public NonPlayable(Vector2 pos, Vector2 vel, Vector2 dim, TextureRegion tex, TextureRegion[] frames) {
+        super(pos, dim, tex, frames);
+        this.vel = vel;
+    }
 }

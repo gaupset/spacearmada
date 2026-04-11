@@ -21,7 +21,7 @@ public class SpawnSystem extends EntitySystem {
     public SpawnSystem(Assets assets, float interval, int priority) {
         super(priority);
         this.baseInterval = interval;
-        this.enemy = new Enemy(assets.enemy);
+        this.enemy = new Enemy(assets.enemy, assets.enemyFrames);
         this.spawnTimer = 0f;
     }
 

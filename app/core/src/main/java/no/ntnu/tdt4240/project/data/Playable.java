@@ -13,4 +13,9 @@ public class Playable extends Base {
         super(pos, dim, tex);
         this.health = health;
     }
+
+    public Playable(Vector2 pos, Vector2 dim, int health, TextureRegion tex, TextureRegion[] frames) {
+        super(pos, dim, tex, frames);
+        this.health = health;
+    }
 }

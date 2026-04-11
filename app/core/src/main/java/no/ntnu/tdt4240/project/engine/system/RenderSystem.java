@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 import no.ntnu.tdt4240.project.engine.Mapper;
+import no.ntnu.tdt4240.project.engine.component.AnimationComponent;
 import no.ntnu.tdt4240.project.engine.component.DimensionComponent;
 import no.ntnu.tdt4240.project.engine.component.HealthComponent;
 import no.ntnu.tdt4240.project.engine.component.PlayerComponent;
@@ -45,6 +46,13 @@ public class RenderSystem extends IteratingSystem {
         tex = Mapper.texture.get(e);
         pos = Mapper.position.get(e);
         dim = Mapper.dimension.get(e);
+
+        AnimationComponent anim = Mapper.animation.get(e);
+        if (anim != null) {
+            anim.stateTime += dt;
+            int frameIndex = (int) (anim.stateTime / anim.frameDuration) % anim.frames.length;
+            tex.region = anim.frames[frameIndex];
+        }
 
         boolean faded = false;
         if (Mapper.player.has(e)) {

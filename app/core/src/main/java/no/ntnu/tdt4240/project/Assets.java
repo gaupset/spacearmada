@@ -15,6 +15,10 @@ public class Assets {
     public TextureRegion playerBullet;
     public TextureRegion enemy;
     public TextureRegion enemyBullet;
+    public TextureRegion[] playerFrames;
+    public TextureRegion[] playerBulletFrames;
+    public TextureRegion[] enemyFrames;
+    public TextureRegion[] enemyBulletFrames;
     private Texture playerSheet;
     private Texture playerBulletSheet;
     private Texture enemySheet;
@@ -34,22 +38,26 @@ public class Assets {
      * Loads and initializes all textures as solid colors using {@link Pixmap}.
      */
     public void load() {
-        // Sprites — load sprite sheets and extract first 32x32 frame
+        // Sprites — load sprite sheets and extract 32x32 frames
         playerSheet = new Texture("sprites/alien.png");
         playerSheet.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-        player = TextureRegion.split(playerSheet, 32, 32)[0][0];
+        playerFrames = flattenFrames(TextureRegion.split(playerSheet, 32, 32));
+        player = playerFrames[0];
 
         playerBulletSheet = new Texture("sprites/bullet.png");
         playerBulletSheet.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-        playerBullet = TextureRegion.split(playerBulletSheet, 32, 32)[0][0];
+        playerBulletFrames = flattenFrames(TextureRegion.split(playerBulletSheet, 32, 32));
+        playerBullet = playerBulletFrames[0];
 
         enemySheet = new Texture("sprites/enemy.png");
         enemySheet.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-        enemy = TextureRegion.split(enemySheet, 32, 32)[0][0];
+        enemyFrames = flattenFrames(TextureRegion.split(enemySheet, 32, 32));
+        enemy = enemyFrames[0];
 
         enemyBulletSheet = new Texture("sprites/enemy_bullet.png");
         enemyBulletSheet.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-        enemyBullet = TextureRegion.split(enemyBulletSheet, 32, 32)[0][0];
+        enemyBulletFrames = flattenFrames(TextureRegion.split(enemyBulletSheet, 32, 32));
+        enemyBullet = enemyBulletFrames[0];
 
         starsBackground = new Texture("ui/stars2.jpg");
         starsBackground.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
@@ -81,6 +89,19 @@ public class Assets {
 
     public Sound getLaserSound() {
         return laserSound;
+    }
+
+    private static TextureRegion[] flattenFrames(TextureRegion[][] grid) {
+        int count = 0;
+        for (TextureRegion[] row : grid) count += row.length;
+        TextureRegion[] flat = new TextureRegion[count];
+        int i = 0;
+        for (TextureRegion[] row : grid) {
+            for (TextureRegion region : row) {
+                flat[i++] = region;
+            }
+        }
+        return flat;
     }
 
     public static Texture createColorTexture(Color color) {

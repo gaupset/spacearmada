@@ -36,8 +36,8 @@ public class ShootingSystem extends IteratingSystem {
             ShooterComponent.class
         ).get(), priority);
         this.assets = assets;
-        this.playerBullet = new PlayerBullet(assets.playerBullet);
-        this.enemyBullet = new EnemyBullet(assets.enemyBullet);
+        this.playerBullet = new PlayerBullet(assets.playerBullet, assets.playerBulletFrames);
+        this.enemyBullet = new EnemyBullet(assets.enemyBullet, assets.enemyBulletFrames);
     }
 
     @Override

@@ -12,8 +12,8 @@ import no.ntnu.tdt4240.project.data.NonPlayable;
 public class EnemyBullet extends Bullet {
     private static final float ENEMY_BULLET_VEL = 300f;
 
-    public EnemyBullet(TextureRegion tex) {
-        super(tex);
+    public EnemyBullet(TextureRegion tex, TextureRegion[] frames) {
+        super(tex, frames);
     }
 
     /**
@@ -29,7 +29,7 @@ public class EnemyBullet extends Bullet {
         Vector2 dim = new Vector2(BULLET_WIDTH, BULLET_HEIGHT);
         Vector2 vel = new Vector2(0f, -ENEMY_BULLET_VEL);
         Vector2 pos = calculatePosition(originPos, originDim, dim.y);
-        return new NonPlayable(pos, vel, dim, tex);
+        return new NonPlayable(pos, vel, dim, tex, frames);
     }
 
     /**
