@@ -58,6 +58,11 @@ public class AudioService {
             currentMusic.setLooping(loop);
             updateMusicVolume(); // Apply current volume/mute settings
             currentMusic.play();
+            if (loop) {
+                currentMusic.setOnCompletionListener(music -> {
+                    music.play();
+                });
+            }
         } catch (Exception e) {
             Gdx.app.error("AudioService", "Could not play music: " + fileName, e);
         }

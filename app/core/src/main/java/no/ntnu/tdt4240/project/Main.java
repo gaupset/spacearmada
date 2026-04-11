@@ -39,7 +39,7 @@ public class Main extends ApplicationAdapter {
 
         UiFactory.init(assets.getDefaultFont());
 
-        AudioService.getInstance().playMusic("elevator_music.mp3", true);
+        AudioService.getInstance().playMusic("audio/elevator_music.mp3", true);
 
         sm = new StateManager();
         // State entry point - passing assets to the state
