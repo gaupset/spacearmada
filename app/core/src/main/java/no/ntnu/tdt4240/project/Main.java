@@ -24,10 +24,10 @@ public class Main extends ApplicationAdapter {
         // Initialize Firebase with default config if not already initialized
         if (AppConfig.get() == null) {
             AppConfig.init(new AppConfig(
-                "https://us-central1-spacearmada-12345.cloudfunctions.net",
-                "https://firestore.googleapis.com",
-                "https://spacearmada-12345-default-rtdb.firebaseio.com",
-                "spacearmada-12345"
+                "http://10.0.2.2:5001/invaders99-3f807/us-central1",
+                "http://10.0.2.2:8080",
+                "http://10.0.2.2:9000",
+                "invaders99-3f807"
             ));
         }
         FirebaseService.init();
