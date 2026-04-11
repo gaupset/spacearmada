@@ -8,6 +8,7 @@ import no.ntnu.tdt4240.project.engine.component.HealthComponent;
 import no.ntnu.tdt4240.project.engine.component.PlayerComponent;
 import no.ntnu.tdt4240.project.engine.component.PositionComponent;
 import no.ntnu.tdt4240.project.engine.component.ScoreComponent;
+import no.ntnu.tdt4240.project.engine.component.PowerupEffectsComponent;
 import no.ntnu.tdt4240.project.engine.component.SabotageEffectsComponent;
 import no.ntnu.tdt4240.project.engine.component.ShooterComponent;
 import no.ntnu.tdt4240.project.engine.component.TextureComponent;
@@ -29,4 +30,5 @@ public class Mapper {
     public static final ComponentMapper<EnemyComponent> enemy = ComponentMapper.getFor(EnemyComponent.class);
     public static final ComponentMapper<ShooterComponent> shooter = ComponentMapper.getFor(ShooterComponent.class);
     public static final ComponentMapper<SabotageEffectsComponent> sabotageEffects = ComponentMapper.getFor(SabotageEffectsComponent.class);
+    public static final ComponentMapper<PowerupEffectsComponent> powerupEffects = ComponentMapper.getFor(PowerupEffectsComponent.class);
 }

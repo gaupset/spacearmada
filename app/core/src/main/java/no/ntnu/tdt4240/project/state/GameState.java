@@ -17,10 +17,12 @@ import java.util.Map;
 import com.badlogic.gdx.utils.JsonValue;
 
 import no.ntnu.tdt4240.project.config.Player;
+import no.ntnu.tdt4240.project.model.Powerup;
 import no.ntnu.tdt4240.project.model.Sabotage;
 import no.ntnu.tdt4240.project.service.LobbyService;
 import no.ntnu.tdt4240.project.engine.component.HealthComponent;
 import no.ntnu.tdt4240.project.engine.component.PlayerComponent;
+import no.ntnu.tdt4240.project.engine.component.PowerupEffectsComponent;
 import no.ntnu.tdt4240.project.engine.component.SabotageEffectsComponent;
 import no.ntnu.tdt4240.project.engine.component.ScoreComponent;
 import no.ntnu.tdt4240.project.engine.entity.EntityAssembler;
@@ -31,6 +33,7 @@ import no.ntnu.tdt4240.project.engine.system.CollisionSystem;
 import no.ntnu.tdt4240.project.engine.system.EventSystem;
 import no.ntnu.tdt4240.project.engine.system.InputSystem;
 import no.ntnu.tdt4240.project.engine.system.MovementSystem;
+import no.ntnu.tdt4240.project.engine.system.PowerupEffectSystem;
 import no.ntnu.tdt4240.project.engine.system.RemovalSystem;
 import no.ntnu.tdt4240.project.engine.system.RenderSystem;
 import no.ntnu.tdt4240.project.engine.system.SabotageEffectSystem;
@@ -42,6 +45,10 @@ import no.ntnu.tdt4240.project.GameInputProcessor;
 import no.ntnu.tdt4240.project.layout.GameLayout;
 import no.ntnu.tdt4240.project.layout.Layout;
 import no.ntnu.tdt4240.project.Assets;
+import no.ntnu.tdt4240.project.powerup.strategy.PowerupStrategy;
+import no.ntnu.tdt4240.project.powerup.strategy.RapidFirePowerupStrategy;
+import no.ntnu.tdt4240.project.powerup.strategy.ShieldPowerupStrategy;
+import no.ntnu.tdt4240.project.powerup.strategy.SlowEnemiesPowerupStrategy;
 import no.ntnu.tdt4240.project.sabotage.strategy.DoubleAliensSabotageStrategy;
 import no.ntnu.tdt4240.project.sabotage.strategy.EnemySpeedSabotageStrategy;
 import no.ntnu.tdt4240.project.sabotage.strategy.HalfPlayerBulletsSabotageStrategy;
@@ -52,6 +59,7 @@ public class GameState extends State implements EventListener {
     private static final float PAUSE_BUTTON_COOLDOWN_SECONDS = 10f;
     private static final int SABOTAGE_SCORE_THRESHOLD = 1;
     private static final int SABOTAGE_EFFECT_DURATION_SEC = 10;
+    private static final int POWERUP_EFFECT_DURATION_SEC = 10;
     private static final float LOBBY_POLL_INTERVAL = 2f;
 
     private Engine engine;
@@ -61,14 +69,15 @@ public class GameState extends State implements EventListener {
     private GameHud hud;
     private boolean menuOpen = false;
     private boolean gameplayPaused = false;
-    private boolean isSabotageVisible = false;
     private InputMultiplexer inputMux;
     private boolean exitPauseWhenMenuCloses = false;
     private boolean hasBeenSetup = false;
     private float pauseButtonCooldownRemaining = 0f;
     private float lobbyPollTimer = 0f;
     private int sabotagesUsedCount = 0;
+    private int powerupsUsedCount = 0;
     private final Map<String, SabotageStrategy> sabotageStrategies = new HashMap<>();
+    private final Map<String, PowerupStrategy> powerupStrategies = new HashMap<>();
 
     public GameState(StateManager sm, SpriteBatch batch, Engine engine, Assets assets) {
         this(sm, batch, engine, assets, null);
@@ -83,6 +92,9 @@ public class GameState extends State implements EventListener {
         sabotageStrategies.put(Sabotage.TYPE_ENEMY_SPEED, new EnemySpeedSabotageStrategy());
         sabotageStrategies.put(Sabotage.TYPE_HALF_PLAYER_BULLETS, new HalfPlayerBulletsSabotageStrategy());
         sabotageStrategies.put(Sabotage.TYPE_DOUBLE_ALIENS, new DoubleAliensSabotageStrategy());
+        powerupStrategies.put(Powerup.TYPE_SHIELD, new ShieldPowerupStrategy());
+        powerupStrategies.put(Powerup.TYPE_RAPID_FIRE, new RapidFirePowerupStrategy());
+        powerupStrategies.put(Powerup.TYPE_SLOW_ENEMIES, new SlowEnemiesPowerupStrategy());
     }
 
     @Override
@@ -103,6 +115,9 @@ public class GameState extends State implements EventListener {
         Entity sabotageEffectsEntity = new Entity();
         sabotageEffectsEntity.add(new SabotageEffectsComponent());
         engine.addEntity(sabotageEffectsEntity);
+        Entity powerupEffectsEntity = new Entity();
+        powerupEffectsEntity.add(new PowerupEffectsComponent());
+        engine.addEntity(powerupEffectsEntity);
         // Systems
         engine.addSystem(new InputSystem(input, 0));
         engine.addSystem(new MovementSystem(0));
@@ -113,6 +128,7 @@ public class GameState extends State implements EventListener {
         engine.addSystem(new SpawnSystem(assets, 3, 4)); 
         engine.addSystem(new ShootingSystem(assets, 4));
         engine.addSystem(new SabotageEffectSystem(4));
+        engine.addSystem(new PowerupEffectSystem(4));
         engine.addSystem(new RemovalSystem(5));
         engine.addSystem(new RenderSystem(batch, layout.get().getViewport(), 6));
 
@@ -121,8 +137,13 @@ public class GameState extends State implements EventListener {
             () -> sm.set(new MenuState(sm, batch, assets)),
             () -> sm.push(new PauseState(sm, batch, assets, this)),
             () -> {
-                if (getAvailableSabotageCount() > 0) {
+                if (getAvailableAbilityCount() > 0) {
                     sm.push(new SabotageState(sm, batch, assets, this));
+                }
+            },
+            () -> {
+                if (getAvailableAbilityCount() > 0) {
+                    sm.push(new PowerupState(sm, batch, assets, this));
                 }
             },
             () -> {
@@ -252,13 +273,19 @@ public class GameState extends State implements EventListener {
         engine.update(0f);
         int score = getPlayerScore();
         int health = getPlayerHealth();
-        isSabotageVisible = getAvailableSabotageCount() > 0;
+        int abilityCount = getAvailableAbilityCount();
+        boolean sabotageVisible = isMultiplayer() && abilityCount > 0;
+        boolean powerupVisible = abilityCount > 0;
         boolean pauseReady = isPauseButtonReady();
         SabotageEffectsComponent effects = getSabotageEffectsComponent();
-        hud.act(0f, false, isSabotageVisible, pauseReady, score, health,
+        PowerupEffectsComponent pEffects = getPowerupEffectsComponent();
+        hud.act(0f, false, sabotageVisible, powerupVisible, pauseReady, score, health,
             effects != null ? effects.enemySpeedBoostRemaining : 0f,
             effects != null ? effects.playerFireRateSlowRemaining : 0f,
-            effects != null ? effects.alienSpawnBoostRemaining : 0f);
+            effects != null ? effects.alienSpawnBoostRemaining : 0f,
+            pEffects != null ? pEffects.shieldRemaining : 0f,
+            pEffects != null ? pEffects.rapidFireRemaining : 0f,
+            pEffects != null ? pEffects.slowEnemiesRemaining : 0f);
         hud.draw();
     }
 
@@ -272,33 +299,9 @@ public class GameState extends State implements EventListener {
     }
 
     public void updateGameplay(float dt) {
-        if (gameplayPaused) {
-            return;
-        }
-
         boolean isRunning = !gameOver;
 
-        for (EntitySystem system : engine.getSystems()) {
-            if(!(system instanceof RenderSystem)) {
-                boolean shouldProcess = isRunning;
-                if (system instanceof SabotageEffectSystem && menuOpen) {
-                    shouldProcess = false;
-                }
-                system.setProcessing(shouldProcess);
-            }
-        }
-        engine.update(dt);
-
-        // Update pause button cooldown timer while game is running
-        if (isRunning && pauseButtonCooldownRemaining > 0f) {
-            pauseButtonCooldownRemaining -= dt;
-            if (pauseButtonCooldownRemaining <= 0f) {
-                pauseButtonCooldownRemaining = 0f;
-            }
-        }
-
-        // Poll Firebase for incoming sabotages, sync score and heartbeat
-        // TODO: Move to a service
+        // Always poll Firebase even while paused so game-over is detected
         if (isRunning && lobbyService != null) {
             lobbyPollTimer += dt;
             if (lobbyPollTimer >= LOBBY_POLL_INTERVAL) {
@@ -332,6 +335,39 @@ public class GameState extends State implements EventListener {
             }
         }
 
+        if (gameplayPaused) {
+            // Still transition to game over even while paused
+            if (gameOver) {
+                int finalScore = getPlayerScore();
+                if (lobbyService != null) {
+                    lobbyService.setPlayerGameOver(finalScore);
+                }
+                engine.removeAllEntities();
+                engine.removeAllSystems();
+                sm.set(new GameOverState(sm, batch, assets, engine, finalScore, lobbyService));
+            }
+            return;
+        }
+
+        for (EntitySystem system : engine.getSystems()) {
+            if(!(system instanceof RenderSystem)) {
+                boolean shouldProcess = isRunning;
+                if ((system instanceof SabotageEffectSystem || system instanceof PowerupEffectSystem) && menuOpen) {
+                    shouldProcess = false;
+                }
+                system.setProcessing(shouldProcess);
+            }
+        }
+        engine.update(dt);
+
+        // Update pause button cooldown timer while game is running
+        if (isRunning && pauseButtonCooldownRemaining > 0f) {
+            pauseButtonCooldownRemaining -= dt;
+            if (pauseButtonCooldownRemaining <= 0f) {
+                pauseButtonCooldownRemaining = 0f;
+            }
+        }
+
         // When game is over, transition to GameOverState
         if (gameOver) {
             int finalScore = getPlayerScore();
@@ -353,23 +389,57 @@ public class GameState extends State implements EventListener {
         // Get current player stats for HUD display
         int score = getPlayerScore();
         int health = getPlayerHealth();
-        isSabotageVisible = getAvailableSabotageCount() > 0;
+        int abilityCount = getAvailableAbilityCount();
+        boolean sabotageVisible = isMultiplayer() && abilityCount > 0;
+        boolean powerupVisible = abilityCount > 0;
         boolean pauseReady = isPauseButtonReady();
         SabotageEffectsComponent effects = getSabotageEffectsComponent();
-        hud.act(Gdx.graphics.getDeltaTime(), menuOpen, isSabotageVisible, pauseReady, score, health,
+        PowerupEffectsComponent pEffects = getPowerupEffectsComponent();
+        hud.act(Gdx.graphics.getDeltaTime(), menuOpen, sabotageVisible, powerupVisible, pauseReady, score, health,
             effects != null ? effects.enemySpeedBoostRemaining : 0f,
             effects != null ? effects.playerFireRateSlowRemaining : 0f,
-            effects != null ? effects.alienSpawnBoostRemaining : 0f);
+            effects != null ? effects.alienSpawnBoostRemaining : 0f,
+            pEffects != null ? pEffects.shieldRemaining : 0f,
+            pEffects != null ? pEffects.rapidFireRemaining : 0f,
+            pEffects != null ? pEffects.slowEnemiesRemaining : 0f);
         hud.draw();
     }
 
-    public int getAvailableSabotageCount() {
+    public int getAvailableAbilityCount() {
         int earned = getPlayerScore() / SABOTAGE_SCORE_THRESHOLD;
-        return Math.max(0, earned - sabotagesUsedCount);
+        return Math.max(0, earned - (sabotagesUsedCount + powerupsUsedCount));
     }
 
     public void recordSabotageUse() {
         sabotagesUsedCount += 1;
+    }
+
+    public void recordPowerupUse() {
+        powerupsUsedCount += 1;
+    }
+
+    public boolean isMultiplayer() {
+        return lobbyService != null;
+    }
+
+    public void applyPowerup(String type, float durationSeconds) {
+        PowerupEffectsComponent effects = getPowerupEffectsComponent();
+        if (effects == null) {
+            return;
+        }
+        PowerupStrategy strategy = powerupStrategies.get(type);
+        if (strategy == null) {
+            strategy = powerupStrategies.get(Powerup.TYPE_SHIELD);
+        }
+        strategy.apply(effects, durationSeconds);
+    }
+
+    private PowerupEffectsComponent getPowerupEffectsComponent() {
+        ImmutableArray<Entity> entities = engine.getEntitiesFor(Family.all(PowerupEffectsComponent.class).get());
+        if (entities.size() == 0) {
+            return null;
+        }
+        return Mapper.powerupEffects.get(entities.first());
     }
 
     public InputMultiplexer getInputMultiplexer() {

@@ -16,6 +16,7 @@ import no.ntnu.tdt4240.project.engine.component.EnemyComponent;
 import no.ntnu.tdt4240.project.engine.component.HealthComponent;
 import no.ntnu.tdt4240.project.engine.component.PlayerComponent;
 import no.ntnu.tdt4240.project.engine.component.PositionComponent;
+import no.ntnu.tdt4240.project.engine.component.PowerupEffectsComponent;
 import no.ntnu.tdt4240.project.engine.component.RemoveComponent;
 
 public class CollisionSystem extends EntitySystem {
@@ -23,6 +24,7 @@ public class CollisionSystem extends EntitySystem {
     private ImmutableArray<Entity> playerBullets;
     private ImmutableArray<Entity> enemies;
     private ImmutableArray<Entity> enemyBullets;
+    private ImmutableArray<Entity> powerupEntities;
 
     public CollisionSystem(int priority) {
         super(priority);
@@ -48,6 +50,7 @@ public class CollisionSystem extends EntitySystem {
             .all(EnemyComponent.class, BulletComponent.class)
             .get()
         );
+        powerupEntities = engine.getEntitiesFor(Family.all(PowerupEffectsComponent.class).get());
     }
 
     @Override
@@ -74,6 +77,13 @@ public class CollisionSystem extends EntitySystem {
      */
     private void playerCollision(Entity e, ImmutableArray<Entity> entities) {
         handleCollision(e, entities, (player, other) -> {
+            if (powerupEntities != null && powerupEntities.size() > 0) {
+                PowerupEffectsComponent pwr = Mapper.powerupEffects.get(powerupEntities.first());
+                if (pwr.shieldRemaining > 0f) {
+                    other.add(new RemoveComponent());
+                    return;
+                }
+            }
             HealthComponent hp = Mapper.health.get(player);
             if (hp != null && hp.isInvincible()) {
                 return;

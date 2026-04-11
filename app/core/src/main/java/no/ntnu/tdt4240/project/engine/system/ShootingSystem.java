@@ -12,6 +12,7 @@ import no.ntnu.tdt4240.project.Assets;
 import no.ntnu.tdt4240.project.engine.Mapper;
 import no.ntnu.tdt4240.project.engine.component.DimensionComponent;
 import no.ntnu.tdt4240.project.engine.component.PositionComponent;
+import no.ntnu.tdt4240.project.engine.component.PowerupEffectsComponent;
 import no.ntnu.tdt4240.project.engine.component.SabotageEffectsComponent;
 import no.ntnu.tdt4240.project.engine.component.ShooterComponent;
 import no.ntnu.tdt4240.project.engine.entity.EntityAssembler;
@@ -23,6 +24,7 @@ public class ShootingSystem extends IteratingSystem {
     private final EnemyBullet enemyBullet;
     private final Assets assets;
     private ImmutableArray<Entity> sabotageEntities;
+    private ImmutableArray<Entity> powerupEntities;
 
     private PositionComponent pos;
     private DimensionComponent dim;
@@ -42,6 +44,7 @@ public class ShootingSystem extends IteratingSystem {
     public void addedToEngine(com.badlogic.ashley.core.Engine engine) {
         super.addedToEngine(engine);
         sabotageEntities = engine.getEntitiesFor(Family.all(SabotageEffectsComponent.class).get());
+        powerupEntities = engine.getEntitiesFor(Family.all(PowerupEffectsComponent.class).get());
     }
 
     @Override
@@ -59,6 +62,12 @@ public class ShootingSystem extends IteratingSystem {
             SabotageEffectsComponent effects = Mapper.sabotageEffects.get(sabotageEntities.first());
             if (effects.playerFireRateSlowRemaining > 0f) {
                 interval *= SabotageEffectsComponent.PLAYER_SHOOT_INTERVAL_MULTIPLIER;
+            }
+        }
+        if (isPlayer && powerupEntities != null && powerupEntities.size() > 0) {
+            PowerupEffectsComponent pwr = Mapper.powerupEffects.get(powerupEntities.first());
+            if (pwr.rapidFireRemaining > 0f) {
+                interval *= PowerupEffectsComponent.PLAYER_SHOOT_INTERVAL_MULTIPLIER;
             }
         }
         shooter.timer += dt;
