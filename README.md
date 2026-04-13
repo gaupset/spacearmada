@@ -7,3 +7,6 @@ TDT4240
 3. `cd firebase && firebase emulators:start` in a new terminal to start emulators
 4. Open and start Android project as usual.
 5. You can check Firebase connection status by navigating to the settings of the app
+
+# Deploy:
+`firebase deploy --only functions,db`

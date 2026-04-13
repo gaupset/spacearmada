@@ -12,6 +12,13 @@ interface GameHandlerResult {
   message?: string;
 }
 
+/**
+ * Handles an incoming game request for a lobby.
+ * @param {string} lobbyId - The lobby identifier.
+ * @param {string} lobbyUserId - The user identifier.
+ * @param {string} action - Optional action to perform.
+ * @return {Promise<GameHandlerResult>} The result of the request.
+ */
 export async function handleGameRequest(
   lobbyId: string,
   lobbyUserId: string,
@@ -28,7 +35,8 @@ export async function handleGameRequest(
     return {status: "error", isRunner: false, message: "Lobby not found"};
   }
   const lobby = lobbySnap.val() as LobbyData;
-  logger.info("lobby data", {gameStarted: lobby.gameStarted, playerCount: lobby.players ? Object.keys(lobby.players).length : 0});
+  const playerCount = lobby.players ? Object.keys(lobby.players).length : 0;
+  logger.info("lobby data", {gameStarted: lobby.gameStarted, playerCount});
 
   // Runner election via transaction
   const isRunner = await tryClaimRunner(lobbyId, lobbyUserId);
@@ -46,6 +54,12 @@ export async function handleGameRequest(
   return {status: "ok", isRunner};
 }
 
+/**
+ * Attempts to claim the runner role for a lobby via transaction.
+ * @param {string} lobbyId - The lobby identifier.
+ * @param {string} lobbyUserId - The user attempting to claim runner.
+ * @return {Promise<boolean>} True if this user is now the runner.
+ */
 async function tryClaimRunner(
   lobbyId: string,
   lobbyUserId: string
@@ -71,6 +85,12 @@ async function tryClaimRunner(
   return val?.id === lobbyUserId;
 }
 
+/**
+ * Handles the startGame action for a lobby.
+ * @param {string} lobbyId - The lobby identifier.
+ * @param {LobbyData} lobby - The current lobby data.
+ * @return {Promise<GameHandlerResult>} The result of starting the game.
+ */
 async function handleStartGame(
   lobbyId: string,
   lobby: LobbyData
@@ -117,6 +137,13 @@ async function handleStartGame(
   return {status: "ok", isRunner: false, message: "Game started"};
 }
 
+/**
+ * Performs game management tasks for the runner: kicking inactive players
+ * and ending or deleting the lobby when appropriate.
+ * @param {string} lobbyId - The lobby identifier.
+ * @param {LobbyData} lobby - The current lobby data.
+ * @return {Promise<void>}
+ */
 async function runGameManagement(
   lobbyId: string,
   lobby: LobbyData
@@ -168,6 +195,11 @@ async function runGameManagement(
   }
 }
 
+/**
+ * Returns true if the game should end (one or fewer active players).
+ * @param {Record<string, LobbyPlayer>} players - The players map.
+ * @return {boolean} Whether the game should end.
+ */
 function shouldGameEnd(players: Record<string, LobbyPlayer>): boolean {
   let activeCount = 0;
   for (const player of Object.values(players)) {
@@ -178,6 +210,12 @@ function shouldGameEnd(players: Record<string, LobbyPlayer>): boolean {
   return activeCount <= 1;
 }
 
+/**
+ * Returns true if the lobby should be deleted (all players offline).
+ * @param {Record<string, LobbyPlayer>} players - The players map.
+ * @param {number} now - Current timestamp in ms.
+ * @return {boolean} Whether the lobby should be deleted.
+ */
 function shouldDeleteLobby(
   players: Record<string, LobbyPlayer>,
   now: number

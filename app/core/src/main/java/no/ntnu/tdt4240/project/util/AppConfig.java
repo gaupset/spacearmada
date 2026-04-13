@@ -2,7 +2,7 @@ package no.ntnu.tdt4240.project.util;
 
 public class AppConfig {
     private static AppConfig instance;
-
+    
     public final String firebaseBaseUrl;
     public final String firestoreBaseUrl;
     public final String databaseBaseUrl;

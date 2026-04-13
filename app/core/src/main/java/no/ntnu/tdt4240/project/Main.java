@@ -21,14 +21,27 @@ public class Main extends ApplicationAdapter {
 
     @Override
     public void create() {
-        // Initialize Firebase with default config if not already initialized
+        // Toggle this flag to switch between local emulator and deployed Firebase services.
+        // true  → Android emulator on the same machine (10.0.2.2 = host machine localhost)
+        // false → Deployed Firebase project (Cloud Functions + production RTDB)
+        final boolean DEV_MODE = false;
+
         if (AppConfig.get() == null) {
-            AppConfig.init(new AppConfig(
-                "http://10.0.2.2:5001/invaders99-3f807/us-central1",
-                "http://10.0.2.2:8082",
-                "http://10.0.2.2:9000",
-                "invaders99-3f807"
-            ));
+            if (DEV_MODE) {
+                AppConfig.init(new AppConfig(
+                    "http://10.0.2.2:5001/invaders99-3f807/us-central1", // Cloud Functions emulator
+                    "http://10.0.2.2:8082",                               // Firestore emulator
+                    "http://10.0.2.2:9000",                               // RTDB emulator
+                    "invaders99-3f807"
+                ));
+            } else {
+                AppConfig.init(new AppConfig(
+                    "https://us-central1-invaders99-3f807.cloudfunctions.net", // Cloud Functions
+                    "",                                                         // Firestore: native SDK only
+                    "https://invaders99-3f807-default-rtdb.europe-west1.firebasedatabase.app", // RTDB
+                    "invaders99-3f807"
+                ));
+            }
         }
         FirebaseService.init();
 

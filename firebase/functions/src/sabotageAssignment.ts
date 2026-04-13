@@ -2,6 +2,8 @@
  * Assigns sabotage targets so each player attacks exactly one other player
  * and is attacked by exactly one (a bijection). Uses a random cyclic
  * permutation (no self-targets) when there are at least two players.
+ * @param {string[]} playerIds - List of player IDs to assign targets for.
+ * @return {Record<string, string>} Map of attackerId to victimId.
  */
 export function assignTargets(
   playerIds: string[]
@@ -23,6 +25,9 @@ export function assignTargets(
 /**
  * Splices the sabotage ring after a player is eliminated.
  * The predecessor now targets the eliminated player's former victim.
+ * @param {Record<string, string>} currentTargets - Current attacker→victim map.
+ * @param {string} eliminatedPlayerId - ID of the eliminated player.
+ * @return {Record<string, string>} Updated attacker→victim map.
  */
 export function reassignAfterElimination(
   currentTargets: Record<string, string>,

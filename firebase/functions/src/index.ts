@@ -4,9 +4,10 @@ import * as logger from "firebase-functions/logger";
 import {initializeApp} from "firebase-admin/app";
 import {handleGameRequest} from "./gameRunner";
 
-initializeApp({
-  databaseURL: "https://invaders99-3f807.firebaseio.com",
-});
+const databaseURL = process.env.DATABASE_URL ||
+  "https://invaders99-3f807-default-rtdb.europe-west1.firebasedatabase.app";
+logger.info("initializeApp", {databaseURL});
+initializeApp({databaseURL});
 setGlobalOptions({maxInstances: 10});
 
 export const helloWorld = onRequest((request, response) => {
