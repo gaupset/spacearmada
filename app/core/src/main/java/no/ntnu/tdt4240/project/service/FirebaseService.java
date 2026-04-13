@@ -20,6 +20,7 @@ public class FirebaseService {
     private final String firestoreBaseUrl;
     private final String databaseBaseUrl;
     private final String projectId;
+    private final String dbNsParam;
     private long serverTimeOffset = 0;
 
     private FirebaseService(AppConfig config) {
@@ -27,6 +28,9 @@ public class FirebaseService {
         this.firestoreBaseUrl = config.firestoreBaseUrl;
         this.databaseBaseUrl = config.databaseBaseUrl;
         this.projectId = config.projectId;
+        // ?ns= is required by the RTDB emulator (HTTP) to select the namespace.
+        // Only needs to be included when using emulatrs
+        this.dbNsParam = config.databaseBaseUrl.startsWith("http://") ? "?ns=" + config.projectId : "";
         fetchServerTimeOffset();
     }
 
@@ -62,27 +66,27 @@ public class FirebaseService {
 
     // Generic DB methods
     public void getDbData(String path, final FirebaseCallback callback) {
-        String url = databaseBaseUrl + "/" + path + ".json?ns=" + projectId;
+        String url = databaseBaseUrl + "/" + path + ".json" + dbNsParam;
         sendRequest(Net.HttpMethods.GET, url, null, callback);
     }
 
     public void putDbData(String path, String body, final FirebaseCallback callback) {
-        String url = databaseBaseUrl + "/" + path + ".json?ns=" + projectId;
+        String url = databaseBaseUrl + "/" + path + ".json" + dbNsParam;
         sendRequest(Net.HttpMethods.PUT, url, body, callback);
     }
 
     public void patchDbData(String path, String body, final FirebaseCallback callback) {
-        String url = databaseBaseUrl + "/" + path + ".json?ns=" + projectId;
+        String url = databaseBaseUrl + "/" + path + ".json" + dbNsParam;
         sendRequest("PATCH", url, body, callback);
     }
 
     public void postDbData(String path, String body, final FirebaseCallback callback) {
-        String url = databaseBaseUrl + "/" + path + ".json?ns=" + projectId;
+        String url = databaseBaseUrl + "/" + path + ".json" + dbNsParam;
         sendRequest(Net.HttpMethods.POST, url, body, callback);
     }
 
     public void deleteDbData(String path, final FirebaseCallback callback) {
-        String url = databaseBaseUrl + "/" + path + ".json?ns=" + projectId;
+        String url = databaseBaseUrl + "/" + path + ".json" + dbNsParam;
         sendRequest(Net.HttpMethods.DELETE, url, null, callback);
     }
 
