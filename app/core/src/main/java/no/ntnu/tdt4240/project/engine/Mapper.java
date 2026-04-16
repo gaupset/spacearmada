@@ -15,6 +15,7 @@ import no.ntnu.tdt4240.project.engine.component.PowerupEffectsComponent;
 import no.ntnu.tdt4240.project.engine.component.SabotageEffectsComponent;
 import no.ntnu.tdt4240.project.engine.component.ShooterComponent;
 import no.ntnu.tdt4240.project.engine.component.TextureComponent;
+import no.ntnu.tdt4240.project.engine.component.TutorialScenarioComponent;
 import no.ntnu.tdt4240.project.engine.component.VelocityComponent;
 
 /**
@@ -37,4 +38,5 @@ public class Mapper {
     public static final ComponentMapper<PowerupEffectsComponent> powerupEffects = ComponentMapper.getFor(PowerupEffectsComponent.class);
     public static final ComponentMapper<AnimationComponent> animation = ComponentMapper.getFor(AnimationComponent.class);
     public static final ComponentMapper<WaveComponent> wave = ComponentMapper.getFor(WaveComponent.class);
+    public static final ComponentMapper<TutorialScenarioComponent> tutorialScenario = ComponentMapper.getFor(TutorialScenarioComponent.class);
 }

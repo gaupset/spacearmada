@@ -11,6 +11,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import no.ntnu.tdt4240.project.ui.UiFactory;
 import no.ntnu.tdt4240.project.util.Theme;
@@ -34,6 +35,7 @@ public class GameHud {
     private final Label shieldLabel;
     private final Label rapidFireLabel;
     private final Label slowEnemiesLabel;
+    private final Label tutorialLabel;
 
     public interface MenuToggleListener {
         void onMenuToggle(boolean open);
@@ -58,7 +60,11 @@ public class GameHud {
     private final TextButton sabotageButton;
     private final TextButton powerupButton;
     private final TextButton pauseButton;
+    private final TextButton nextButton;
+    private final TextButton tutorialPowerupButton;
+    private final TextButton tutorialSabotageButton;
     private final Runnable onMenuResumePressed;
+    private final boolean tutorialMode;
 
     private boolean isMenuOpen = false;
 
@@ -70,6 +76,7 @@ public class GameHud {
         PowerupListener powerupListener,
         Runnable onMenuResumePressed
     ) {
+        this.tutorialMode = false;
         this.onMenuResumePressed = onMenuResumePressed;
         stage = new Stage(new ExtendViewport(VIEWPORT_MIN_WIDTH, VIEWPORT_MIN_HEIGHT));
 
@@ -134,6 +141,9 @@ public class GameHud {
         topBar.row();
         topBar.add(powerupButton).colspan(2).right().padTop(2f).padBottom(8f).padLeft(8f).padRight(8f).height(36f).width(170f);
         stage.addActor(topBar);
+        nextButton = null;
+        tutorialPowerupButton = null;
+        tutorialSabotageButton = null;
 
         // Top-left: Score and Health display
         scoreLabel = new Label("SCORE: 0", skin);
@@ -185,6 +195,7 @@ public class GameHud {
         slowEnemiesLabel.setFontScale(0.5f);
         slowEnemiesLabel.setColor(powerupColor);
         slowEnemiesLabel.setVisible(false);
+        tutorialLabel = null;
 
         Table statsBar = new Table();
         statsBar.setFillParent(true);
@@ -241,10 +252,128 @@ public class GameHud {
         stage.addActor(menuPanel);
     }
 
+    public GameHud(Runnable nextListener, Runnable powerupListener, Runnable sabotageListener) {
+        this.tutorialMode = true;
+        this.onMenuResumePressed = null;
+        stage = new Stage(new ExtendViewport(VIEWPORT_MIN_WIDTH, VIEWPORT_MIN_HEIGHT));
+
+        Skin skin = UiFactory.getInstance().getSkin();
+
+        Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        pixmap.setColor(new Color(0f, 0f, 0f, 0.7f));
+        pixmap.fill();
+        overlayTex = new Texture(pixmap);
+        pixmap.dispose();
+
+        pauseButton = null;
+        sabotageButton = null;
+        powerupButton = null;
+        menuPanel = null;
+
+        nextButton = new TextButton("NEXT", skin);
+        nextButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
+        nextButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                if (nextListener != null) {
+                    nextListener.run();
+                }
+            }
+        });
+
+        Table topBar = new Table();
+        topBar.setFillParent(true);
+        topBar.top().right();
+        topBar.add(nextButton).width(80f).height(36f).padTop(8f).padRight(8f);
+        topBar.row();
+        tutorialPowerupButton = new TextButton("POWERUP", skin);
+        tutorialPowerupButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
+        tutorialPowerupButton.setVisible(false);
+        tutorialPowerupButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                if (!tutorialPowerupButton.isVisible()) {
+                    return;
+                }
+                if (powerupListener != null) {
+                    powerupListener.run();
+                }
+            }
+        });
+        topBar.add(tutorialPowerupButton).width(120f).height(36f).padTop(4f).padRight(8f);
+        topBar.row();
+        tutorialSabotageButton = new TextButton("SABOTAGE", skin);
+        tutorialSabotageButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
+        tutorialSabotageButton.setVisible(false);
+        tutorialSabotageButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                if (!tutorialSabotageButton.isVisible()) {
+                    return;
+                }
+                if (sabotageListener != null) {
+                    sabotageListener.run();
+                }
+            }
+        });
+        topBar.add(tutorialSabotageButton).width(140f).height(36f).padTop(4f).padRight(8f);
+        stage.addActor(topBar);
+
+        scoreLabel = new Label("SCORE: 0", skin);
+        scoreLabel.setFontScale(0.5f);
+        scoreLabel.setColor(Color.WHITE);
+
+        healthLabel = new Label("LIVES: 0", skin);
+        healthLabel.setFontScale(0.5f);
+        healthLabel.setColor(Color.WHITE);
+
+        waveLabel = new Label("WAVE: 1", skin);
+        waveLabel.setFontScale(0.5f);
+        waveLabel.setColor(Color.WHITE);
+
+        enemySpeedLabel = new Label("", skin);
+        enemySpeedLabel.setVisible(false);
+        fireRateLabel = new Label("", skin);
+        fireRateLabel.setVisible(false);
+        alienSpawnLabel = new Label("", skin);
+        alienSpawnLabel.setVisible(false);
+        shieldLabel = new Label("", skin);
+        shieldLabel.setVisible(false);
+        rapidFireLabel = new Label("", skin);
+        rapidFireLabel.setVisible(false);
+        slowEnemiesLabel = new Label("", skin);
+        slowEnemiesLabel.setVisible(false);
+
+        Table statsBar = new Table();
+        statsBar.setFillParent(true);
+        statsBar.top().left();
+        statsBar.add(scoreLabel).padLeft(10f).padTop(10f).row();
+        statsBar.add(healthLabel).padLeft(10f).padTop(5f).row();
+        statsBar.add(waveLabel).padLeft(10f).padTop(5f);
+        stage.addActor(statsBar);
+
+        tutorialLabel = new Label("", skin);
+        tutorialLabel.setFontScale(0.6f);
+        tutorialLabel.setColor(Color.WHITE);
+        tutorialLabel.setWrap(true);
+        tutorialLabel.setAlignment(Align.center);
+        tutorialLabel.setVisible(false);
+
+        Table centerMessage = new Table();
+        centerMessage.setFillParent(true);
+        centerMessage.center().bottom();
+        centerMessage.add(tutorialLabel).width(VIEWPORT_MIN_WIDTH - 48f).padBottom(130f);
+        stage.addActor(centerMessage);
+    }
+
     public void act(float delta, boolean isMenuOpen, boolean isSabotageVisible, boolean isPowerupVisible,
                     boolean isPauseReady, int score, int health, int wave,
                     float enemySpeedRemaining, float fireRateRemaining, float alienSpawnRemaining,
                     float shieldRemaining, float rapidFireRemaining, float slowEnemiesRemaining) {
+        if (tutorialMode) {
+            stage.act(delta);
+            return;
+        }
         this.isMenuOpen = isMenuOpen;
         menuPanel.setVisible(isMenuOpen);
         sabotageButton.setVisible(isSabotageVisible);
@@ -267,6 +396,36 @@ public class GameHud {
         updateEffectLabel(rapidFireLabel, "2x FIRE RATE", rapidFireRemaining);
         updateEffectLabel(slowEnemiesLabel, "0.5x ENEMY SPEED", slowEnemiesRemaining);
 
+        stage.act(delta);
+    }
+
+    public void actTutorial(
+        float delta,
+        int score,
+        int health,
+        int wave,
+        String promptText,
+        boolean isPowerupVisible,
+        boolean isSabotageVisible,
+        boolean isNextVisible
+    ) {
+        if (!tutorialMode) {
+            return;
+        }
+        scoreLabel.setText("SCORE: " + score);
+        waveLabel.setText("WAVE: " + wave);
+        healthLabel.setText("LIVES: " + health);
+
+        if (promptText == null || promptText.isEmpty()) {
+            tutorialLabel.setVisible(false);
+            tutorialLabel.setText("");
+        } else {
+            tutorialLabel.setText(promptText);
+            tutorialLabel.setVisible(true);
+        }
+        tutorialPowerupButton.setVisible(isPowerupVisible);
+        tutorialSabotageButton.setVisible(isSabotageVisible);
+        nextButton.setVisible(isNextVisible);
         stage.act(delta);
     }
 
