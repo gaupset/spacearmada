@@ -46,19 +46,22 @@ public class ShootingSystem extends IteratingSystem {
         ShooterComponent shooter = Mapper.shooter.get(e);
         boolean isPlayer = Mapper.player.has(e);
 
+        // Disable enemy shooting in this branch: only process player shooters
+        if (!isPlayer) {
+            return;
+        }
+
         float interval = shooter.baseInterval;
-        if (isPlayer) {
-            if (sabotageEntities != null && sabotageEntities.size() > 0) {
-                SabotageEffectsComponent effects = Mapper.sabotageEffects.get(sabotageEntities.first());
-                if (effects.playerFireRateSlowRemaining > 0f) {
-                    interval *= SabotageEffectsComponent.PLAYER_SHOOT_INTERVAL_MULTIPLIER;
-                }
+        if (sabotageEntities != null && sabotageEntities.size() > 0) {
+            SabotageEffectsComponent effects = Mapper.sabotageEffects.get(sabotageEntities.first());
+            if (effects.playerFireRateSlowRemaining > 0f) {
+                interval *= SabotageEffectsComponent.PLAYER_SHOOT_INTERVAL_MULTIPLIER;
             }
-            if (powerupEntities != null && powerupEntities.size() > 0) {
-                PowerupEffectsComponent pwr = Mapper.powerupEffects.get(powerupEntities.first());
-                if (pwr.rapidFireRemaining > 0f) {
-                    interval *= PowerupEffectsComponent.PLAYER_SHOOT_INTERVAL_MULTIPLIER;
-                }
+        }
+        if (powerupEntities != null && powerupEntities.size() > 0) {
+            PowerupEffectsComponent pwr = Mapper.powerupEffects.get(powerupEntities.first());
+            if (pwr.rapidFireRemaining > 0f) {
+                interval *= PowerupEffectsComponent.PLAYER_SHOOT_INTERVAL_MULTIPLIER;
             }
         }
 
@@ -72,17 +75,6 @@ public class ShootingSystem extends IteratingSystem {
         Vector2 posData = new Vector2(pos.x, pos.y);
         Vector2 dimData = new Vector2(Mapper.dimension.get(e).width, Mapper.dimension.get(e).height);
 
-        if (isPlayer) {
-            assembler.createPlayerBullet(playerBullet.create(posData, dimData));
-        } else {
-            NonPlayable config;
-            if (players != null && players.size() > 0) {
-                PositionComponent playerPos = Mapper.position.get(players.first());
-                config = enemyBullet.create(posData, dimData, new Vector2(playerPos.x, playerPos.y));
-            } else {
-                config = enemyBullet.create(posData, dimData);
-            }
-            assembler.createEnemyBullet(config);
-        }
+        assembler.createPlayerBullet(playerBullet.create(posData, dimData));
     }
 }

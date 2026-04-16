@@ -31,7 +31,9 @@ public class FirebaseService {
         // ?ns= is required by the RTDB emulator (HTTP) to select the namespace.
         // Only needs to be included when using emulatrs
         this.dbNsParam = config.databaseBaseUrl.startsWith("http://") ? "?ns=" + config.projectId : "";
-        fetchServerTimeOffset();
+        // Disabled: this game does not rely on serverTimeOffset, and this call
+        // produces noisy 400 errors against .info/serverTimeOffset via REST.
+        //fetchServerTimeOffset();
     }
 
     public static void init() {
