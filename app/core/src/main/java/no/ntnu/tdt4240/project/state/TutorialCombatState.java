@@ -129,7 +129,6 @@ public class TutorialCombatState extends State {
     @Override
     protected void update(float dt) {
         if (shouldPauseTutorial()) {
-            setPauseRequested(false);
             setTutorialSystemsPaused(true);
         }
         engine.update(dt);
