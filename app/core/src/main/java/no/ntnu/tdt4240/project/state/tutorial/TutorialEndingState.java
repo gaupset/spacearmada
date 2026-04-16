@@ -1,4 +1,4 @@
-package no.ntnu.tdt4240.project.state;
+package no.ntnu.tdt4240.project.state.tutorial;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
@@ -13,6 +13,9 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
 import no.ntnu.tdt4240.project.AppProperties;
 import no.ntnu.tdt4240.project.Assets;
+import no.ntnu.tdt4240.project.state.MenuState;
+import no.ntnu.tdt4240.project.state.State;
+import no.ntnu.tdt4240.project.state.StateManager;
 import no.ntnu.tdt4240.project.ui.SpaceButton;
 import no.ntnu.tdt4240.project.util.Theme;
 

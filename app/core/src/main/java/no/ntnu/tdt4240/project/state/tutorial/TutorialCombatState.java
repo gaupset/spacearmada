@@ -1,4 +1,4 @@
-package no.ntnu.tdt4240.project.state;
+package no.ntnu.tdt4240.project.state.tutorial;
 
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
@@ -38,6 +38,8 @@ import no.ntnu.tdt4240.project.powerup.strategy.PowerupStrategy;
 import no.ntnu.tdt4240.project.powerup.strategy.RapidFirePowerupStrategy;
 import no.ntnu.tdt4240.project.powerup.strategy.ShieldPowerupStrategy;
 import no.ntnu.tdt4240.project.powerup.strategy.SlowEnemiesPowerupStrategy;
+import no.ntnu.tdt4240.project.state.State;
+import no.ntnu.tdt4240.project.state.StateManager;
 import no.ntnu.tdt4240.project.ui.view.GameHud;
 
 import java.util.HashMap;

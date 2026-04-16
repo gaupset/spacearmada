@@ -1,4 +1,4 @@
-package no.ntnu.tdt4240.project.state;
+package no.ntnu.tdt4240.project.state.tutorial;
 
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
@@ -33,6 +33,8 @@ import no.ntnu.tdt4240.project.engine.system.SpawnSystem;
 import no.ntnu.tdt4240.project.engine.system.TutorialPlayerShootingSystem;
 import no.ntnu.tdt4240.project.engine.system.TutorialScenarioSystem;
 import no.ntnu.tdt4240.project.engine.system.WaveSystem;
+import no.ntnu.tdt4240.project.state.State;
+import no.ntnu.tdt4240.project.state.StateManager;
 import no.ntnu.tdt4240.project.ui.view.GameHud;
 
 public class TutorialSabotageState extends State {

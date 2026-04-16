@@ -1,4 +1,4 @@
-package no.ntnu.tdt4240.project.state;
+package no.ntnu.tdt4240.project.state.tutorial;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
@@ -17,25 +17,27 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
 import no.ntnu.tdt4240.project.AppProperties;
 import no.ntnu.tdt4240.project.Assets;
-import no.ntnu.tdt4240.project.model.Powerup;
+import no.ntnu.tdt4240.project.model.Sabotage;
+import no.ntnu.tdt4240.project.state.State;
+import no.ntnu.tdt4240.project.state.StateManager;
 import no.ntnu.tdt4240.project.ui.SpaceButton;
 import no.ntnu.tdt4240.project.ui.UiFactory;
 import no.ntnu.tdt4240.project.util.Theme;
 
-public class TutorialPowerupState extends State {
+public class TutorialSabotageChoiceState extends State {
     private static final float BUTTON_HEIGHT = 36f;
     private static final float BUTTON_GAP = 8f;
 
-    private final TutorialCombatState tutorialGameState;
+    private final TutorialSabotageState tutorialGameState;
     private Stage stage;
     private Texture overlayTex;
     private Label chargesLabel;
 
-    public TutorialPowerupState(
+    public TutorialSabotageChoiceState(
         StateManager sm,
         com.badlogic.gdx.graphics.g2d.SpriteBatch batch,
         Assets assets,
-        TutorialCombatState tutorialGameState
+        TutorialSabotageState tutorialGameState
     ) {
         super(sm, batch, assets);
         this.tutorialGameState = tutorialGameState;
@@ -76,7 +78,7 @@ public class TutorialPowerupState extends State {
         root.setBackground(new TextureRegionDrawable(overlayTex));
         root.top();
 
-        Label titleLabel = new Label("Choose a powerup", skin);
+        Label titleLabel = new Label("Choose a sabotage", skin);
         titleLabel.setFontScale(1.1f);
         root.add(titleLabel).padTop(28f).row();
 
@@ -85,21 +87,21 @@ public class TutorialPowerupState extends State {
         root.add(chargesLabel).padTop(6f).padBottom(8f).row();
 
         Table stack = new Table();
-        addPowerupRow(stack, Powerup.TYPE_SHIELD, "Shield (invincibility)", true);
-        addPowerupRow(stack, Powerup.TYPE_RAPID_FIRE, "2x fire rate", true);
-        addPowerupRow(stack, Powerup.TYPE_SLOW_ENEMIES, "0.5x enemy speed", false);
+        addSabotageRow(stack, Sabotage.TYPE_ENEMY_SPEED, "2x enemy speed", true);
+        addSabotageRow(stack, Sabotage.TYPE_HALF_PLAYER_BULLETS, "0.5x player bullets", true);
+        addSabotageRow(stack, Sabotage.TYPE_DOUBLE_ALIENS, "2x number of aliens", false);
         root.add(stack).expand().center().width(AppProperties.WIDTH).row();
 
         stage.addActor(root);
     }
 
-    private void addPowerupRow(Table parent, String powerupType, String label, boolean gapBelow) {
+    private void addSabotageRow(Table parent, String sabotageType, String label, boolean gapBelow) {
         SpaceButton button = new SpaceButton(label);
         button.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
         button.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                onPowerupChosen(powerupType);
+                onSabotageChosen(sabotageType);
             }
         });
         parent.add(button)
@@ -109,17 +111,17 @@ public class TutorialPowerupState extends State {
             .row();
     }
 
-    private void onPowerupChosen(String powerupType) {
+    private void onSabotageChosen(String sabotageType) {
         if (tutorialGameState.getAvailableAbilityCount() <= 0) {
             return;
         }
-        tutorialGameState.applyPowerup(powerupType);
-        sm.pop();
+        tutorialGameState.useSabotage();
+        sm.set(new TutorialEndingState(sm, batch, assets));
     }
 
     private String formatChargesLine() {
         int n = tutorialGameState.getAvailableAbilityCount();
-        return n == 1 ? "1 powerup available" : n + " powerups available";
+        return n == 1 ? "1 sabotage available" : n + " sabotages available";
     }
 
     @Override

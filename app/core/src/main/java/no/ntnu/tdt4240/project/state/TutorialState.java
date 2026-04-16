@@ -12,6 +12,7 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
 import no.ntnu.tdt4240.project.Assets;
+import no.ntnu.tdt4240.project.state.tutorial.TutorialGameState;
 import no.ntnu.tdt4240.project.ui.SpaceButton;
 import no.ntnu.tdt4240.project.util.Theme;
 

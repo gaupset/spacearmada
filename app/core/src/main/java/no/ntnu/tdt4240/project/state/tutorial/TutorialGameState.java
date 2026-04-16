@@ -1,4 +1,4 @@
-package no.ntnu.tdt4240.project.state;
+package no.ntnu.tdt4240.project.state.tutorial;
 
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
@@ -24,6 +24,8 @@ import no.ntnu.tdt4240.project.engine.system.InputSystem;
 import no.ntnu.tdt4240.project.engine.system.MovementSystem;
 import no.ntnu.tdt4240.project.engine.system.RemovalSystem;
 import no.ntnu.tdt4240.project.engine.system.RenderSystem;
+import no.ntnu.tdt4240.project.state.State;
+import no.ntnu.tdt4240.project.state.StateManager;
 import no.ntnu.tdt4240.project.ui.view.GameHud;
 
 public class TutorialGameState extends State {
