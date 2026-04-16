@@ -24,15 +24,12 @@ import no.ntnu.tdt4240.project.engine.system.InputSystem;
 import no.ntnu.tdt4240.project.engine.system.MovementSystem;
 import no.ntnu.tdt4240.project.engine.system.RemovalSystem;
 import no.ntnu.tdt4240.project.engine.system.RenderSystem;
-import no.ntnu.tdt4240.project.layout.GameLayout;
-import no.ntnu.tdt4240.project.layout.Layout;
 import no.ntnu.tdt4240.project.ui.view.GameHud;
 
 public class TutorialGameState extends State {
     private static final float MOVEMENT_STEP_DURATION_SECONDS = 5f;
 
     private final Engine engine;
-    private final Layout layout;
     private GameHud hud;
     private InputMultiplexer inputMux;
     private float elapsedSeconds = 0f;
@@ -41,12 +38,17 @@ public class TutorialGameState extends State {
     public TutorialGameState(StateManager sm, SpriteBatch batch, Assets assets) {
         super(sm, batch, assets);
         this.engine = new Engine();
-        this.layout = new GameLayout();
     }
 
     @Override
     protected void setup() {
-        GameInputProcessor input = new GameInputProcessor(layout.get().getViewport());
+        hud = new GameHud(() -> {
+            if (canProgress) {
+                sm.set(new TutorialCombatIntroState(sm, batch, assets));
+            }
+        }, null, null);
+
+        GameInputProcessor input = new GameInputProcessor(hud.getStage().getViewport());
 
         Player player = new Player(assets.player, assets.playerFrames);
         EntityAssembler assembler = new EntityAssembler(engine);
@@ -59,13 +61,7 @@ public class TutorialGameState extends State {
         engine.addSystem(new CollisionSystem(assets, 2));
         engine.addSystem(new EventSystem(3));
         engine.addSystem(new RemovalSystem(4));
-        engine.addSystem(new RenderSystem(batch, layout.get().getViewport(), 5));
-
-        hud = new GameHud(() -> {
-            if (canProgress) {
-                sm.set(new TutorialCombatIntroState(sm, batch, assets));
-            }
-        }, null, null);
+        engine.addSystem(new RenderSystem(batch, hud.getStage().getViewport(), 5));
 
         inputMux = new InputMultiplexer();
         inputMux.addProcessor(hud.getStage());
@@ -131,7 +127,6 @@ public class TutorialGameState extends State {
 
     @Override
     protected void resize(int width, int height) {
-        layout.resize(width, height);
         if (hud != null) {
             hud.resize(width, height);
         }

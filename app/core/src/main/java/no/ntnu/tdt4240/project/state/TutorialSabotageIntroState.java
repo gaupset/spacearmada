@@ -10,13 +10,13 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
+
+import no.ntnu.tdt4240.project.AppProperties;
 import no.ntnu.tdt4240.project.Assets;
 import no.ntnu.tdt4240.project.ui.SpaceButton;
 import no.ntnu.tdt4240.project.util.Theme;
 
 public class TutorialSabotageIntroState extends State {
-    private static final float VIEWPORT_MIN_WIDTH = 360f;
-    private static final float VIEWPORT_MIN_HEIGHT = 640f;
 
     private Stage stage;
 
@@ -26,7 +26,7 @@ public class TutorialSabotageIntroState extends State {
 
     @Override
     protected void setup() {
-        stage = new Stage(new ExtendViewport(VIEWPORT_MIN_WIDTH, VIEWPORT_MIN_HEIGHT));
+        stage = new Stage(new ExtendViewport(AppProperties.WIDTH, AppProperties.HEIGHT));
         Gdx.input.setInputProcessor(stage);
         buildLayout();
     }
@@ -41,7 +41,7 @@ public class TutorialSabotageIntroState extends State {
         lineOne.setWrap(true);
         lineOne.setAlignment(Align.center);
         lineOne.setFontScale(0.75f);
-        root.add(lineOne).width(VIEWPORT_MIN_WIDTH - 48f).padBottom(24f).row();
+        root.add(lineOne).width(AppProperties.WIDTH - 48f).padBottom(24f).row();
 
         SpaceButton continueButton = new SpaceButton("CONTINUE");
         continueButton.addListener(new ClickListener() {

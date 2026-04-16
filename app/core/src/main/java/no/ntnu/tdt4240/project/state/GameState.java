@@ -9,7 +9,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.utils.viewport.Viewport;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,8 +43,6 @@ import no.ntnu.tdt4240.project.engine.system.WaveSystem;
 import no.ntnu.tdt4240.project.event.Event;
 import no.ntnu.tdt4240.project.event.EventListener;
 import no.ntnu.tdt4240.project.GameInputProcessor;
-import no.ntnu.tdt4240.project.layout.GameLayout;
-import no.ntnu.tdt4240.project.layout.Layout;
 import no.ntnu.tdt4240.project.Assets;
 import no.ntnu.tdt4240.project.powerup.strategy.PowerupStrategy;
 import no.ntnu.tdt4240.project.powerup.strategy.RapidFirePowerupStrategy;
@@ -65,7 +62,6 @@ public class GameState extends State implements EventListener {
     private static final float LOBBY_POLL_INTERVAL = 2f;
 
     private Engine engine;
-    private Layout layout;
     private final LobbyService lobbyService;
     private boolean gameOver;
     private GameHud hud;
@@ -89,7 +85,6 @@ public class GameState extends State implements EventListener {
         super(sm, batch, assets);
         this.engine = engine;
         this.lobbyService = lobbyService;
-        this.layout = new GameLayout();
         this.gameOver = false;
         sabotageStrategies.put(Sabotage.TYPE_ENEMY_SPEED, new EnemySpeedSabotageStrategy());
         sabotageStrategies.put(Sabotage.TYPE_HALF_PLAYER_BULLETS, new HalfPlayerBulletsSabotageStrategy());
@@ -107,37 +102,7 @@ public class GameState extends State implements EventListener {
         }
         hasBeenSetup = true;
 
-        // Input
-        GameInputProcessor input = new GameInputProcessor(layout.get().getViewport());
-
-        // Player
-        Player player = new Player(assets.player, assets.playerFrames);
-        EntityAssembler assembler = new EntityAssembler(engine);
-        assembler.createPlayer(player.create());
-        Entity sabotageEffectsEntity = new Entity();
-        sabotageEffectsEntity.add(new SabotageEffectsComponent());
-        engine.addEntity(sabotageEffectsEntity);
-        Entity powerupEffectsEntity = new Entity();
-        powerupEffectsEntity.add(new PowerupEffectsComponent());
-        engine.addEntity(powerupEffectsEntity);
-        Entity waveEntity = new Entity();
-        waveEntity.add(new WaveComponent(System.currentTimeMillis()));
-        engine.addEntity(waveEntity);
-        // Systems
-        engine.addSystem(new InputSystem(input, 0));
-        engine.addSystem(new MovementSystem(0));
-        engine.addSystem(new BounceSystem(1));
-        engine.addSystem(new BoundSystem(1));
-        engine.addSystem(new CollisionSystem(assets, 2));
-        engine.addSystem(eventSystem());
-        engine.addSystem(new WaveSystem(3));
-        engine.addSystem(new SpawnSystem(assets, 3, 4));
-        engine.addSystem(new ShootingSystem(assets, 4));
-        engine.addSystem(new SabotageEffectSystem(4));
-        engine.addSystem(new PowerupEffectSystem(4));
-        engine.addSystem(new RemovalSystem(5));
-        engine.addSystem(new RenderSystem(batch, layout.get().getViewport(), 6));
-
+        // Stage
         hud = new GameHud(
             isOpen -> this.menuOpen = isOpen,
             () -> sm.set(new MenuState(sm, batch, assets)),
@@ -161,6 +126,38 @@ public class GameState extends State implements EventListener {
                 }
             }
         );
+
+        // Input
+        GameInputProcessor input = new GameInputProcessor(hud.getStage().getViewport());
+
+        // Entities
+        Player player = new Player(assets.player, assets.playerFrames);
+        EntityAssembler assembler = new EntityAssembler(engine);
+        assembler.createPlayer(player.create());
+        Entity sabotageEffectsEntity = new Entity();
+        sabotageEffectsEntity.add(new SabotageEffectsComponent());
+        engine.addEntity(sabotageEffectsEntity);
+        Entity powerupEffectsEntity = new Entity();
+        powerupEffectsEntity.add(new PowerupEffectsComponent());
+        engine.addEntity(powerupEffectsEntity);
+        Entity waveEntity = new Entity();
+        waveEntity.add(new WaveComponent(System.currentTimeMillis()));
+        engine.addEntity(waveEntity);
+
+        // Systems
+        engine.addSystem(new InputSystem(input, 0));
+        engine.addSystem(new MovementSystem(0));
+        engine.addSystem(new BounceSystem(1));
+        engine.addSystem(new BoundSystem(1));
+        engine.addSystem(new CollisionSystem(assets, 2));
+        engine.addSystem(eventSystem());
+        engine.addSystem(new WaveSystem(3));
+        engine.addSystem(new SpawnSystem(assets, 3, 4));
+        engine.addSystem(new ShootingSystem(assets, 4));
+        engine.addSystem(new SabotageEffectSystem(4));
+        engine.addSystem(new PowerupEffectSystem(4));
+        engine.addSystem(new RemovalSystem(5));
+        engine.addSystem(new RenderSystem(batch, hud.getStage().getViewport(), 6));
 
         InputMultiplexer inputMux = new InputMultiplexer();
         inputMux.addProcessor(hud.getStage());
@@ -500,11 +497,15 @@ public class GameState extends State implements EventListener {
 
     @Override
     public void resize(int width, int height) {
-        layout.resize(width, height);
+        if (hud != null) {
+            hud.resize(width, height);
+        }
     }
 
     @Override
     public void dispose() {
-        // Assets are now managed by Main
+        if (hud != null) {
+            hud.dispose();
+        }
     }
 }

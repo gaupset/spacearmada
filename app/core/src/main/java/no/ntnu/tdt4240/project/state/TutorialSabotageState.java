@@ -33,25 +33,31 @@ import no.ntnu.tdt4240.project.engine.system.SpawnSystem;
 import no.ntnu.tdt4240.project.engine.system.TutorialPlayerShootingSystem;
 import no.ntnu.tdt4240.project.engine.system.TutorialScenarioSystem;
 import no.ntnu.tdt4240.project.engine.system.WaveSystem;
-import no.ntnu.tdt4240.project.layout.GameLayout;
-import no.ntnu.tdt4240.project.layout.Layout;
 import no.ntnu.tdt4240.project.ui.view.GameHud;
 
 public class TutorialSabotageState extends State {
     private final Engine engine;
-    private final Layout layout;
     private GameHud hud;
     private InputMultiplexer inputMux;
 
     public TutorialSabotageState(StateManager sm, SpriteBatch batch, Assets assets) {
         super(sm, batch, assets);
         this.engine = new Engine();
-        this.layout = new GameLayout();
     }
 
     @Override
     protected void setup() {
-        GameInputProcessor input = new GameInputProcessor(layout.get().getViewport());
+        hud = new GameHud(
+            null,
+            null,
+            () -> {
+                if (canOpenSabotage()) {
+                    sm.push(new TutorialSabotageChoiceState(sm, batch, assets, this));
+                }
+            }
+        );
+
+        GameInputProcessor input = new GameInputProcessor(hud.getStage().getViewport());
         EntityAssembler assembler = new EntityAssembler(engine);
         Player player = new Player(assets.player, assets.playerFrames);
         assembler.createPlayer(player.create());
@@ -82,17 +88,7 @@ public class TutorialSabotageState extends State {
         engine.addSystem(new TutorialScenarioSystem(4));
         engine.addSystem(new PowerupEffectSystem(4));
         engine.addSystem(new RemovalSystem(5));
-        engine.addSystem(new RenderSystem(batch, layout.get().getViewport(), 6));
-
-        hud = new GameHud(
-            null,
-            null,
-            () -> {
-                if (canOpenSabotage()) {
-                    sm.push(new TutorialSabotageChoiceState(sm, batch, assets, this));
-                }
-            }
-        );
+        engine.addSystem(new RenderSystem(batch, hud.getStage().getViewport(), 6));
 
         inputMux = new InputMultiplexer();
         inputMux.addProcessor(hud.getStage());
@@ -227,7 +223,6 @@ public class TutorialSabotageState extends State {
 
     @Override
     protected void resize(int width, int height) {
-        layout.resize(width, height);
         if (hud != null) {
             hud.resize(width, height);
         }

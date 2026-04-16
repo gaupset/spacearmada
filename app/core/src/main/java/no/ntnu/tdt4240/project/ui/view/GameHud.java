@@ -13,12 +13,12 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
+
+import no.ntnu.tdt4240.project.AppProperties;
 import no.ntnu.tdt4240.project.ui.UiFactory;
 import no.ntnu.tdt4240.project.util.Theme;
 
 public class GameHud {
-    private static final float VIEWPORT_MIN_WIDTH = 360f;
-    private static final float VIEWPORT_MIN_HEIGHT = 640f;
     private static final Color PAUSE_BUTTON_DISABLED_LABEL = new Color(0.45f, 0.45f, 0.48f, 1f);
 
     private final Stage stage;
@@ -78,7 +78,7 @@ public class GameHud {
     ) {
         this.tutorialMode = false;
         this.onMenuResumePressed = onMenuResumePressed;
-        stage = new Stage(new ExtendViewport(VIEWPORT_MIN_WIDTH, VIEWPORT_MIN_HEIGHT));
+        stage = new Stage(new ExtendViewport(AppProperties.WIDTH, AppProperties.HEIGHT));
 
         Skin skin = UiFactory.getInstance().getSkin();
 
@@ -255,7 +255,7 @@ public class GameHud {
     public GameHud(Runnable nextListener, Runnable powerupListener, Runnable sabotageListener) {
         this.tutorialMode = true;
         this.onMenuResumePressed = null;
-        stage = new Stage(new ExtendViewport(VIEWPORT_MIN_WIDTH, VIEWPORT_MIN_HEIGHT));
+        stage = new Stage(new ExtendViewport(AppProperties.WIDTH, AppProperties.HEIGHT));
 
         Skin skin = UiFactory.getInstance().getSkin();
 
@@ -362,7 +362,7 @@ public class GameHud {
         Table centerMessage = new Table();
         centerMessage.setFillParent(true);
         centerMessage.center().bottom();
-        centerMessage.add(tutorialLabel).width(VIEWPORT_MIN_WIDTH - 48f).padBottom(130f);
+        centerMessage.add(tutorialLabel).width(AppProperties.WIDTH - 48f).padBottom(130f);
         stage.addActor(centerMessage);
     }
 

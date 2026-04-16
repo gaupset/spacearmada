@@ -33,8 +33,6 @@ import no.ntnu.tdt4240.project.engine.system.SpawnSystem;
 import no.ntnu.tdt4240.project.engine.system.TutorialPlayerShootingSystem;
 import no.ntnu.tdt4240.project.engine.system.TutorialScenarioSystem;
 import no.ntnu.tdt4240.project.engine.system.WaveSystem;
-import no.ntnu.tdt4240.project.layout.GameLayout;
-import no.ntnu.tdt4240.project.layout.Layout;
 import no.ntnu.tdt4240.project.model.Powerup;
 import no.ntnu.tdt4240.project.powerup.strategy.PowerupStrategy;
 import no.ntnu.tdt4240.project.powerup.strategy.RapidFirePowerupStrategy;
@@ -49,7 +47,6 @@ public class TutorialCombatState extends State {
     private static final int POWERUP_EFFECT_DURATION_SEC = 10;
 
     private final Engine engine;
-    private final Layout layout;
     private final Map<String, PowerupStrategy> powerupStrategies = new HashMap<>();
     private GameHud hud;
     private InputMultiplexer inputMux;
@@ -57,7 +54,6 @@ public class TutorialCombatState extends State {
     public TutorialCombatState(StateManager sm, SpriteBatch batch, Assets assets) {
         super(sm, batch, assets);
         this.engine = new Engine();
-        this.layout = new GameLayout();
         powerupStrategies.put(Powerup.TYPE_SHIELD, new ShieldPowerupStrategy());
         powerupStrategies.put(Powerup.TYPE_RAPID_FIRE, new RapidFirePowerupStrategy());
         powerupStrategies.put(Powerup.TYPE_SLOW_ENEMIES, new SlowEnemiesPowerupStrategy());
@@ -65,7 +61,21 @@ public class TutorialCombatState extends State {
 
     @Override
     protected void setup() {
-        GameInputProcessor input = new GameInputProcessor(layout.get().getViewport());
+        hud = new GameHud(
+            () -> {
+                if (isNextPromptVisible()) {
+                    sm.set(new TutorialSabotageIntroState(sm, batch, assets));
+                }
+            },
+            () -> {
+                if (canOpenPowerup()) {
+                    sm.push(new TutorialPowerupState(sm, batch, assets, this));
+                }
+            },
+            null
+        );
+
+        GameInputProcessor input = new GameInputProcessor(hud.getStage().getViewport());
         EntityAssembler assembler = new EntityAssembler(engine);
         Player player = new Player(assets.player, assets.playerFrames);
         assembler.createPlayer(player.create());
@@ -96,21 +106,7 @@ public class TutorialCombatState extends State {
         engine.addSystem(new TutorialScenarioSystem(4));
         engine.addSystem(new PowerupEffectSystem(4));
         engine.addSystem(new RemovalSystem(5));
-        engine.addSystem(new RenderSystem(batch, layout.get().getViewport(), 6));
-
-        hud = new GameHud(
-            () -> {
-                if (isNextPromptVisible()) {
-                    sm.set(new TutorialSabotageIntroState(sm, batch, assets));
-                }
-            },
-            () -> {
-                if (canOpenPowerup()) {
-                    sm.push(new TutorialPowerupState(sm, batch, assets, this));
-                }
-            },
-            null
-        );
+        engine.addSystem(new RenderSystem(batch, hud.getStage().getViewport(), 6));
 
         inputMux = new InputMultiplexer();
         inputMux.addProcessor(hud.getStage());
@@ -266,7 +262,6 @@ public class TutorialCombatState extends State {
 
     @Override
     protected void resize(int width, int height) {
-        layout.resize(width, height);
         if (hud != null) {
             hud.resize(width, height);
         }

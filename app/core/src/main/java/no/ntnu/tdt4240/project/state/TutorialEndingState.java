@@ -10,14 +10,13 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
+
+import no.ntnu.tdt4240.project.AppProperties;
 import no.ntnu.tdt4240.project.Assets;
 import no.ntnu.tdt4240.project.ui.SpaceButton;
 import no.ntnu.tdt4240.project.util.Theme;
 
 public class TutorialEndingState extends State {
-    private static final float VIEWPORT_MIN_WIDTH = 360f;
-    private static final float VIEWPORT_MIN_HEIGHT = 640f;
-
     private Stage stage;
     private Label messageLineOne;
     private Label messageLineTwo;
@@ -30,7 +29,7 @@ public class TutorialEndingState extends State {
 
     @Override
     protected void setup() {
-        stage = new Stage(new ExtendViewport(VIEWPORT_MIN_WIDTH, VIEWPORT_MIN_HEIGHT));
+        stage = new Stage(new ExtendViewport(AppProperties.WIDTH, AppProperties.HEIGHT));
         Gdx.input.setInputProcessor(stage);
         buildLayout();
     }
@@ -46,13 +45,13 @@ public class TutorialEndingState extends State {
         messageLineOne.setFontScale(0.75f);
         messageLineOne.setWrap(true);
         messageLineOne.setAlignment(Align.center);
-        root.add(messageLineOne).width(VIEWPORT_MIN_WIDTH - 48f).padBottom(16f).row();
+        root.add(messageLineOne).width(AppProperties.WIDTH - 48f).padBottom(16f).row();
 
         messageLineTwo = new Label("", style);
         messageLineTwo.setFontScale(0.72f);
         messageLineTwo.setWrap(true);
         messageLineTwo.setAlignment(Align.center);
-        root.add(messageLineTwo).width(VIEWPORT_MIN_WIDTH - 48f).padBottom(24f).row();
+        root.add(messageLineTwo).width(AppProperties.WIDTH - 48f).padBottom(24f).row();
 
         actionButton = new SpaceButton("CONTINUE");
         actionButton.addListener(new ClickListener() {
