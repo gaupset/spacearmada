@@ -62,7 +62,7 @@ public class Assets {
         starsBackground = new Texture("ui/stars2.jpg");
         starsBackground.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
 
-        logoCrop = new Texture("ui/invaders99-logo-crop.png");
+        logoCrop = new Texture("ui/logo.png");
         logoCrop.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
 
         fontGenerator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/Roboto-Bold.ttf"));

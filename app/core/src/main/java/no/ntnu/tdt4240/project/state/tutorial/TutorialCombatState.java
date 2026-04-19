@@ -1,4 +1,4 @@
-package no.ntnu.tdt4240.project.state;
+package no.ntnu.tdt4240.project.state.tutorial;
 
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
@@ -33,25 +33,53 @@ import no.ntnu.tdt4240.project.engine.system.SpawnSystem;
 import no.ntnu.tdt4240.project.engine.system.TutorialPlayerShootingSystem;
 import no.ntnu.tdt4240.project.engine.system.TutorialScenarioSystem;
 import no.ntnu.tdt4240.project.engine.system.WaveSystem;
-import no.ntnu.tdt4240.project.layout.GameLayout;
-import no.ntnu.tdt4240.project.layout.Layout;
+import no.ntnu.tdt4240.project.model.Powerup;
+import no.ntnu.tdt4240.project.powerup.strategy.PowerupStrategy;
+import no.ntnu.tdt4240.project.powerup.strategy.RapidFirePowerupStrategy;
+import no.ntnu.tdt4240.project.powerup.strategy.ShieldPowerupStrategy;
+import no.ntnu.tdt4240.project.powerup.strategy.SlowEnemiesPowerupStrategy;
+import no.ntnu.tdt4240.project.state.MenuState;
+import no.ntnu.tdt4240.project.state.State;
+import no.ntnu.tdt4240.project.state.StateManager;
 import no.ntnu.tdt4240.project.ui.view.GameHud;
 
-public class TutorialSabotageState extends State {
+import java.util.HashMap;
+import java.util.Map;
+
+public class TutorialCombatState extends State {
+    private static final int POWERUP_EFFECT_DURATION_SEC = 10;
+
     private final Engine engine;
-    private final Layout layout;
+    private final Map<String, PowerupStrategy> powerupStrategies = new HashMap<>();
     private GameHud hud;
     private InputMultiplexer inputMux;
 
-    public TutorialSabotageState(StateManager sm, SpriteBatch batch, Assets assets) {
+    public TutorialCombatState(StateManager sm, SpriteBatch batch, Assets assets) {
         super(sm, batch, assets);
         this.engine = new Engine();
-        this.layout = new GameLayout();
+        powerupStrategies.put(Powerup.TYPE_SHIELD, new ShieldPowerupStrategy());
+        powerupStrategies.put(Powerup.TYPE_RAPID_FIRE, new RapidFirePowerupStrategy());
+        powerupStrategies.put(Powerup.TYPE_SLOW_ENEMIES, new SlowEnemiesPowerupStrategy());
     }
 
     @Override
     protected void setup() {
-        GameInputProcessor input = new GameInputProcessor(layout.get().getViewport());
+        hud = new GameHud(
+            () -> sm.set(new MenuState(sm, batch, assets)),
+            () -> {
+                if (isNextPromptVisible()) {
+                    sm.set(new TutorialSabotageIntroState(sm, batch, assets));
+                }
+            },
+            () -> {
+                if (canOpenPowerup()) {
+                    sm.push(new TutorialPowerupState(sm, batch, assets, this));
+                }
+            },
+            null
+        );
+
+        GameInputProcessor input = new GameInputProcessor(hud.getStage().getViewport());
         EntityAssembler assembler = new EntityAssembler(engine);
         Player player = new Player(assets.player, assets.playerFrames);
         assembler.createPlayer(player.create());
@@ -67,7 +95,7 @@ public class TutorialSabotageState extends State {
         engine.addEntity(waveEntity);
         Entity tutorialEntity = new Entity();
         TutorialScenarioComponent tutorial = new TutorialScenarioComponent();
-        tutorial.mode = TutorialScenarioComponent.MODE_SABOTAGE;
+        tutorial.mode = TutorialScenarioComponent.MODE_POWERUP;
         engine.addEntity(tutorialEntity.add(tutorial));
 
         engine.addSystem(new InputSystem(input, 0));
@@ -82,18 +110,7 @@ public class TutorialSabotageState extends State {
         engine.addSystem(new TutorialScenarioSystem(4));
         engine.addSystem(new PowerupEffectSystem(4));
         engine.addSystem(new RemovalSystem(5));
-        engine.addSystem(new RenderSystem(batch, layout.get().getViewport(), 6));
-
-        hud = new GameHud(
-            () -> sm.set(new MenuState(sm, batch, assets)),
-            null,
-            null,
-            () -> {
-                if (canOpenSabotage()) {
-                    sm.push(new TutorialSabotageChoiceState(sm, batch, assets, this));
-                }
-            }
-        );
+        engine.addSystem(new RenderSystem(batch, hud.getStage().getViewport(), 6));
 
         inputMux = new InputMultiplexer();
         inputMux.addProcessor(hud.getStage());
@@ -123,24 +140,29 @@ public class TutorialSabotageState extends State {
     }
 
     void renderFrozen() {
-        boolean sabotageVisible = canOpenSabotage();
-        String prompt = sabotageVisible ? "Click SABOTAGE" : "";
+        boolean powerupVisible = canOpenPowerup();
+        String prompt = "";
+        if (powerupVisible) {
+            prompt = "Click POWERUP";
+        } else if (isNextPromptVisible()) {
+            prompt = "Press NEXT to continue the tutorial";
+        }
         hud.actTutorial(
             Gdx.graphics.getDeltaTime(),
             getPlayerScore(),
             getPlayerHealth(),
             getWaveNumber(),
             prompt,
+            powerupVisible,
             false,
-            sabotageVisible,
-            false
+            isNextPromptVisible()
         );
         hud.draw();
     }
 
-    private boolean canOpenSabotage() {
+    private boolean canOpenPowerup() {
         TutorialScenarioComponent tutorial = getTutorialComponent();
-        return tutorial != null && tutorial.pauseRequested && !tutorial.sabotageChosen;
+        return tutorial != null && tutorial.pauseRequested && !tutorial.powerupChosen;
     }
 
     private void setTutorialSystemsPaused(boolean paused) {
@@ -153,14 +175,25 @@ public class TutorialSabotageState extends State {
     }
 
     int getAvailableAbilityCount() {
-        return canOpenSabotage() ? 1 : 0;
+        return canOpenPowerup() ? 1 : 0;
     }
 
-    void useSabotage() {
+    void applyPowerup(String type) {
+        ImmutableArray<Entity> entities = engine.getEntitiesFor(Family.all(PowerupEffectsComponent.class).get());
+        if (entities.size() == 0) {
+            return;
+        }
+        PowerupEffectsComponent effects = Mapper.powerupEffects.get(entities.first());
+        PowerupStrategy strategy = powerupStrategies.get(type);
+        if (strategy == null) {
+            strategy = powerupStrategies.get(Powerup.TYPE_SHIELD);
+        }
+        strategy.apply(effects, POWERUP_EFFECT_DURATION_SEC);
         TutorialScenarioComponent tutorial = getTutorialComponent();
         if (tutorial != null) {
-            tutorial.sabotageChosen = true;
+            tutorial.powerupChosen = true;
             tutorial.pauseRequested = false;
+            tutorial.postSelectionElapsedSeconds = 0f;
         }
         setTutorialSystemsPaused(false);
     }
@@ -168,6 +201,11 @@ public class TutorialSabotageState extends State {
     private boolean shouldPauseTutorial() {
         TutorialScenarioComponent tutorial = getTutorialComponent();
         return tutorial != null && tutorial.pauseRequested;
+    }
+
+    private boolean isNextPromptVisible() {
+        TutorialScenarioComponent tutorial = getTutorialComponent();
+        return tutorial != null && tutorial.nextPromptVisible;
     }
 
     private TutorialScenarioComponent getTutorialComponent() {
@@ -221,7 +259,6 @@ public class TutorialSabotageState extends State {
 
     @Override
     protected void resize(int width, int height) {
-        layout.resize(width, height);
         if (hud != null) {
             hud.resize(width, height);
         }

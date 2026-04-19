@@ -1,4 +1,4 @@
-package no.ntnu.tdt4240.project.state;
+package no.ntnu.tdt4240.project.state.tutorial;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
@@ -15,16 +15,19 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
+
+import no.ntnu.tdt4240.project.AppProperties;
 import no.ntnu.tdt4240.project.Assets;
 import no.ntnu.tdt4240.project.model.Sabotage;
+import no.ntnu.tdt4240.project.state.MenuState;
+import no.ntnu.tdt4240.project.state.State;
+import no.ntnu.tdt4240.project.state.StateManager;
 import no.ntnu.tdt4240.project.ui.SpaceButton;
 import no.ntnu.tdt4240.project.ui.UiFactory;
 import no.ntnu.tdt4240.project.ui.view.GameHud;
 import no.ntnu.tdt4240.project.util.Theme;
 
 public class TutorialSabotageChoiceState extends State {
-    private static final float VIEWPORT_MIN_WIDTH = 360f;
-    private static final float VIEWPORT_MIN_HEIGHT = 640f;
     private static final float BUTTON_HEIGHT = 36f;
     private static final float BUTTON_GAP = 8f;
 
@@ -45,7 +48,7 @@ public class TutorialSabotageChoiceState extends State {
 
     @Override
     protected void setup() {
-        stage = new Stage(new ExtendViewport(VIEWPORT_MIN_WIDTH, VIEWPORT_MIN_HEIGHT));
+        stage = new Stage(new ExtendViewport(AppProperties.WIDTH, AppProperties.HEIGHT));
 
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         pixmap.setColor(new Color(0f, 0f, 0f, 0.6f));
@@ -106,7 +109,7 @@ public class TutorialSabotageChoiceState extends State {
         addSabotageRow(stack, Sabotage.TYPE_ENEMY_SPEED, "2x enemy speed", true);
         addSabotageRow(stack, Sabotage.TYPE_HALF_PLAYER_BULLETS, "0.5x player bullets", true);
         addSabotageRow(stack, Sabotage.TYPE_DOUBLE_ALIENS, "2x number of aliens", false);
-        root.add(stack).expand().center().width(VIEWPORT_MIN_WIDTH).row();
+        root.add(stack).expand().center().width(AppProperties.WIDTH).row();
 
         stage.addActor(root);
         stage.addActor(exitBar);
@@ -122,7 +125,7 @@ public class TutorialSabotageChoiceState extends State {
             }
         });
         parent.add(button)
-            .width(VIEWPORT_MIN_WIDTH)
+            .width(AppProperties.WIDTH)
             .height(BUTTON_HEIGHT)
             .padBottom(gapBelow ? BUTTON_GAP : 0f)
             .row();

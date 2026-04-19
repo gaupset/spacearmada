@@ -1,4 +1,4 @@
-package no.ntnu.tdt4240.project.state;
+package no.ntnu.tdt4240.project.state.tutorial;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
@@ -11,25 +11,32 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
+
+import no.ntnu.tdt4240.project.AppProperties;
 import no.ntnu.tdt4240.project.Assets;
+import no.ntnu.tdt4240.project.state.MenuState;
+import no.ntnu.tdt4240.project.state.State;
+import no.ntnu.tdt4240.project.state.StateManager;
 import no.ntnu.tdt4240.project.ui.SpaceButton;
 import no.ntnu.tdt4240.project.ui.UiFactory;
 import no.ntnu.tdt4240.project.ui.view.GameHud;
 import no.ntnu.tdt4240.project.util.Theme;
 
-public class TutorialSabotageIntroState extends State {
-    private static final float VIEWPORT_MIN_WIDTH = 360f;
-    private static final float VIEWPORT_MIN_HEIGHT = 640f;
-
+public class TutorialEndingState extends State {
     private Stage stage;
+    private Label messageLineOne;
+    private Label messageLineTwo;
+    private SpaceButton actionButton;
+    private TextButton exitButton;
+    private int step = 0;
 
-    public TutorialSabotageIntroState(StateManager sm, SpriteBatch batch, Assets assets) {
+    public TutorialEndingState(StateManager sm, SpriteBatch batch, Assets assets) {
         super(sm, batch, assets);
     }
 
     @Override
     protected void setup() {
-        stage = new Stage(new ExtendViewport(VIEWPORT_MIN_WIDTH, VIEWPORT_MIN_HEIGHT));
+        stage = new Stage(new ExtendViewport(AppProperties.WIDTH, AppProperties.HEIGHT));
         Gdx.input.setInputProcessor(stage);
         buildLayout();
     }
@@ -41,7 +48,7 @@ public class TutorialSabotageIntroState extends State {
         Table exitBar = new Table();
         exitBar.setFillParent(true);
         exitBar.top().right();
-        TextButton exitButton = new TextButton("EXIT", UiFactory.getInstance().getSkin());
+        exitButton = new TextButton("EXIT", UiFactory.getInstance().getSkin());
         exitButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
         exitButton.addListener(new ClickListener() {
             @Override
@@ -55,26 +62,55 @@ public class TutorialSabotageIntroState extends State {
             .pad(GameHud.TUTORIAL_TOP_EXIT_PAD);
 
         Label.LabelStyle style = new Label.LabelStyle(assets.getDefaultFont(), Color.WHITE);
-        Label lineOne = new Label("Earn 5 points to sabotage another player", style);
-        lineOne.setWrap(true);
-        lineOne.setAlignment(Align.center);
-        lineOne.setFontScale(0.75f);
-        root.add(lineOne).width(VIEWPORT_MIN_WIDTH - 48f).padBottom(24f).row();
 
-        SpaceButton continueButton = new SpaceButton("CONTINUE");
-        continueButton.addListener(new ClickListener() {
+        messageLineOne = new Label("The selected sabotage is now applied to another player", style);
+        messageLineOne.setFontScale(0.75f);
+        messageLineOne.setWrap(true);
+        messageLineOne.setAlignment(Align.center);
+        root.add(messageLineOne).width(AppProperties.WIDTH - 48f).padBottom(16f).row();
+
+        messageLineTwo = new Label("", style);
+        messageLineTwo.setFontScale(0.72f);
+        messageLineTwo.setWrap(true);
+        messageLineTwo.setAlignment(Align.center);
+        root.add(messageLineTwo).width(AppProperties.WIDTH - 48f).padBottom(24f).row();
+
+        actionButton = new SpaceButton("CONTINUE");
+        actionButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                sm.set(new TutorialSabotageState(sm, batch, assets));
+                advanceStep();
             }
         });
-        root.add(continueButton)
+        root.add(actionButton)
             .width(Theme.BUTTON_WIDTH)
             .height(Theme.BUTTON_HEIGHT)
             .row();
 
         stage.addActor(root);
         stage.addActor(exitBar);
+    }
+
+    private void advanceStep() {
+        if (step == 0) {
+            step = 1;
+            messageLineOne.setText("When you are hit by an enemy or enemy bullet, you lose a life");
+            messageLineTwo.setText("You also lose a life when an enemy hits the bottom of the screen");
+            return;
+        }
+
+        if (step == 1) {
+            step = 2;
+            messageLineOne.setText("Congratulations! You have finished the tutorial");
+            messageLineTwo.setText("Click EXIT TUTORIAL to return to the main menu");
+            actionButton.setText("EXIT TUTORIAL");
+            if (exitButton != null) {
+                exitButton.setVisible(false);
+            }
+            return;
+        }
+
+        sm.set(new MenuState(sm, batch, assets));
     }
 
     @Override
