@@ -7,6 +7,7 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
@@ -14,6 +15,8 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import no.ntnu.tdt4240.project.Assets;
 import no.ntnu.tdt4240.project.state.tutorial.TutorialGameState;
 import no.ntnu.tdt4240.project.ui.SpaceButton;
+import no.ntnu.tdt4240.project.ui.UiFactory;
+import no.ntnu.tdt4240.project.ui.view.GameHud;
 import no.ntnu.tdt4240.project.util.Theme;
 
 /**
@@ -55,6 +58,21 @@ public class TutorialState extends State {
         Table root = new Table();
         root.setFillParent(true);
         root.center();
+        Table exitBar = new Table();
+        exitBar.setFillParent(true);
+        exitBar.top().right();
+        TextButton exitButton = new TextButton("EXIT", UiFactory.getInstance().getSkin());
+        exitButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
+        exitButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                sm.set(new MenuState(sm, batch, assets));
+            }
+        });
+        exitBar.add(exitButton)
+            .width(GameHud.TUTORIAL_TOP_EXIT_WIDTH)
+            .height(GameHud.TUTORIAL_TOP_EXIT_HEIGHT)
+            .pad(GameHud.TUTORIAL_TOP_EXIT_PAD);
 
         Label.LabelStyle style = new Label.LabelStyle(assets.getDefaultFont(), Color.WHITE);
         messageLineOne = new Label("Welcome to Spacearmada", style);
@@ -88,6 +106,7 @@ public class TutorialState extends State {
             .row();
 
         stage.addActor(root);
+        stage.addActor(exitBar);
     }
 
     @Override

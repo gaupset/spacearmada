@@ -38,6 +38,7 @@ import no.ntnu.tdt4240.project.powerup.strategy.PowerupStrategy;
 import no.ntnu.tdt4240.project.powerup.strategy.RapidFirePowerupStrategy;
 import no.ntnu.tdt4240.project.powerup.strategy.ShieldPowerupStrategy;
 import no.ntnu.tdt4240.project.powerup.strategy.SlowEnemiesPowerupStrategy;
+import no.ntnu.tdt4240.project.state.MenuState;
 import no.ntnu.tdt4240.project.state.State;
 import no.ntnu.tdt4240.project.state.StateManager;
 import no.ntnu.tdt4240.project.ui.view.GameHud;
@@ -64,6 +65,7 @@ public class TutorialCombatState extends State {
     @Override
     protected void setup() {
         hud = new GameHud(
+            () -> sm.set(new MenuState(sm, batch, assets)),
             () -> {
                 if (isNextPromptVisible()) {
                     sm.set(new TutorialSabotageIntroState(sm, batch, assets));
@@ -204,13 +206,6 @@ public class TutorialCombatState extends State {
     private boolean isNextPromptVisible() {
         TutorialScenarioComponent tutorial = getTutorialComponent();
         return tutorial != null && tutorial.nextPromptVisible;
-    }
-
-    private void setPauseRequested(boolean pauseRequested) {
-        TutorialScenarioComponent tutorial = getTutorialComponent();
-        if (tutorial != null) {
-            tutorial.pauseRequested = pauseRequested;
-        }
     }
 
     private TutorialScenarioComponent getTutorialComponent() {

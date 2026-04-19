@@ -24,6 +24,7 @@ import no.ntnu.tdt4240.project.engine.system.InputSystem;
 import no.ntnu.tdt4240.project.engine.system.MovementSystem;
 import no.ntnu.tdt4240.project.engine.system.RemovalSystem;
 import no.ntnu.tdt4240.project.engine.system.RenderSystem;
+import no.ntnu.tdt4240.project.state.MenuState;
 import no.ntnu.tdt4240.project.state.State;
 import no.ntnu.tdt4240.project.state.StateManager;
 import no.ntnu.tdt4240.project.ui.view.GameHud;
@@ -44,11 +45,16 @@ public class TutorialGameState extends State {
 
     @Override
     protected void setup() {
-        hud = new GameHud(() -> {
-            if (canProgress) {
-                sm.set(new TutorialCombatIntroState(sm, batch, assets));
-            }
-        }, null, null);
+        hud = new GameHud(
+            () -> sm.set(new MenuState(sm, batch, assets)),
+            () -> {
+                if (canProgress) {
+                    sm.set(new TutorialCombatIntroState(sm, batch, assets));
+                }
+            },
+            null,
+            null
+        );
 
         GameInputProcessor input = new GameInputProcessor(hud.getStage().getViewport());
 
@@ -100,7 +106,7 @@ public class TutorialGameState extends State {
             canProgress ? "Press NEXT to progress to the next step" : "",
             false,
             false,
-            true
+            canProgress
         );
         hud.draw();
     }

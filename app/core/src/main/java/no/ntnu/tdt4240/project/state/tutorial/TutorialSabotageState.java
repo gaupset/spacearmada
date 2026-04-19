@@ -33,6 +33,7 @@ import no.ntnu.tdt4240.project.engine.system.SpawnSystem;
 import no.ntnu.tdt4240.project.engine.system.TutorialPlayerShootingSystem;
 import no.ntnu.tdt4240.project.engine.system.TutorialScenarioSystem;
 import no.ntnu.tdt4240.project.engine.system.WaveSystem;
+import no.ntnu.tdt4240.project.state.MenuState;
 import no.ntnu.tdt4240.project.state.State;
 import no.ntnu.tdt4240.project.state.StateManager;
 import no.ntnu.tdt4240.project.ui.view.GameHud;
@@ -50,6 +51,7 @@ public class TutorialSabotageState extends State {
     @Override
     protected void setup() {
         hud = new GameHud(
+            () -> sm.set(new MenuState(sm, batch, assets)),
             null,
             null,
             () -> {
@@ -165,13 +167,6 @@ public class TutorialSabotageState extends State {
     private boolean shouldPauseTutorial() {
         TutorialScenarioComponent tutorial = getTutorialComponent();
         return tutorial != null && tutorial.pauseRequested;
-    }
-
-    private void setPauseRequested(boolean pauseRequested) {
-        TutorialScenarioComponent tutorial = getTutorialComponent();
-        if (tutorial != null) {
-            tutorial.pauseRequested = pauseRequested;
-        }
     }
 
     private TutorialScenarioComponent getTutorialComponent() {
