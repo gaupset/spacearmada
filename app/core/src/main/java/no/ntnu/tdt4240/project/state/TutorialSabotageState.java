@@ -85,6 +85,7 @@ public class TutorialSabotageState extends State {
         engine.addSystem(new RenderSystem(batch, layout.get().getViewport(), 6));
 
         hud = new GameHud(
+            () -> sm.set(new MenuState(sm, batch, assets)),
             null,
             null,
             () -> {
@@ -111,7 +112,6 @@ public class TutorialSabotageState extends State {
     @Override
     protected void update(float dt) {
         if (shouldPauseTutorial()) {
-            setPauseRequested(false);
             setTutorialSystemsPaused(true);
         }
         engine.update(dt);
@@ -168,13 +168,6 @@ public class TutorialSabotageState extends State {
     private boolean shouldPauseTutorial() {
         TutorialScenarioComponent tutorial = getTutorialComponent();
         return tutorial != null && tutorial.pauseRequested;
-    }
-
-    private void setPauseRequested(boolean pauseRequested) {
-        TutorialScenarioComponent tutorial = getTutorialComponent();
-        if (tutorial != null) {
-            tutorial.pauseRequested = pauseRequested;
-        }
     }
 
     private TutorialScenarioComponent getTutorialComponent() {

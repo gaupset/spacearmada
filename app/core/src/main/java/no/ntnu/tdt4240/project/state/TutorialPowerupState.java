@@ -11,6 +11,7 @@ import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
@@ -18,6 +19,7 @@ import no.ntnu.tdt4240.project.Assets;
 import no.ntnu.tdt4240.project.model.Powerup;
 import no.ntnu.tdt4240.project.ui.SpaceButton;
 import no.ntnu.tdt4240.project.ui.UiFactory;
+import no.ntnu.tdt4240.project.ui.view.GameHud;
 import no.ntnu.tdt4240.project.util.Theme;
 
 public class TutorialPowerupState extends State {
@@ -76,6 +78,22 @@ public class TutorialPowerupState extends State {
         root.setBackground(new TextureRegionDrawable(overlayTex));
         root.top();
 
+        Table exitBar = new Table();
+        exitBar.setFillParent(true);
+        exitBar.top().right();
+        TextButton exitButton = new TextButton("EXIT", skin);
+        exitButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
+        exitButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                sm.set(new MenuState(sm, batch, assets));
+            }
+        });
+        exitBar.add(exitButton)
+            .width(GameHud.TUTORIAL_TOP_EXIT_WIDTH)
+            .height(GameHud.TUTORIAL_TOP_EXIT_HEIGHT)
+            .pad(GameHud.TUTORIAL_TOP_EXIT_PAD);
+
         Label titleLabel = new Label("Choose a powerup", skin);
         titleLabel.setFontScale(1.1f);
         root.add(titleLabel).padTop(28f).row();
@@ -91,6 +109,7 @@ public class TutorialPowerupState extends State {
         root.add(stack).expand().center().width(VIEWPORT_MIN_WIDTH).row();
 
         stage.addActor(root);
+        stage.addActor(exitBar);
     }
 
     private void addPowerupRow(Table parent, String powerupType, String label, boolean gapBelow) {

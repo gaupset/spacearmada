@@ -99,6 +99,7 @@ public class TutorialCombatState extends State {
         engine.addSystem(new RenderSystem(batch, layout.get().getViewport(), 6));
 
         hud = new GameHud(
+            () -> sm.set(new MenuState(sm, batch, assets)),
             () -> {
                 if (isNextPromptVisible()) {
                     sm.set(new TutorialSabotageIntroState(sm, batch, assets));
@@ -129,7 +130,6 @@ public class TutorialCombatState extends State {
     @Override
     protected void update(float dt) {
         if (shouldPauseTutorial()) {
-            setPauseRequested(false);
             setTutorialSystemsPaused(true);
         }
         engine.update(dt);
@@ -207,13 +207,6 @@ public class TutorialCombatState extends State {
     private boolean isNextPromptVisible() {
         TutorialScenarioComponent tutorial = getTutorialComponent();
         return tutorial != null && tutorial.nextPromptVisible;
-    }
-
-    private void setPauseRequested(boolean pauseRequested) {
-        TutorialScenarioComponent tutorial = getTutorialComponent();
-        if (tutorial != null) {
-            tutorial.pauseRequested = pauseRequested;
-        }
     }
 
     private TutorialScenarioComponent getTutorialComponent() {

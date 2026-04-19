@@ -61,11 +61,16 @@ public class TutorialGameState extends State {
         engine.addSystem(new RemovalSystem(4));
         engine.addSystem(new RenderSystem(batch, layout.get().getViewport(), 5));
 
-        hud = new GameHud(() -> {
-            if (canProgress) {
-                sm.set(new TutorialCombatIntroState(sm, batch, assets));
-            }
-        }, null, null);
+        hud = new GameHud(
+            () -> sm.set(new MenuState(sm, batch, assets)),
+            () -> {
+                if (canProgress) {
+                    sm.set(new TutorialCombatIntroState(sm, batch, assets));
+                }
+            },
+            null,
+            null
+        );
 
         inputMux = new InputMultiplexer();
         inputMux.addProcessor(hud.getStage());
@@ -102,7 +107,7 @@ public class TutorialGameState extends State {
             canProgress ? "Press NEXT to progress to the next step" : "",
             false,
             false,
-            true
+            canProgress
         );
         hud.draw();
     }

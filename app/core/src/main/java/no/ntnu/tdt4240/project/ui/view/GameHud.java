@@ -21,6 +21,14 @@ public class GameHud {
     private static final float VIEWPORT_MIN_HEIGHT = 640f;
     private static final Color PAUSE_BUTTON_DISABLED_LABEL = new Color(0.45f, 0.45f, 0.48f, 1f);
 
+    /** Same size as PAUSE / MENU in the main HUD; use for tutorial EXIT on info screens too. */
+    public static final float TUTORIAL_TOP_EXIT_WIDTH = 80f;
+    public static final float TUTORIAL_TOP_EXIT_HEIGHT = 36f;
+    public static final float TUTORIAL_TOP_EXIT_PAD = 8f;
+    /** Centered top NEXT after a step completes; larger than EXIT. */
+    private static final float TUTORIAL_TOP_NEXT_WIDTH = 120f;
+    private static final float TUTORIAL_TOP_NEXT_HEIGHT = 44f;
+
     private final Stage stage;
     private final Table menuPanel;
     private final Texture overlayTex;
@@ -60,6 +68,7 @@ public class GameHud {
     private final TextButton sabotageButton;
     private final TextButton powerupButton;
     private final TextButton pauseButton;
+    private final TextButton tutorialExitButton;
     private final TextButton nextButton;
     private final TextButton tutorialPowerupButton;
     private final TextButton tutorialSabotageButton;
@@ -142,6 +151,7 @@ public class GameHud {
         topBar.add(powerupButton).colspan(2).right().padTop(2f).padBottom(8f).padLeft(8f).padRight(8f).height(36f).width(170f);
         stage.addActor(topBar);
         nextButton = null;
+        tutorialExitButton = null;
         tutorialPowerupButton = null;
         tutorialSabotageButton = null;
 
@@ -252,7 +262,7 @@ public class GameHud {
         stage.addActor(menuPanel);
     }
 
-    public GameHud(Runnable nextListener, Runnable powerupListener, Runnable sabotageListener) {
+    public GameHud(Runnable exitListener, Runnable nextListener, Runnable powerupListener, Runnable sabotageListener) {
         this.tutorialMode = true;
         this.onMenuResumePressed = null;
         stage = new Stage(new ExtendViewport(VIEWPORT_MIN_WIDTH, VIEWPORT_MIN_HEIGHT));
@@ -270,8 +280,19 @@ public class GameHud {
         powerupButton = null;
         menuPanel = null;
 
+        tutorialExitButton = new TextButton("EXIT", skin);
+        tutorialExitButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
+        tutorialExitButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                if (exitListener != null) {
+                    exitListener.run();
+                }
+            }
+        });
         nextButton = new TextButton("NEXT", skin);
-        nextButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
+        nextButton.getLabel().setFontScale(0.9f);
+        nextButton.setVisible(false);
         nextButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -281,11 +302,6 @@ public class GameHud {
             }
         });
 
-        Table topBar = new Table();
-        topBar.setFillParent(true);
-        topBar.top().right();
-        topBar.add(nextButton).width(80f).height(36f).padTop(8f).padRight(8f);
-        topBar.row();
         tutorialPowerupButton = new TextButton("POWERUP", skin);
         tutorialPowerupButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
         tutorialPowerupButton.setVisible(false);
@@ -300,8 +316,7 @@ public class GameHud {
                 }
             }
         });
-        topBar.add(tutorialPowerupButton).width(120f).height(36f).padTop(4f).padRight(8f);
-        topBar.row();
+
         tutorialSabotageButton = new TextButton("SABOTAGE", skin);
         tutorialSabotageButton.getLabel().setFontScale(Theme.FONT_SCALE_SMALL);
         tutorialSabotageButton.setVisible(false);
@@ -316,8 +331,41 @@ public class GameHud {
                 }
             }
         });
-        topBar.add(tutorialSabotageButton).width(140f).height(36f).padTop(4f).padRight(8f);
-        stage.addActor(topBar);
+
+        // Top-right column: same corner/sizing as MENU (and PAUSE) in the main HUD.
+        // Right-align each row so EXIT stays flush right like single-cell exit bars on info screens
+        // (otherwise the column grows to the widest button and EXIT sits left within it).
+        Table topRightBar = new Table();
+        topRightBar.setFillParent(true);
+        topRightBar.top().right();
+        topRightBar.add(tutorialExitButton)
+            .right()
+            .width(TUTORIAL_TOP_EXIT_WIDTH)
+            .height(TUTORIAL_TOP_EXIT_HEIGHT)
+            .pad(TUTORIAL_TOP_EXIT_PAD)
+            .row();
+        topRightBar.add(tutorialPowerupButton)
+            .right()
+            .width(120f)
+            .height(TUTORIAL_TOP_EXIT_HEIGHT)
+            .padTop(4f)
+            .padRight(TUTORIAL_TOP_EXIT_PAD)
+            .row();
+        topRightBar.add(tutorialSabotageButton)
+            .right()
+            .width(140f)
+            .height(TUTORIAL_TOP_EXIT_HEIGHT)
+            .padTop(4f)
+            .padRight(TUTORIAL_TOP_EXIT_PAD)
+            .padBottom(TUTORIAL_TOP_EXIT_PAD);
+        stage.addActor(topRightBar);
+
+        // Top-center: NEXT appears after a step completes; larger than EXIT.
+        Table topCenterNext = new Table();
+        topCenterNext.setFillParent(true);
+        topCenterNext.top().center();
+        topCenterNext.add(nextButton).width(TUTORIAL_TOP_NEXT_WIDTH).height(TUTORIAL_TOP_NEXT_HEIGHT).padTop(TUTORIAL_TOP_EXIT_PAD);
+        stage.addActor(topCenterNext);
 
         scoreLabel = new Label("SCORE: 0", skin);
         scoreLabel.setFontScale(0.5f);
