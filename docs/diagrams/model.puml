@@ -1,0 +1,43 @@
+@startuml
+set separator none
+
+skinparam linetype polyline
+skinparam linetype ortho
+
+package no.ntnu.tdt4240.project {
+    package data {
+        class LobbyPlayer
+    }
+
+    package model {
+        class Powerup
+        class Sabotage
+    }
+
+    package service {
+        class LobbyService
+    }
+
+    package state {
+        class GameState
+        class SabotageState
+        class PowerupState
+        package tutorial {
+            class TutorialCombatState
+            class TutorialSabotageChoiceState
+            class TutorialPowerupState
+        }
+    }
+}
+
+Powerup <-- GameState
+Powerup <-- PowerupState
+Powerup <-- TutorialCombatState
+Powerup <-- TutorialPowerupState
+
+Sabotage <-- LobbyPlayer
+Sabotage <-- LobbyService
+Sabotage <-- GameState
+Sabotage <-- SabotageState
+Sabotage <-- TutorialSabotageChoiceState
+@enduml

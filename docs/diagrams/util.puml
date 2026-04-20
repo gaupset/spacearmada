@@ -1,0 +1,76 @@
+@startuml
+set separator none
+
+skinparam linetype polyline
+skinparam linetype ortho
+
+package no.ntnu.tdt4240.project {
+    class Main
+
+    package service {
+        class FirebaseService
+        class LobbyService
+    }
+
+    package state {
+        class GameOverState
+        class HistoryState
+        class LeaderboardState
+        class MenuState
+        class PauseState
+        class PowerupState
+        class SabotageState
+        class SettingsState
+        class TutorialState
+        class WaitingRoomState
+        package tutorial {
+            class TutorialCombatIntroState
+            class TutorialEndingState
+            class TutorialPowerupState
+            class TutorialSabotageChoiceState
+            class TutorialSabotageIntroState
+        }
+    }
+
+    package ui {
+        class FirebaseTestWidget
+        class SpaceButton
+        class UiFactory
+        package view {
+            class GameHud
+        }
+    }
+
+    package util {
+        class AppConfig
+        class FirebaseJson
+        class Theme
+    }
+
+    AppConfig <-- Main
+    AppConfig <-- FirebaseService
+
+    FirebaseJson <-- LobbyService
+    FirebaseJson <-- FirebaseService
+
+    Theme <-- SabotageState
+    Theme <-- TutorialCombatIntroState
+    Theme <-- PowerupState
+    Theme <-- GameHud
+    Theme <-- TutorialSabotageChoiceState
+    Theme <-- TutorialState
+    Theme <-- PauseState
+    Theme <-- TutorialSabotageIntroState
+    Theme <-- FirebaseTestWidget
+    Theme <-- TutorialPowerupState
+    Theme <-- WaitingRoomState
+    Theme <-- HistoryState
+    Theme <-- LeaderboardState
+    Theme <-- SettingsState
+    Theme <-- GameOverState
+    Theme <-- MenuState
+    Theme <-- SpaceButton
+    Theme <-- TutorialEndingState
+    Theme <-- UiFactory
+}
+@enduml

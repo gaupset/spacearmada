@@ -1,0 +1,35 @@
+@startuml
+set separator none
+
+skinparam linetype polyline
+skinparam linetype ortho
+
+package no.ntnu.tdt4240.project {
+    package event {
+        enum Event
+        interface EventListener
+        class EventManager
+    }
+
+    package engine {
+        package system {
+            class EventSystem
+        }
+    }
+
+    package state {
+        class GameState
+    }
+}
+
+
+EventListener <-- EventManager
+EventListener <|.. GameState
+
+Event <-- EventListener
+Event <-- EventManager
+Event <-- GameState
+Event <-- EventSystem
+
+EventManager <-- EventSystem
+@enduml

@@ -1,0 +1,51 @@
+@startuml
+set separator none
+
+skinparam linetype polyline
+skinparam linetype ortho
+
+package no.ntnu.tdt4240.project {
+    package config {
+        class Enemy
+        class Player
+        abstract class Bullet
+    }
+
+    package data {
+        class Base
+        class LobbyPlayer
+        class NonPlayable
+        class Playable
+    }
+
+    package engine {
+        package entity {
+            class EntityAssembler
+        }
+        package system {
+            class ShootingSystem
+            class SpawnSystem
+        }
+    }
+
+    package service {
+        class LobbyService
+    }
+}
+
+Base <|-- NonPlayable
+Base <|-- Playable
+
+Base <-- EntityAssembler
+
+LobbyPlayer <-- LobbyService
+
+NonPlayable <-- Enemy
+NonPlayable <-- Bullet
+NonPlayable <-- EntityAssembler
+NonPlayable <-- ShootingSystem
+NonPlayable <-- SpawnSystem
+
+Playable <-- Player
+Playable <-- EntityAssembler
+@enduml

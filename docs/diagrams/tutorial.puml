@@ -1,0 +1,50 @@
+@startuml
+set separator none
+
+skinparam linetype polyline
+skinparam linetype ortho
+
+package no.ntnu.tdt4240.project {
+    package state {
+        abstract class State
+        class TutorialState
+        package tutorial {
+            class TutorialCombatIntroState
+            class TutorialCombatState
+            class TutorialEndingState
+            class TutorialGameState
+            class TutorialPowerupState
+            class TutorialSabotageChoiceState
+            class TutorialSabotageIntroState
+            class TutorialSabotageState
+        }
+    }
+}
+
+State <|-- TutorialCombatIntroState
+State <|-- TutorialCombatState
+State <|-- TutorialEndingState
+State <|-- TutorialGameState
+State <|-- TutorialPowerupState
+State <|-- TutorialSabotageChoiceState
+State <|-- TutorialSabotageIntroState
+State <|-- TutorialSabotageState
+
+TutorialCombatIntroState <-- TutorialGameState
+
+TutorialCombatState <-- TutorialCombatIntroState
+TutorialCombatState <-- TutorialPowerupState
+
+TutorialEndingState <-- TutorialSabotageChoiceState
+
+TutorialGameState <-- TutorialState
+
+TutorialPowerupState <-- TutorialCombatState
+
+TutorialSabotageChoiceState <-- TutorialSabotageState
+
+TutorialSabotageIntroState <-- TutorialCombatState
+
+TutorialSabotageState <-- TutorialSabotageChoiceState
+TutorialSabotageState <-- TutorialSabotageIntroState
+@enduml

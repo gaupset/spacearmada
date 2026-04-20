@@ -1,0 +1,44 @@
+@startuml
+set separator none
+
+skinparam linetype polyline
+skinparam linetype ortho
+
+package no.ntnu.tdt4240.project {
+    package engine {
+        note "Every system depends on this" as N1
+        class Mapper
+        package entity {
+            class EntityAssembler
+        }
+        package system {
+            class TutorialPlayerShootingSystem
+            class ShootingSystem
+            class SpawnSystem
+        }
+    }
+
+    package state {
+        class GameState
+        package tutorial {
+            class TutorialCombatState
+            class TutorialSabotageState
+            class TutorialGameState
+        }
+    }
+}
+
+' package engine
+
+Mapper .. N1
+
+' package engine.entity
+
+EntityAssembler <-- TutorialPlayerShootingSystem
+EntityAssembler <-- ShootingSystem
+EntityAssembler <-- SpawnSystem
+EntityAssembler <-- GameState
+EntityAssembler <-- TutorialCombatState
+EntityAssembler <-- TutorialSabotageState
+EntityAssembler <-- TutorialGameState
+@enduml

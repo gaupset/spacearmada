@@ -1,0 +1,89 @@
+@startuml
+set separator none
+
+skinparam linetype polyline
+skinparam linetype ortho
+
+package com.badlogic.gdx {
+    ' Main
+    abstract class ApplicationAdapter
+    interface ApplicationListener
+    ' GameInputProcessor
+    class InputAdapter
+    interface InputProcessor
+}
+
+package no.ntnu.tdt4240.project {
+    class AppProperties
+    class Assets
+    class GameInputProcessor
+    class Main
+
+    package config {
+        class Enemy
+        class Player
+    }
+
+    package engine {
+        package system {
+            class BoundSystem
+            class BounceSystem
+            class CollisionSystem
+            class InputSystem
+            class ShootingSystem
+            class SpawnSystem
+            class TutorialPlayerShootingSystem
+        }
+    }
+
+    package state {
+        abstract class State
+        package tutorial {
+            class TutorialCombatState
+            class TutorialEndingState
+            class TutorialGameState
+            class TutorialPowerupState
+            class TutorialSabotageChoiceState
+            class TutorialSabotageIntroState
+            class TutorialSabotageState
+        }
+    }
+
+    package ui {
+        package view {
+            class GameHud
+        }
+    }
+}
+
+' root
+InputAdapter <|-- GameInputProcessor
+ApplicationAdapter <|-- Main
+
+' gdx
+ApplicationListener <|.. ApplicationAdapter
+InputProcessor <|.. InputAdapter
+
+AppProperties <-- Enemy
+AppProperties <-- Player
+AppProperties <-- BoundSystem
+AppProperties <-- BounceSystem
+AppProperties <-- TutorialPowerupState
+AppProperties <-- TutorialSabotageIntroState
+AppProperties <-- TutorialSabotageChoiceState
+AppProperties <-- TutorialEndingState
+AppProperties <-- GameHud
+
+Assets <-- Main
+Assets <-- State
+Assets <-- CollisionSystem
+Assets <-- ShootingSystem
+Assets <-- SpawnSystem
+Assets <-- TutorialPlayerShootingSystem
+
+GameInputProcessor <-- InputSystem
+GameInputProcessor <-- GameState
+GameInputProcessor <-- TutorialGameState
+GameInputProcessor <-- TutorialCombatState
+GameInputProcessor <-- TutorialSabotageState
+@enduml

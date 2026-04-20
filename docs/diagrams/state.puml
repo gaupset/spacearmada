@@ -1,0 +1,83 @@
+@startuml
+set separator none
+
+skinparam linetype polyline
+skinparam linetype ortho
+
+package no.ntnu.tdt4240.project {
+    class Main
+
+    package state {
+        class StateManager
+        abstract class State
+        class GameOverState
+        class GameState
+        class HistoryState
+        class LeaderboardState
+        class MenuState
+        class PauseState
+        class PowerupState
+        class SabotageState
+        class SettingsState
+        class TutorialState
+        class WaitingRoomState
+        package tutorial {
+            class TutorialCombatIntroState
+            class TutorialSabotageIntroState
+            class TutorialSabotageChoiceState
+            class TutorialPowerupState
+            class TutorialEndingState
+        }
+    }
+}
+
+State <|-- GameOverState
+State <|-- GameState
+State <|-- HistoryState
+State <|-- LeaderboardState
+State <|-- MenuState
+State <|-- PauseState
+State <|-- PowerupState
+State <|-- SabotageState
+State <|-- SettingsState
+State <|-- TutorialState
+State <|-- WaitingRoomState
+
+StateManager <-- Main
+StateManager <-- State
+
+State <-- StateManager
+
+GameOverState <-- GameState
+
+GameState <-- GameOverState
+GameState <-- MenuState
+GameState <-- WaitingRoomState
+GameState <-- PauseState
+GameState <-- PowerupState
+GameState <-- SabotageState
+
+MenuState <-- WaitingRoomState
+MenuState <-- HistoryState
+MenuState <-- LeaderboardState
+MenuState <-- SettingsState
+MenuState <-- GameOverState
+MenuState <-- TutorialState
+MenuState <-- TutorialCombatIntroState
+MenuState <-- TutorialSabotageIntroState
+MenuState <-- TutorialSabotageChoiceState
+MenuState <-- TutorialPowerupState
+MenuState <-- TutorialEndingState
+
+PauseState <-- GameState
+
+PowerupState <-- GameState
+
+SabotageState <-- GameState
+
+SettingsState <-- MenuState
+
+TutorialState <-- MenuState
+
+WaitingRoomState <-- MenuState
+@enduml

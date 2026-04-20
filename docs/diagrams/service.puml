@@ -1,0 +1,56 @@
+@startuml
+set separator none
+
+skinparam linetype polyline
+skinparam linetype ortho
+
+package no.ntnu.tdt4240.project {
+    class Main
+
+    package engine {
+        package system {
+            class CollisionSystem
+        }
+    }
+
+    package service {
+        class AudioService
+        class FirebaseService
+        class FirebaseController
+        class LobbyService
+        class ScoreService
+    }
+
+    package state {
+        class MenuState
+        class WaitingRoomState
+        class GameState
+        class GameOverState
+        class SettingsState
+    }
+
+    package ui {
+        class FirebaseTestWidget
+    }
+}
+
+AudioService <-- Main
+AudioService <-- CollisionSystem
+AudioService <-- MenuState
+AudioService <-- SettingsState
+
+FirebaseService <-- LobbyService
+FirebaseService <-- Main
+FirebaseService <-- FirebaseTestWidget
+
+FirebaseController <-- WaitingRoomState
+
+LobbyService <-- FirebaseController
+LobbyService <-- WaitingRoomState
+LobbyService <-- GameState
+LobbyService <-- GameOverState
+
+ScoreService <-- LobbyService
+ScoreService <-- MenuState
+ScoreService <-- GameOverState
+@enduml

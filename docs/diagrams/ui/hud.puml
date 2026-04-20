@@ -1,0 +1,43 @@
+@startuml
+set separator none
+
+skinparam linetype polyline
+skinparam linetype ortho
+
+package no.ntnu.tdt4240.project {
+    package state {
+        class GameState
+        class TutorialState
+        package tutorial {
+            class TutorialGameState
+            class TutorialCombatState
+            class TutorialCombatIntroState
+            class TutorialPowerupState
+            class TutorialSabotageState
+            class TutorialSabotageIntroState
+            class TutorialSabotageChoiceState
+            class TutorialEndingState
+        }
+    }
+
+    package ui {
+        class FirebaseTestWidget
+        class SpaceButton
+        class UiFactory
+        package view {
+            class GameHud
+        }
+    }
+}
+
+GameHud <-- GameState
+GameHud <-- TutorialState
+GameHud <-- TutorialGameState
+GameHud <-- TutorialCombatState
+GameHud <-- TutorialCombatIntroState
+GameHud <-- TutorialSabotageState
+GameHud <-- TutorialSabotageIntroState
+GameHud <-- TutorialSabotageChoiceState
+GameHud <-- TutorialPowerupState
+GameHud <-- TutorialEndingState
+@enduml

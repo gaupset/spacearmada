@@ -1,0 +1,56 @@
+@startuml
+set separator none
+
+skinparam linetype polyline
+skinparam linetype ortho
+
+package no.ntnu.tdt4240.project {
+    package powerup.strategy {
+        interface PowerupStrategy
+        class RapidFirePowerupStrategy
+        class ShieldPowerupStrategy
+        class SlowEnemiesPowerupStrategy
+    }
+
+    package sabotage.strategy {
+        interface SabotageStrategy
+        class DoubleAliensSabotageStrategy
+        class EnemySpeedSabotageStrategy
+        class HalfPlayerBulletsSabotageStrategy
+    }
+
+    package state {
+        class GameState
+        package tutorial {
+            class TutorialCombatState
+        }
+    }
+
+    ' package powerup.strategy
+
+    PowerupStrategy <|.. RapidFirePowerupStrategy
+    PowerupStrategy <|.. ShieldPowerupStrategy
+    PowerupStrategy <|.. SlowEnemiesPowerupStrategy
+
+    RapidFirePowerupStrategy <-- GameState
+    RapidFirePowerupStrategy <-- TutorialCombatState
+
+    ShieldPowerupStrategy <-- GameState
+    ShieldPowerupStrategy <-- TutorialCombatState
+
+    SlowEnemiesPowerupStrategy <-- GameState
+    SlowEnemiesPowerupStrategy <-- TutorialCombatState
+
+    ' package sabotage.strategy
+
+    SabotageStrategy <|.. DoubleAliensSabotageStrategy
+    SabotageStrategy <|.. EnemySpeedSabotageStrategy
+    SabotageStrategy <|.. HalfPlayerBulletsSabotageStrategy
+
+    DoubleAliensSabotageStrategy <-- GameState
+
+    EnemySpeedSabotageStrategy <-- GameState
+
+    HalfPlayerBulletsSabotageStrategy <-- GameState
+}
+@enduml

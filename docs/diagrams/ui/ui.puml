@@ -1,0 +1,61 @@
+@startuml
+set separator none
+
+skinparam linetype polyline
+skinparam linetype ortho
+
+package com.badlogic.gdx.scenes.scene2d.ui {
+    class Table
+    class TextButton
+}
+
+package no.ntnu.tdt4240.project {
+    package state {
+        class MenuState
+        class WaitingRoomState
+        class GameOverState
+        class PowerupState
+        class SabotageState
+        class HistoryState
+        class LeaderboardState
+        class SettingsState
+        class TutorialState
+        package tutorial {
+            class TutorialCombatIntroState
+            class TutorialPowerupState
+            class TutorialSabotageIntroState
+            class TutorialSabotageChoiceState
+            class TutorialEndingState
+        }
+    }
+
+    package ui {
+        class FirebaseTestWidget
+        class SpaceButton
+        class UiFactory
+        package view {
+            class GameHud
+        }
+    }
+}
+
+Table <|-- FirebaseTestWidget
+TextButton <|-- SpaceButton
+
+FirebaseTestWidget <-- SettingsState
+
+SpaceButton <-- MenuState
+SpaceButton <-- WaitingRoomState
+SpaceButton <-- GameOverState
+SpaceButton <-- PowerupState
+SpaceButton <-- SabotageState
+SpaceButton <-- HistoryState
+SpaceButton <-- LeaderboardState
+SpaceButton <-- SettingsState
+SpaceButton <-- TutorialState
+SpaceButton <-- TutorialCombatIntroState
+SpaceButton <-- TutorialPowerupState
+SpaceButton <-- TutorialSabotageIntroState
+SpaceButton <-- TutorialSabotageChoiceState
+SpaceButton <-- TutorialEndingState
+@enduml

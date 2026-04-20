@@ -1,0 +1,58 @@
+@startuml
+set separator none
+
+skinparam linetype polyline
+skinparam linetype ortho
+
+package no.ntnu.tdt4240.project {
+    package config {
+        class Enemy
+        class Player
+        class WaveConfig
+        package bullet {
+            abstract class Bullet
+            class EnemyBullet
+            class PlayerBullet
+        }
+    }
+
+    package engine {
+        package system {
+            class SpawnSystem
+            class WaveSystem
+            class ShootingSystem
+            class TutorialPlayerShootingSystem
+        }
+    }
+
+    package state {
+        class GameState
+        package tutorial {
+            class TutorialCombatState
+            class TutorialSabotageState
+            class TutorialGameState
+        }
+    }
+}
+
+' package config
+
+Player <-- GameState
+Player <-- TutorialCombatState
+Player <-- TutorialSabotageState
+Player <-- TutorialGameState
+
+Enemy <-- SpawnSystem
+
+WaveConfig <-- WaveSystem
+
+' package config.bullet
+
+Bullet <|-- EnemyBullet
+Bullet <|-- PlayerBullet
+
+EnemyBullet <-- ShootingSystem
+
+PlayerBullet <-- ShootingSystem
+PlayerBullet <-- TutorialPlayerShootingSystem
+@enduml
