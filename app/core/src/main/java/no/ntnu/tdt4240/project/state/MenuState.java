@@ -63,7 +63,7 @@ public class MenuState extends State {
 
         // Menu buttons table
         Table buttons = new Table();
-        String[] buttonLabels = { "SINGLEPLAYER", "MULTIPLAYER", "LEADERBOARD", "HISTORY", "TUTORIAL", "SETTINGS" };
+        String[] buttonLabels = { "SINGLEPLAYER", "MULTIPLAYER", "TUTORIAL", "SETTINGS" };
         for (String label : buttonLabels) {
             SpaceButton button = new SpaceButton(label);
 
@@ -81,20 +81,6 @@ public class MenuState extends State {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
                         sm.set(new WaitingRoomState(sm, batch, assets));
-                    }
-                });
-            } else if (label.equals("LEADERBOARD")) {
-                button.addListener(new ClickListener() {
-                    @Override
-                    public void clicked(InputEvent event, float x, float y) {
-                        sm.set(new LeaderboardState(sm, batch, assets));
-                    }
-                });
-            } else if (label.equals("HISTORY")) {
-                button.addListener(new ClickListener() {
-                    @Override
-                    public void clicked(InputEvent event, float x, float y) {
-                        sm.set(new HistoryState(sm, batch, assets));
                     }
                 });
             } else if (label.equals("TUTORIAL")) {
