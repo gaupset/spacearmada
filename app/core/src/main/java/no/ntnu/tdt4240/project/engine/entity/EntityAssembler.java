@@ -46,6 +46,7 @@ public class EntityAssembler {
      *     <li>{@link PositionComponent}</li>
      *     <li>{@link DimensionComponent}</li>
      *     <li>{@link TextureComponent}</li>
+     *     <li>{@link AnimationComponent} [if and only if data object contains frames]</li>
      * </ul>
      *
      * @param data Data object containing all initial entity values
@@ -74,6 +75,7 @@ public class EntityAssembler {
      *     <li>{@link HealthComponent}</li>
      *     <li>{@link ScoreComponent}</li>
      *     <li>{@link TextureComponent}</li>
+     *     <li>{@link AnimationComponent}</li>
      *     <li>{@link PlayerComponent}</li>
      *     <li>{@link ShooterComponent}</li>
      * </ul>
@@ -101,6 +103,7 @@ public class EntityAssembler {
      *     <li>{@link VelocityComponent}</li>
      *     <li>{@link DimensionComponent}</li>
      *     <li>{@link TextureComponent}</li>
+     *     <li>{@link AnimationComponent}</li>
      *     <li>{@link PlayerComponent}</li>
      *     <li>{@link BulletComponent}</li>
      * </ul>
@@ -127,6 +130,7 @@ public class EntityAssembler {
      *     <li>{@link VelocityComponent}</li>
      *     <li>{@link DimensionComponent}</li>
      *     <li>{@link TextureComponent}</li>
+     *     <li>{@link AnimationComponent}</li>
      *     <li>{@link EnemyComponent}</li>
      * </ul>
      *
@@ -151,6 +155,7 @@ public class EntityAssembler {
      *     <li>{@link VelocityComponent}</li>
      *     <li>{@link DimensionComponent}</li>
      *     <li>{@link TextureComponent}</li>
+     *     <li>{@link AnimationComponent}</li>
      *     <li>{@link EnemyComponent}</li>
      *     <li>{@link ShooterComponent}</li>
      * </ul>
@@ -177,6 +182,7 @@ public class EntityAssembler {
      *     <li>{@link VelocityComponent}</li>
      *     <li>{@link DimensionComponent}</li>
      *     <li>{@link TextureComponent}</li>
+     *     <li>{@link AnimationComponent}</li>
      *     <li>{@link EnemyComponent}</li>
      *     <li>{@link BulletComponent}</li>
      * </ul>
