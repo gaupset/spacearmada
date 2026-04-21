@@ -3,6 +3,7 @@ package no.ntnu.tdt4240.project.service;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Preferences;
 import java.util.Random;
 import java.util.UUID;
 import no.ntnu.tdt4240.project.model.Sabotage;
@@ -11,11 +12,22 @@ import no.ntnu.tdt4240.project.util.FirebaseJson;
 
 
 public class LobbyService {
+    private static final String PREFS_NAME = "spacearmada_prefs";
+    private static final String PREF_PLAYER_NAME = "player_name";
+    private static final String SERVER_TIMESTAMP = "{\".sv\": \"timestamp\"}";
+
     private String lobbyID;
     public String lobbyUserID; // Unique per lobby session
-    private String playerID;       // Persistent player ID
+    private String playerID;       // Persistent player name
+    private final Preferences prefs;
 
-    private static final String SERVER_TIMESTAMP = "{\".sv\": \"timestamp\"}";
+    public LobbyService() {
+        prefs = Gdx.app.getPreferences(PREFS_NAME);
+        String stored = prefs.getString(PREF_PLAYER_NAME, null);
+        if (stored != null && !stored.isEmpty()) {
+            playerID = stored;
+        }
+    }
 
     public interface LobbyCallback {
         void onSuccess(String success);
@@ -27,48 +39,11 @@ public class LobbyService {
         void onFailure(String error);
     }
 
-    public void checkDatabaseFormat(final LobbyCallback callback) {
-        FirebaseService.getInstance().getDbData("", new FirebaseService.FirebaseCallback() {
-            @Override
-            public void onSuccess(String response) {
-                try {
-                    JsonValue root = new JsonReader().parse(response);
-                    if (root != null && root.has("lobbies") && root.has("players")) {
-                        callback.onSuccess(response);
-                    } else {
-                        createDatabase(callback);
-                    }
-                } catch (Exception e) {
-                    createDatabase(callback);
-                }
-            }
-            @Override
-            public void onFailure(String error) {
-                callback.onFailure(error);
-            }
-        });
-    }
-
-    public void createDatabase(final LobbyCallback callback) {
-        String initialData = "{\"lobbies\": {}, \"players\": {}}";
-        FirebaseService.getInstance().putDbData("", initialData, new FirebaseService.FirebaseCallback() {
-            @Override
-            public void onSuccess(String response) {
-                callback.onSuccess(response);
-            }
-            @Override
-            public void onFailure(String error) {
-                callback.onFailure(error);
-            }
-        });
-    }
-
     public void createLobby(final LobbyCallback callback) {
         final String newId = String.format("%06d", new Random().nextInt(1000000));
         lobbyUserID = UUID.randomUUID().toString();
 
-        LobbyPlayer lp = createInitialLobbyPlayer();
-        String lpJson = FirebaseJson.toJson(lp).replace("null", SERVER_TIMESTAMP);
+        String lpJson = buildPlayerJson();
 
         String lobbyJson = "{" +
             "\"gameStarted\": false," +
@@ -101,8 +76,7 @@ public class LobbyService {
                 }
                 JsonValue lobbyJson = new JsonReader().parse(response);
                 if (lobbyJson != null && !lobbyJson.getBoolean("gameStarted", false)) {
-                    LobbyPlayer lp = createInitialLobbyPlayer();
-                    String lpJson = FirebaseJson.toJson(lp).replace("null", SERVER_TIMESTAMP);
+                    String lpJson = buildPlayerJson();
 
                     FirebaseService.getInstance().putDbData("lobbies/" + lobbyId + "/players/" + lobbyUserID, lpJson, new FirebaseService.FirebaseCallback() {
                         @Override
@@ -127,7 +101,7 @@ public class LobbyService {
         });
     }
 
-    private LobbyPlayer createInitialLobbyPlayer() {
+    private String buildPlayerJson() {
         LobbyPlayer lp = new LobbyPlayer();
         lp.actualName = playerID;
         lp.personalHighScore = ScoreService.getInstance().getHighScore();
@@ -135,8 +109,9 @@ public class LobbyService {
         lp.gameOver = false;
         lp.leftLobby = false;
         lp.score = 0;
-        lp.lastTimeOnline = SERVER_TIMESTAMP;
-        return lp;
+        String base = FirebaseJson.toJson(lp);
+        String inner = base.substring(1, base.length() - 1);
+        return "{" + inner + ",\"lastTimeOnline\":" + SERVER_TIMESTAMP + "}";
     }
 
     public void sendHeartbeat() {
@@ -209,15 +184,16 @@ public class LobbyService {
         });
     }
 
-    public void setSabotage(Sabotage sabotage){
-        getLobbyStatus(new LobbyStatusCallback() {
+    public void setSabotage(Sabotage sabotage) {
+        if (lobbyID == null || lobbyUserID == null) return;
+        String extras = "\"sabotage\":" + FirebaseJson.toJson(sabotage);
+        FirebaseService.getInstance().callGameHandler(lobbyID, lobbyUserID, "sendSabotage", extras, new FirebaseService.FirebaseCallback() {
             @Override
-            public void onUpdate(JsonValue response) {
-                String otherPlayer = getSabotageTargetPlayerId(response);
-                writeSabotage(sabotage, otherPlayer);
+            public void onSuccess(String response) {}
+            @Override
+            public void onFailure(String error) {
+                Gdx.app.error("LobbyHandler", "sendSabotage failed: " + error);
             }
-            @Override
-            public void onFailure(String error) {}
         });
     }
 
@@ -229,28 +205,6 @@ public class LobbyService {
             @Override
             public void onFailure(String error) {}
         });
-    }
-
-    private void writeSabotage(Sabotage sabotage, String otherPlayerID) {
-        if (otherPlayerID == null || otherPlayerID.isEmpty()) return;
-        String path = "lobbies/" + lobbyID + "/players/" + otherPlayerID + "/sabotage";
-        String sabotageJson = FirebaseJson.toJson(sabotage);
-        FirebaseService.getInstance().putDbData(path, sabotageJson, new FirebaseService.FirebaseCallback() {
-            @Override
-            public void onSuccess(String response) {}
-            @Override
-            public void onFailure(String error) {
-                Gdx.app.error("LobbyHandler", "writeSabotage failed: " + error);
-            }
-        });
-    }
-
-    private String getSabotageTargetPlayerId(JsonValue lobbyData) {
-        JsonValue players = lobbyData.get("players");
-        if (players == null || lobbyUserID == null) return "";
-        JsonValue me = players.get(lobbyUserID);
-        if (me == null) return "";
-        return me.getString("sabotageTargetId", "");
     }
 
     public void getLobbyStatus(final LobbyStatusCallback callback) {
@@ -283,6 +237,12 @@ public class LobbyService {
 
     public void setPlayerID(String id) {
         this.playerID = id;
+        prefs.putString(PREF_PLAYER_NAME, id == null ? "" : id);
+        prefs.flush();
+    }
+
+    public String getPlayerID() {
+        return playerID;
     }
 
     public String getLobbyID() { return lobbyID; }

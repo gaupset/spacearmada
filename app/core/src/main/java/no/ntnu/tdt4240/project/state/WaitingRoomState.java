@@ -19,6 +19,7 @@ import no.ntnu.tdt4240.project.service.FirebaseController;
 import no.ntnu.tdt4240.project.service.LobbyService;
 import no.ntnu.tdt4240.project.ui.SpaceButton;
 import no.ntnu.tdt4240.project.ui.UiFactory;
+import no.ntnu.tdt4240.project.util.NameGenerator;
 import no.ntnu.tdt4240.project.util.Theme;
 
 import java.util.Random;
@@ -36,7 +37,9 @@ public class WaitingRoomState extends State {
     private Stage stage;
     private Table root;
     private Label playerCountLabel;
+    private Label errorLabel;
     private SpaceButton startBtn;
+    private TextField nameField;
 
     private float updateTimer = 0;
     private float pingTimer = 0;
@@ -64,19 +67,7 @@ public class WaitingRoomState extends State {
         root.setFillParent(true);
         stage.addActor(root);
 
-        firebaseController.checkDatabaseFormat(new LobbyService.LobbyCallback() {
-            @Override
-            public void onSuccess(String response) {
-                showMainOptions();
-            }
-
-            @Override
-            public void onFailure(String error) {
-                Gdx.app.error("Lobby", "DB check failed: " + error);
-                // Even if check fails, allow options for now or show error
-                showMainOptions();
-            }
-        });
+        showMainOptions();
     }
 
     @Override
@@ -95,6 +86,12 @@ public class WaitingRoomState extends State {
         title.setFontScale(1.4f);
         root.add(title).padBottom(40f).row();
 
+        String stored = firebaseController.lobbyHandler().getPlayerID();
+        String initialName = stored != null ? stored : NameGenerator.random();
+        nameField = new TextField(initialName, UiFactory.getInstance().getSkin());
+        root.add(new Label("NAME:", UiFactory.getInstance().getSkin())).pad(5).row();
+        root.add(nameField).width(220).height(40).padBottom(20f).row();
+
         SpaceButton createBtn = new SpaceButton("CREATE LOBBY");
         SpaceButton joinBtn = new SpaceButton("JOIN LOBBY");
         SpaceButton backBtn = new SpaceButton("BACK");
@@ -102,6 +99,7 @@ public class WaitingRoomState extends State {
         createBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                commitPlayerName();
                 createLobby();
             }
         });
@@ -109,6 +107,7 @@ public class WaitingRoomState extends State {
         joinBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                commitPlayerName();
                 showJoinInput();
             }
         });
@@ -123,6 +122,22 @@ public class WaitingRoomState extends State {
         root.add(createBtn).width(Theme.BUTTON_WIDTH).height(Theme.BUTTON_HEIGHT).pad(10).row();
         root.add(joinBtn).width(Theme.BUTTON_WIDTH).height(Theme.BUTTON_HEIGHT).pad(10).row();
         root.add(backBtn).width(Theme.BUTTON_WIDTH).height(Theme.BUTTON_HEIGHT).pad(10).row();
+
+        errorLabel = new Label("", UiFactory.getInstance().getSkin());
+        errorLabel.setColor(1f, 0.3f, 0.3f, 1f);
+        errorLabel.setWrap(true);
+        root.add(errorLabel).width(280).padTop(10).row();
+    }
+
+    private void showError(String message) {
+        Gdx.app.error("Lobby", message);
+        if (errorLabel != null) errorLabel.setText(message);
+    }
+
+    private void commitPlayerName() {
+        String name = nameField != null ? nameField.getText().trim() : "";
+        if (name.isEmpty()) name = NameGenerator.random();
+        firebaseController.lobbyHandler().setPlayerID(name);
     }
 
     private void createLobby() {
@@ -135,7 +150,7 @@ public class WaitingRoomState extends State {
 
             @Override
             public void onFailure(String error) {
-                Gdx.app.error("Lobby", "Create failed: " + error);
+                showError("Create failed: " + error);
             }
         });
     }
@@ -176,7 +191,8 @@ public class WaitingRoomState extends State {
 
             @Override
             public void onFailure(String error) {
-                Gdx.app.error("Lobby", "Join failed: " + error);
+                showMainOptions();
+                showError("Join failed: " + error);
             }
         });
     }

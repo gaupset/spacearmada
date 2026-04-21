@@ -1,7 +1,12 @@
 import {getDatabase, ServerValue} from "firebase-admin/database";
 import * as logger from "firebase-functions/logger";
 import {LobbyData, LobbyPlayer, RunnerState} from "./types";
-import {assignTargets} from "./sabotageAssignment";
+import {assignTargets, nextTargetInRing} from "./sabotageAssignment";
+
+export interface SabotagePayload {
+  type: string;
+  duration: number;
+}
 
 const RUNNER_STALE_MS = 2000;
 const INACTIVE_PLAYER_MS = 10000;
@@ -17,12 +22,14 @@ interface GameHandlerResult {
  * @param {string} lobbyId - The lobby identifier.
  * @param {string} lobbyUserId - The user identifier.
  * @param {string} action - Optional action to perform.
+ * @param {object} payload - Optional action payload (e.g. sabotage details).
  * @return {Promise<GameHandlerResult>} The result of the request.
  */
 export async function handleGameRequest(
   lobbyId: string,
   lobbyUserId: string,
-  action?: string
+  action?: string,
+  payload?: {sabotage?: SabotagePayload}
 ): Promise<GameHandlerResult> {
   logger.info("handleGameRequest", {lobbyId, lobbyUserId, action});
 
@@ -44,6 +51,21 @@ export async function handleGameRequest(
   // Handle explicit actions regardless of runner status
   if (action === "startGame") {
     return await handleStartGame(lobbyId, lobby);
+  }
+  if (action === "sendSabotage") {
+    if (!payload?.sabotage) {
+      return {
+        status: "error",
+        isRunner: false,
+        message: "Missing sabotage payload",
+      };
+    }
+    return await handleSendSabotage(
+      lobbyId,
+      lobbyUserId,
+      lobby,
+      payload.sabotage
+    );
   }
 
   // Only the runner performs management tasks
@@ -184,6 +206,7 @@ async function runGameManagement(
       await db.ref(`lobbies/${lobbyId}`).update({
         gameEnded: true,
         gameEndedAt: ServerValue.TIMESTAMP,
+        winnerId: determineWinner(freshLobby.players),
       });
     }
   } else if (lobby.gameStarted && lobby.gameEnded) {
@@ -208,6 +231,70 @@ function shouldGameEnd(players: Record<string, LobbyPlayer>): boolean {
     }
   }
   return activeCount <= 1;
+}
+
+/**
+ * Writes a sabotage to the caller's current victim and advances the
+ * caller's sabotageTargetId along the ring.
+ * @param {string} lobbyId - The lobby identifier.
+ * @param {string} lobbyUserId - The caller's player id.
+ * @param {LobbyData} lobby - The current lobby snapshot.
+ * @param {SabotagePayload} sabotage - The sabotage payload to deliver.
+ * @return {Promise<GameHandlerResult>} Result of the send.
+ */
+async function handleSendSabotage(
+  lobbyId: string,
+  lobbyUserId: string,
+  lobby: LobbyData,
+  sabotage: SabotagePayload
+): Promise<GameHandlerResult> {
+  const me = lobby.players?.[lobbyUserId];
+  if (!me || !me.sabotageTargetId) {
+    return {status: "error", isRunner: false, message: "No target assigned"};
+  }
+  const victimId = me.sabotageTargetId;
+  const nextTarget = nextTargetInRing(lobby.players, victimId, lobbyUserId);
+  const db = getDatabase();
+  await db.ref().update({
+    [`lobbies/${lobbyId}/players/${victimId}/sabotage`]: {
+      type: sabotage.type,
+      duration: sabotage.duration,
+    },
+    [`lobbies/${lobbyId}/players/${lobbyUserId}/sabotageTargetId`]: 
+      nextTarget,
+  });
+  return {status: "ok", isRunner: false};
+}
+
+/**
+ * Picks the winner when the game ends.
+ * Prefers the last remaining active player; otherwise the highest score
+ * among players who did not leave.
+ * @param {Record<string, LobbyPlayer>} players - The players map.
+ * @return {string} The winning player id, or empty string if none.
+ */
+function determineWinner(players: Record<string, LobbyPlayer>): string {
+  let active: string | null = null;
+  let activeCount = 0;
+  for (const [id, p] of Object.entries(players)) {
+    if (!p.gameOver && !p.leftLobby) {
+      active = id;
+      activeCount++;
+    }
+  }
+  if (activeCount === 1 && active) return active;
+
+  let bestId = "";
+  let bestScore = -1;
+  for (const [id, p] of Object.entries(players)) {
+    if (p.leftLobby) continue;
+    const s = p.score ?? 0;
+    if (s > bestScore) {
+      bestScore = s;
+      bestId = id;
+    }
+  }
+  return bestId;
 }
 
 /**

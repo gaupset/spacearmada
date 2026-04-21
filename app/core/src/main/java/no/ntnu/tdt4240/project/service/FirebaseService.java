@@ -21,7 +21,6 @@ public class FirebaseService {
     private final String databaseBaseUrl;
     private final String projectId;
     private final String dbNsParam;
-    private long serverTimeOffset = 0;
 
     private FirebaseService(AppConfig config) {
         this.functionsBaseUrl = config.firebaseBaseUrl;
@@ -29,9 +28,7 @@ public class FirebaseService {
         this.databaseBaseUrl = config.databaseBaseUrl;
         this.projectId = config.projectId;
         // ?ns= is required by the RTDB emulator (HTTP) to select the namespace.
-        // Only needs to be included when using emulatrs
         this.dbNsParam = config.databaseBaseUrl.startsWith("http://") ? "?ns=" + config.projectId : "";
-        fetchServerTimeOffset();
     }
 
     public static void init() {
@@ -40,28 +37,6 @@ public class FirebaseService {
 
     public static FirebaseService getInstance() {
         return instance;
-    }
-
-    public long getServerTime() {
-        return System.currentTimeMillis() + serverTimeOffset;
-    }
-
-    public void fetchServerTimeOffset() {
-        getDbData(".info/serverTimeOffset", new FirebaseCallback() {
-            @Override
-            public void onSuccess(String response) {
-                try {
-                    serverTimeOffset = Long.parseLong(response.trim());
-                } catch (NumberFormatException e) {
-                    Gdx.app.error("FirebaseService", "Failed to parse serverTimeOffset: " + response);
-                }
-            }
-
-            @Override
-            public void onFailure(String error) {
-                Gdx.app.error("FirebaseService", "Failed to fetch serverTimeOffset: " + error);
-            }
-        });
     }
 
     // Generic DB methods
@@ -91,9 +66,14 @@ public class FirebaseService {
     }
 
     public void callGameHandler(String lobbyId, String lobbyUserId, String action, final FirebaseCallback callback) {
+        callGameHandler(lobbyId, lobbyUserId, action, null, callback);
+    }
+
+    public void callGameHandler(String lobbyId, String lobbyUserId, String action, String extrasJson, final FirebaseCallback callback) {
         String url = functionsBaseUrl + "/gameHandler";
         String body = "{\"lobbyId\":\"" + lobbyId + "\",\"lobbyUserId\":\"" + lobbyUserId + "\""
             + (action != null ? ",\"action\":\"" + action + "\"" : "")
+            + (extrasJson != null && !extrasJson.isEmpty() ? "," + extrasJson : "")
             + "}";
         sendRequest("POST", url, body, callback);
     }

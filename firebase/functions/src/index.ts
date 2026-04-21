@@ -28,7 +28,7 @@ export const gameHandler = onRequest(async (request, response) => {
     body: request.body,
   });
 
-  const {lobbyId, lobbyUserId, action} = request.body || {};
+  const {lobbyId, lobbyUserId, action, sabotage} = request.body || {};
 
   if (!lobbyId || !lobbyUserId) {
     response.status(400).json({
@@ -39,7 +39,12 @@ export const gameHandler = onRequest(async (request, response) => {
   }
 
   try {
-    const result = await handleGameRequest(lobbyId, lobbyUserId, action);
+    const result = await handleGameRequest(
+      lobbyId,
+      lobbyUserId,
+      action,
+      sabotage ? {sabotage} : undefined
+    );
     response.json(result);
   } catch (error) {
     logger.error("gameHandler error", {error, lobbyId, lobbyUserId});
