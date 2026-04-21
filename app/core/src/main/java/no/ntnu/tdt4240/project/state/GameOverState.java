@@ -190,7 +190,11 @@ public class GameOverState extends State {
         Label.LabelStyle green = new Label.LabelStyle(assets.getDefaultFont(), Color.GREEN);
 
         for (JsonValue player : playerList) {
-            String name = player.getString("actualName", player.name);
+            String name = player.getString("actualName", null);
+            if (name == null || name.isEmpty()) {
+                String key = player.name != null ? player.name : "";
+                name = "player_" + key.substring(0, Math.min(4, key.length()));
+            }
             int score = player.getInt("score", 0);
             boolean isGameOver = player.getBoolean("gameOver", false);
             boolean leftLobby = player.getBoolean("leftLobby", false);
@@ -220,32 +224,22 @@ public class GameOverState extends State {
             scoreboardTable.add(statusLabel).padLeft(10f).padBottom(4f).row();
         }
 
-        // Handle game ended — determine winner
+        // Handle game ended — determine winner from server-set winnerId
         if (gameEnded && !gameEndedDetected) {
             gameEndedDetected = true;
-            // Winner is either the last active player or highest score
             String myId = lobbyService.lobbyUserID;
-            boolean iWon = false;
+            boolean iWon = myId != null && myId.equals(lobbyData.getString("winnerId", ""));
 
-            // Check if I'm the last active player
-            JsonValue me = players.get(myId);
-            if (me != null && !me.getBoolean("gameOver", false) && !me.getBoolean("leftLobby", false)) {
-                iWon = true;
-            }
-
-            // Or if everyone is done, check if I have the highest score
-            if (!iWon && !playerList.isEmpty()) {
-                JsonValue top = playerList.get(0);
-                if (top.name != null && top.name.equals(myId)) {
-                    iWon = true;
+            if (iWon) {
+                if (!winRecorded) {
+                    winRecorded = true;
+                    ScoreService.getInstance().incrementOnlineWins();
                 }
-            }
-
-            if (iWon && !winRecorded) {
-                winRecorded = true;
                 titleLabel.setText("VICTORY!");
                 titleLabel.setStyle(new Label.LabelStyle(assets.getDefaultFont(), Color.GOLD));
-                ScoreService.getInstance().incrementOnlineWins();
+            } else {
+                titleLabel.setText("DEFEAT");
+                titleLabel.setStyle(new Label.LabelStyle(assets.getDefaultFont(), Color.RED));
             }
         }
     }

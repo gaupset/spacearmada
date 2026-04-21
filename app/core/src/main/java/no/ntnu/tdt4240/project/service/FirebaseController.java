@@ -7,11 +7,6 @@ public class FirebaseController {
 
     public FirebaseController() {
         this.lobbyService = new LobbyService();
-        this.lobbyService.setPlayerID("player_" + (System.currentTimeMillis() % 10000));
-    }
-
-    public void checkDatabaseFormat(LobbyService.LobbyCallback callback) {
-        lobbyService.checkDatabaseFormat(callback);
     }
 
     public void createLobby(LobbyService.LobbyCallback callback) {

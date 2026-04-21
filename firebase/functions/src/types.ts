@@ -20,6 +20,7 @@ export interface LobbyData {
   gameEnded: boolean;
   lobbyCreatedAt?: number;
   gameEndedAt?: number | null;
+  winnerId?: string | null;
   runner?: RunnerState | null;
   players: Record<string, LobbyPlayer>;
 }

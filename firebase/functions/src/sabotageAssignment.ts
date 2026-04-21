@@ -1,3 +1,5 @@
+import {LobbyPlayer} from "./types";
+
 /**
  * Assigns sabotage targets so each player attacks exactly one other player
  * and is attacked by exactly one (a bijection). Uses a random cyclic
@@ -23,32 +25,32 @@ export function assignTargets(
 }
 
 /**
- * Splices the sabotage ring after a player is eliminated.
- * The predecessor now targets the eliminated player's former victim.
- * @param {Record<string, string>} currentTargets - Current attacker→victim map.
- * @param {string} eliminatedPlayerId - ID of the eliminated player.
- * @return {Record<string, string>} Updated attacker→victim map.
+ * Walks the sabotage ring forward from `fromId`, returning the next
+ * attackable player id: skips `selfId` and any player that has gameOver
+ * or leftLobby set. Returns `fromId` if no rotation is possible.
+ * @param {Record<string, LobbyPlayer>} players - Lobby players map.
+ * @param {string} fromId - Starting cursor id (typically the current victim).
+ * @param {string} selfId - Caller's id (never target self).
+ * @return {string} The next target id.
  */
-export function reassignAfterElimination(
-  currentTargets: Record<string, string>,
-  eliminatedPlayerId: string
-): Record<string, string> {
-  if (!currentTargets || !eliminatedPlayerId) return {};
-  const succ = currentTargets[eliminatedPlayerId];
-  let pred: string | null = null;
-  for (const [attacker, victim] of Object.entries(currentTargets)) {
-    if (victim === eliminatedPlayerId) {
-      pred = attacker;
-      break;
-    }
+export function nextTargetInRing(
+  players: Record<string, LobbyPlayer>,
+  fromId: string,
+  selfId: string
+): string {
+  if (!players || !fromId) return fromId;
+  const maxSteps = Object.keys(players).length;
+  let cursor = fromId;
+  for (let i = 0; i < maxSteps; i++) {
+    const link = players[cursor];
+    if (!link || !link.sabotageTargetId) return fromId;
+    const candidate = link.sabotageTargetId;
+    const candidatePlayer = players[candidate];
+    const inactive = !!candidatePlayer &&
+      (candidatePlayer.gameOver || candidatePlayer.leftLobby);
+    if (candidate !== selfId && !inactive) return candidate;
+    cursor = candidate;
   }
-  const out: Record<string, string> = {...currentTargets};
-  delete out[eliminatedPlayerId];
-  if (pred !== null) {
-    delete out[pred];
-    if (succ && pred !== succ) {
-      out[pred] = succ;
-    }
-  }
-  return out;
+  return fromId;
 }
+
