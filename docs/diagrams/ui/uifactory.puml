@@ -4,6 +4,8 @@ set separator none
 skinparam linetype polyline
 skinparam linetype ortho
 
+left to right direction
+
 package no.ntnu.tdt4240.project {
     class Main
 

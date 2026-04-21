@@ -1,0 +1,112 @@
+@startuml
+set separator none
+
+left to right direction
+
+package no.ntnu.tdt4240.project.state {
+
+class StateManager {
+- Stack<State> states
++ void push(State)
++ void pop()
++ void set(State)
++ void update(float)
++ void render()
++ void resize(int,int)
++ void dispose()
+}
+
+
+class LeaderboardState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- Stage stage
+# void setup()
+- void buildLayout()
++ void update(float)
+# void render()
++ void resize(int,int)
++ void dispose()
+}
+
+
+abstract class State {
+# StateManager sm
+# SpriteBatch batch
+# Assets assets
+# {abstract}void setup()
+# void show()
+# void hide()
+# {abstract}void update(float)
+# {abstract}void render()
+# {abstract}void resize(int,int)
+# {abstract}void dispose()
+}
+
+
+class TutorialState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- Stage stage
+- Label messageLineOne
+- Label messageLineTwo
+- SpaceButton continueButton
+- int introStep
+# void setup()
+- void buildLayout()
++ void update(float)
+# void render()
++ void resize(int,int)
++ void dispose()
+}
+
+
+class MenuState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- {static} float BUTTON_SPACING
+- Stage stage
+# void setup()
+- void buildLayout()
++ void update(float)
+# void render()
++ void resize(int,int)
++ void dispose()
+}
+
+
+class GameOverState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- {static} float BUTTON_SPACING
+- {static} float POLL_INTERVAL
+- int finalScore
+- Engine engine
+- LobbyService lobbyService
+- Stage stage
+- boolean isNewHighScore
+- Label titleLabel
+- Table scoreboardTable
+- float pollTimer
+- boolean gameEndedDetected
+- boolean winRecorded
+- boolean isOnline()
+# void setup()
+- void buildSingleplayerLayout()
+- void buildOnlineLayout()
+- void updateScoreboard(JsonValue)
++ void update(float)
+# void render()
++ void resize(int,int)
++ void dispose()
+}
+
+}
+
+State <-> StateManager
+
+State <|-- LeaderboardState
+State <|-- TutorialState
+State <|-- MenuState
+State <|-- GameOverState
+@enduml

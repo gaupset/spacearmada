@@ -1,0 +1,107 @@
+@startuml
+set separator none
+
+left to right direction
+
+package no.ntnu.tdt4240.project.state {
+
+abstract class State {
+# StateManager sm
+# SpriteBatch batch
+# Assets assets
+# {abstract}void setup()
+# void show()
+# void hide()
+# {abstract}void update(float)
+# {abstract}void render()
+# {abstract}void resize(int,int)
+# {abstract}void dispose()
+}
+
+package tutorial {
+
+
+class TutorialGameState {
+- {static} float MOVEMENT_STEP_DURATION_SECONDS
+- Engine engine
+- GameHud hud
+- InputMultiplexer inputMux
+- float elapsedSeconds
+- boolean canProgress
+# void setup()
+# void show()
+# void update(float)
+# void render()
+- int getPlayerScore()
+- int getPlayerHealth()
+# void resize(int,int)
+# void dispose()
+}
+
+
+class TutorialEndingState {
+- Stage stage
+- Label messageLineOne
+- Label messageLineTwo
+- SpaceButton actionButton
+- TextButton exitButton
+- int step
+# void setup()
+- void buildLayout()
+- void advanceStep()
+# void update(float)
+# void render()
+# void resize(int,int)
+# void dispose()
+}
+
+
+class TutorialCombatState {
+- {static} int POWERUP_EFFECT_DURATION_SEC
+- Engine engine
+- Map<String,PowerupStrategy> powerupStrategies
+- GameHud hud
+- InputMultiplexer inputMux
+# void setup()
+# void show()
+# void update(float)
+# void render()
+~ void renderFrozen()
+- boolean canOpenPowerup()
+- void setTutorialSystemsPaused(boolean)
+~ int getAvailableAbilityCount()
+~ void applyPowerup(String)
+- boolean shouldPauseTutorial()
+- boolean isNextPromptVisible()
+- TutorialScenarioComponent getTutorialComponent()
++ InputMultiplexer getInputMultiplexer()
++ void restoreDefaultInput()
+- int getPlayerScore()
+- int getPlayerHealth()
+- int getWaveNumber()
+# void resize(int,int)
+# void dispose()
+}
+
+
+class TutorialCombatIntroState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- Stage stage
+# void setup()
+- void buildLayout()
+# void update(float)
+# void render()
+# void resize(int,int)
+# void dispose()
+}
+
+}
+
+}
+
+State <|-- TutorialGameState
+State <|-- TutorialEndingState
+State <|-- TutorialCombatState
+State <|-- TutorialCombatIntroState
+@enduml

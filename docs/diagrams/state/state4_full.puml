@@ -1,0 +1,128 @@
+@startuml
+set separator none
+
+left to right direction
+
+package no.ntnu.tdt4240.project.state {
+
+class WaitingRoomState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- {static} float UPDATE_INTERVAL
+- FirebaseController firebaseController
+- Stage stage
+- Table root
+- Label playerCountLabel
+- Label errorLabel
+- SpaceButton startBtn
+- TextField nameField
+- float updateTimer
+- float pingTimer
+- float pingInterval
+- boolean inLobby
+- boolean isHost
+# void setup()
+# void show()
+- void showMainOptions()
+- void showError(String)
+- void commitPlayerName()
+- void createLobby()
+- void showJoinInput()
+- void joinLobby(String)
+- void showWaitingRoom(boolean)
+- void updateLobbyStatus()
+# void update(float)
+# void render()
+# void resize(int,int)
+# void hide()
++ void dispose()
+}
+
+
+class HistoryState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- Stage stage
+# void setup()
+- void buildLayout()
++ void update(float)
+# void render()
++ void resize(int,int)
++ void dispose()
+}
+
+
+class SettingsState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- {static} float BUTTON_SPACING
+- {static} float FONT_SCALE_TITLE
+- Stage stage
+- boolean showingFirebase
+# void setup()
+- void buildLayout()
++ void update(float)
+# void render()
++ void resize(int,int)
++ void dispose()
+}
+
+
+class PauseState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- {static} float PAUSE_DURATION
+- {static} float RETURN_BUTTON_HEIGHT
+- {static} float RETURN_BOTTOM_PAD
+- GameState gameState
+- Stage stage
+- Texture overlayTex
+- float pauseTimeLeft
+- Label timerLabel
+# void setup()
+# void show()
+# void hide()
+- void syncInputProcessor()
+- void buildLayout()
+- {static} String formatUnpauseTimer(float)
++ void update(float)
++ void render()
++ void resize(int,int)
++ void dispose()
+}
+
+
+class StateManager {
+- Stack<State> states
++ void push(State)
++ void pop()
++ void set(State)
++ void update(float)
++ void render()
++ void resize(int,int)
++ void dispose()
+}
+
+
+abstract class State {
+# StateManager sm
+# SpriteBatch batch
+# Assets assets
+# {abstract}void setup()
+# void show()
+# void hide()
+# {abstract}void update(float)
+# {abstract}void render()
+# {abstract}void resize(int,int)
+# {abstract}void dispose()
+}
+
+}
+
+State <-> StateManager
+
+State <|-- WaitingRoomState
+State <|-- HistoryState
+State <|-- SettingsState
+State <|-- PauseState
+@enduml

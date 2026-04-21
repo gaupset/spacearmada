@@ -4,7 +4,14 @@ set separator none
 skinparam linetype polyline
 skinparam linetype ortho
 
+left to right direction
+
 package no.ntnu.tdt4240.project {
+    class AppProperties
+    class Assets
+    class GameInputProcessor
+    class Main
+
     package config {
         package bullet {
         }
@@ -64,6 +71,22 @@ package com.badlogic {
     }
 }
 
+' AppProperties
+AppProperties <-- config
+AppProperties <-- system
+AppProperties <-- tutorial
+AppProperties <-- view
+
+' Assets
+Assets <-- Main
+Assets <-- state
+Assets <-- system
+
+' GameInputProcessor
+GameInputProcessor <-- system
+GameInputProcessor <-- state
+GameInputProcessor <-- tutorial
+
 ' config
 config <-- state
 config <-- system
@@ -82,6 +105,9 @@ data <-- system
 entity <-- system
 entity <-- state
 
+' engine.component
+component <-- entity
+
 ' event
 event <-- state
 event <-- system
@@ -98,21 +124,28 @@ powerup.strategy <-- state
 sabotage.strategy <-- state
 
 ' service
+service <-- Main
 service <-- system
 service <-- state
 service <-- ui
 
+' state
+state <-- Main
+
 ' ui
+ui <-- Main
 ui <-- state
 
 ' util
+util <-- Main
 util <-- service
 util <-- state
 util <-- ui
 util <-- view
 
 ' gdx
-gdx <-- no.ntnu.tdt4240.project
+gdx <-- GameInputProcessor
+gdx <-- Main
 
 ' gdx.scenes.scene2d.ui
 scenes.scene2d.ui <-- ui

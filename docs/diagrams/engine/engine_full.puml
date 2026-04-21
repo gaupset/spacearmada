@@ -3,21 +3,6 @@ set separator none
 
 package no.ntnu.tdt4240.project.engine {
 
-class EntityAssembler {
-- {static} float PLAYER_SHOOT_BASE_INTERVAL
-- {static} float ENEMY_SHOOT_BASE_INTERVAL
-- {static} float ANIMATION_FRAME_DURATION
-- Engine engine0
-+ Entity create(Base)
-+ void createPlayer(Playable)
-+ void createPlayerBullet(NonPlayable)
-+ void createEnemy(NonPlayable)
-+ void createEnemyShooter(NonPlayable)
-+ void createEnemyBullet(NonPlayable)
-}
-
-package entity {
-
 class Mapper {
 + {static} ComponentMapper<PositionComponent> position
 + {static} ComponentMapper<VelocityComponent> velocity
@@ -34,8 +19,6 @@ class Mapper {
 + {static} ComponentMapper<AnimationComponent> animation
 + {static} ComponentMapper<WaveComponent> wave
 + {static} ComponentMapper<TutorialScenarioComponent> tutorialScenario
-}
-
 }
 
 }

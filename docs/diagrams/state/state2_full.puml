@@ -1,0 +1,103 @@
+@startuml
+set separator none
+
+left to right direction
+
+package no.ntnu.tdt4240.project {
+
+package event {
+    interface EventListener {
+        + void receive(Event)
+    }
+}
+
+package state {
+
+class StateManager {
+- Stack<State> states
++ void push(State)
++ void pop()
++ void set(State)
++ void update(float)
++ void render()
++ void resize(int,int)
++ void dispose()
+}
+
+abstract class State {
+# StateManager sm
+# SpriteBatch batch
+# Assets assets
+# {abstract}void setup()
+# void show()
+# void hide()
+# {abstract}void update(float)
+# {abstract}void render()
+# {abstract}void resize(int,int)
+# {abstract}void dispose()
+}
+
+class GameState {
+- {static} float PAUSE_BUTTON_COOLDOWN_SECONDS
+- {static} int SABOTAGE_SCORE_THRESHOLD
+- {static} int SABOTAGE_EFFECT_DURATION_SEC
+- {static} int POWERUP_EFFECT_DURATION_SEC
+- {static} float LOBBY_POLL_INTERVAL
+- Engine engine
+- LobbyService lobbyService
+- boolean gameOver
+- GameHud hud
+- boolean menuOpen
+- boolean gameplayPaused
+- InputMultiplexer inputMux
+- boolean exitPauseWhenMenuCloses
+- boolean hasBeenSetup
+- float pauseButtonCooldownRemaining
+- float lobbyPollTimer
+- int sabotagesUsedCount
+- int powerupsUsedCount
+- Map<String,SabotageStrategy> sabotageStrategies
+- Map<String,PowerupStrategy> powerupStrategies
++ void setup()
+# void show()
+# void hide()
+- EventSystem eventSystem()
+- int getPlayerScore()
+- int getPlayerHealth()
+~ Stage getHudStage()
+~ void setExitPauseWhenMenuCloses(boolean)
++ boolean isMenuOpen()
++ void setMenuOpen(boolean)
+~ void startPauseButtonCooldown()
+- boolean isPauseButtonReady()
++ void renderFrozen()
+- int getWaveNumber()
++ void resumeInput()
++ void update(float)
++ void updateGameplay(float)
++ void render()
++ int getAvailableAbilityCount()
++ void recordSabotageUse()
++ void recordPowerupUse()
++ boolean isMultiplayer()
++ void applyPowerup(String,float)
+- PowerupEffectsComponent getPowerupEffectsComponent()
++ InputMultiplexer getInputMultiplexer()
++ void setGameplayPaused(boolean)
++ void restoreDefaultInput()
++ void sendSabotage(String)
++ void applySabotage(String,float)
+- SabotageEffectsComponent getSabotageEffectsComponent()
++ void resize(int,int)
++ void dispose()
+}
+
+}
+
+}
+
+State <-> StateManager
+
+EventListener <|.. GameState
+State <|-- GameState
+@enduml

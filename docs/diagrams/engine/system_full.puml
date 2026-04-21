@@ -1,0 +1,87 @@
+@startuml
+set separator none
+
+left to right direction
+
+package no.ntnu.tdt4240.project.engine.system {
+
+class SpawnSystem {
+- float baseInterval
+- Enemy enemy
+- ImmutableArray<com.badlogic.ashley.core.Entity> sabotageEntities
+- ImmutableArray<com.badlogic.ashley.core.Entity> waveEntities
+- float spawnTimer
++ void addedToEngine(com.badlogic.ashley.core.Engine)
++ void update(float)
+}
+
+
+class BoundSystem {
+~ ImmutableArray<Entity> players
+~ ImmutableArray<Entity> enemies
+~ ImmutableArray<Entity> bullets
+~ ImmutableArray<Entity> waveEntities
+- PositionComponent pos
+- DimensionComponent dim
++ void addedToEngine(Engine)
++ void update(float)
+- void setup(Entity)
+- void bulletOutOfBounds(Entity)
+- void enemyOutOfBounds(Entity)
+- boolean isOutOfBounds()
+- boolean isOutOfTopBound()
+- boolean isOutOfBottomBound()
+- void decrementPlayerHealth()
+}
+
+
+class BounceSystem {
+- ImmutableArray<Entity> players
+- ImmutableArray<Entity> enemies
+- PositionComponent pos
+- VelocityComponent vel
+- DimensionComponent dim
++ void addedToEngine(Engine)
++ void update(float)
+- void playerBounce(Entity)
+- void enemyBounce(Entity)
+- void bounce(Runnable)
+- boolean isLeftOutOfBounds()
+- boolean isRightOutOfBounds()
+}
+
+
+class CollisionSystem {
+- Assets assets
+- ImmutableArray<Entity> players
+- ImmutableArray<Entity> playerBullets
+- ImmutableArray<Entity> enemies
+- ImmutableArray<Entity> enemyBullets
+- ImmutableArray<Entity> powerupEntities
+- ImmutableArray<Entity> waveEntities
++ void addedToEngine(Engine)
++ void update(float)
+- void playerCollision(Entity,ImmutableArray<Entity>)
+- void decrementEnemiesAlive()
+- void enemyCollision(Entity,ImmutableArray<Entity>)
+- void handleCollision(Entity,ImmutableArray<Entity>,BiConsumer<Entity,Entity>)
+- boolean overlap()
+- void setupRectangle1(Entity)
+- void setupRectangle2(Entity)
+- void setupRectangle(Entity,Rectangle)
+- void resetRectangle()
+}
+
+}
+
+package com.badlogic.ashley.core {
+
+abstract class EntitySystem
+
+}
+
+EntitySystem <|-- SpawnSystem
+EntitySystem <|-- BoundSystem
+EntitySystem <|-- BounceSystem
+EntitySystem <|-- CollisionSystem
+@enduml

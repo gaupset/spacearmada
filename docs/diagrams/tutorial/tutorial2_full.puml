@@ -45,41 +45,6 @@ class TutorialSabotageState {
 }
 
 
-class TutorialGameState {
-- {static} float MOVEMENT_STEP_DURATION_SECONDS
-- Engine engine
-- GameHud hud
-- InputMultiplexer inputMux
-- float elapsedSeconds
-- boolean canProgress
-# void setup()
-# void show()
-# void update(float)
-# void render()
-- int getPlayerScore()
-- int getPlayerHealth()
-# void resize(int,int)
-# void dispose()
-}
-
-
-class TutorialEndingState {
-- Stage stage
-- Label messageLineOne
-- Label messageLineTwo
-- SpaceButton actionButton
-- TextButton exitButton
-- int step
-# void setup()
-- void buildLayout()
-- void advanceStep()
-# void update(float)
-# void render()
-# void resize(int,int)
-# void dispose()
-}
-
-
 class TutorialPowerupState {
 - {static} float BUTTON_HEIGHT
 - {static} float BUTTON_GAP
@@ -120,47 +85,6 @@ class TutorialSabotageChoiceState {
 }
 
 
-class TutorialCombatState {
-- {static} int POWERUP_EFFECT_DURATION_SEC
-- Engine engine
-- Map<String,PowerupStrategy> powerupStrategies
-- GameHud hud
-- InputMultiplexer inputMux
-# void setup()
-# void show()
-# void update(float)
-# void render()
-~ void renderFrozen()
-- boolean canOpenPowerup()
-- void setTutorialSystemsPaused(boolean)
-~ int getAvailableAbilityCount()
-~ void applyPowerup(String)
-- boolean shouldPauseTutorial()
-- boolean isNextPromptVisible()
-- TutorialScenarioComponent getTutorialComponent()
-+ InputMultiplexer getInputMultiplexer()
-+ void restoreDefaultInput()
-- int getPlayerScore()
-- int getPlayerHealth()
-- int getWaveNumber()
-# void resize(int,int)
-# void dispose()
-}
-
-
-class TutorialCombatIntroState {
-- {static} float VIEWPORT_MIN_WIDTH
-- {static} float VIEWPORT_MIN_HEIGHT
-- Stage stage
-# void setup()
-- void buildLayout()
-# void update(float)
-# void render()
-# void resize(int,int)
-# void dispose()
-}
-
-
 class TutorialSabotageIntroState {
 - Stage stage
 # void setup()
@@ -176,11 +100,7 @@ class TutorialSabotageIntroState {
 }
 
 State <|-- TutorialSabotageState
-State <|-- TutorialGameState
-State <|-- TutorialEndingState
 State <|-- TutorialPowerupState
 State <|-- TutorialSabotageChoiceState
-State <|-- TutorialCombatState
-State <|-- TutorialCombatIntroState
 State <|-- TutorialSabotageIntroState
 @enduml

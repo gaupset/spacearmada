@@ -1,0 +1,104 @@
+@startuml
+set separator none
+
+left to right direction
+
+package no.ntnu.tdt4240.project.state {
+
+class StateManager {
+- Stack<State> states
++ void push(State)
++ void pop()
++ void set(State)
++ void update(float)
++ void render()
++ void resize(int,int)
++ void dispose()
+}
+
+abstract class State {
+# StateManager sm
+# SpriteBatch batch
+# Assets assets
+# {abstract}void setup()
+# void show()
+# void hide()
+# {abstract}void update(float)
+# {abstract}void render()
+# {abstract}void resize(int,int)
+# {abstract}void dispose()
+}
+
+
+class PowerupState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- {static} float POWERUP_UNPAUSE_TIMER_SEC
+- {static} int POWERUP_EFFECT_DURATION_SEC
+- {static} float BUTTON_HEIGHT
+- {static} float BUTTON_GAP
+- {static} float RETURN_BOTTOM_PAD
+- {static} String GAME_NOT_PAUSED_LABEL
+- GameState gameState
+- Stage stage
+- Texture overlayTex
+- float unpauseTimeLeft
+- boolean gameplayRunningBehindOverlay
+- Label timerLabel
+- Label chargesLabel
+# void setup()
+# void show()
+- void buildLayout()
+- void addPowerupRow(Table,String,String,boolean)
+- void onPowerupChosen(String)
+- void refreshChargesLabel()
+- String formatChargesLine()
+- {static} String formatUnpauseTimer(float)
+- void onUnpauseTimerFinished()
+- void attachGameplayInputBehindOverlay()
+# void update(float)
+# void render()
+# void resize(int,int)
+# void dispose()
+}
+
+
+class SabotageState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- {static} float SABOTAGE_UNPAUSE_TIMER_SEC
+- {static} int SABOTAGE_EFFECT_DURATION_SEC
+- {static} float BUTTON_HEIGHT
+- {static} float BUTTON_GAP
+- {static} float RETURN_BOTTOM_PAD
+- {static} String GAME_NOT_PAUSED_LABEL
+- GameState gameState
+- Stage stage
+- Texture overlayTex
+- float unpauseTimeLeft
+- boolean gameplayRunningBehindOverlay
+- Label timerLabel
+- Label chargesLabel
+# void setup()
+# void show()
+- void buildLayout()
+- void addSabotageRow(Table,String,String,boolean)
+- void onSabotageChosen(String)
+- void refreshChargesLabel()
+- String formatChargesLine()
+- {static} String formatUnpauseTimer(float)
+- void onUnpauseTimerFinished()
+- void attachGameplayInputBehindOverlay()
+# void update(float)
+# void render()
+# void resize(int,int)
+# void dispose()
+}
+
+}
+
+State <-> StateManager
+
+State <|-- PowerupState
+State <|-- SabotageState
+@enduml

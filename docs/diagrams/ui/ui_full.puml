@@ -1,6 +1,8 @@
 @startuml
 set separator none
 
+left to right direction
+
 package no.ntnu.tdt4240.project.ui {
 
 class UiFactory {
