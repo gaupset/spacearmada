@@ -251,6 +251,7 @@ public class GameOverState extends State {
             if (pollTimer >= POLL_INTERVAL) {
                 pollTimer = 0f;
                 lobbyService.sendHeartbeat();
+                lobbyService.pingGameHandler();
                 lobbyService.getLobbyStatus(new LobbyService.LobbyStatusCallback() {
                     @Override
                     public void onUpdate(JsonValue lobbyData) {
