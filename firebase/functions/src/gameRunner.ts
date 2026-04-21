@@ -260,7 +260,7 @@ async function handleSendSabotage(
       type: sabotage.type,
       duration: sabotage.duration,
     },
-    [`lobbies/${lobbyId}/players/${lobbyUserId}/sabotageTargetId`]: 
+    [`lobbies/${lobbyId}/players/${lobbyUserId}/sabotageTargetId`]:
       nextTarget,
   });
   return {status: "ok", isRunner: false};
