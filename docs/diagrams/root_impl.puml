@@ -1,0 +1,80 @@
+@startuml
+set separator none
+
+package no.ntnu.tdt4240.project {
+
+class AppProperties {
++ {static} int WIDTH
++ {static} int HEIGHT
++ {static} String TITLE
+}
+
+class Assets {
++ TextureRegion player
++ TextureRegion playerBullet
++ TextureRegion enemy
++ TextureRegion enemyBullet
++ TextureRegion[] playerFrames
++ TextureRegion[] playerBulletFrames
++ TextureRegion[] enemyFrames
++ TextureRegion[] enemyBulletFrames
+- Texture playerSheet
+- Texture playerBulletSheet
+- Texture enemySheet
+- Texture enemyBulletSheet
+- Texture starsBackground
+- Texture logoCrop
+- BitmapFont defaultFont
+- FreeTypeFontGenerator fontGenerator
+- Sound laserSound
++ void load()
++ Texture getStarsBackground()
++ Texture getLogoCrop()
++ BitmapFont getDefaultFont()
++ Sound getLaserSound()
+- {static} TextureRegion[] flattenFrames(TextureRegion[][])
++ {static} Texture createColorTexture(Color)
++ void dispose()
+}
+
+class GameInputProcessor {
+- boolean touched
+- float x
+- float y
+- Viewport viewport
+- Vector2 tmpVec
+- void unproject(int,int)
++ boolean touchDown(int,int,int,int)
++ boolean touchUp(int,int,int,int)
++ boolean touchDragged(int,int,int)
++ boolean isTouched()
++ float getX()
++ float getY()
+}
+
+class Main {
+- SpriteBatch batch
+- StateManager sm
+- Assets assets
+}
+
+}
+
+package com.badlogic.gdx {
+    abstract class ApplicationAdapter
+    interface ApplicationListener {
+        + void create()
+        + void render()
+        + void resize(int, int)
+        + void dispose()
+    }
+    class InputAdapter
+    interface InputProcessor
+}
+
+ApplicationListener <|.. ApplicationAdapter
+InputProcessor <|.. InputAdapter
+
+ApplicationAdapter <|-- Main
+InputAdapter <|-- GameInputProcessor
+@enduml

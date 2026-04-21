@@ -1,0 +1,186 @@
+@startuml
+set separator none
+
+left to right direction
+
+package no.ntnu.tdt4240.project.state {
+
+abstract class State {
+# StateManager sm
+# SpriteBatch batch
+# Assets assets
+# {abstract}void setup()
+# void show()
+# void hide()
+# {abstract}void update(float)
+# {abstract}void render()
+# {abstract}void resize(int,int)
+# {abstract}void dispose()
+}
+
+package tutorial {
+
+class TutorialSabotageState {
+- Engine engine
+- GameHud hud
+- InputMultiplexer inputMux
+# void setup()
+# void show()
+# void update(float)
+# void render()
+~ void renderFrozen()
+- boolean canOpenSabotage()
+- void setTutorialSystemsPaused(boolean)
+~ int getAvailableAbilityCount()
+~ void useSabotage()
+- boolean shouldPauseTutorial()
+- TutorialScenarioComponent getTutorialComponent()
++ InputMultiplexer getInputMultiplexer()
++ void restoreDefaultInput()
+- int getPlayerScore()
+- int getPlayerHealth()
+- int getWaveNumber()
+# void resize(int,int)
+# void dispose()
+}
+
+
+class TutorialGameState {
+- {static} float MOVEMENT_STEP_DURATION_SECONDS
+- Engine engine
+- GameHud hud
+- InputMultiplexer inputMux
+- float elapsedSeconds
+- boolean canProgress
+# void setup()
+# void show()
+# void update(float)
+# void render()
+- int getPlayerScore()
+- int getPlayerHealth()
+# void resize(int,int)
+# void dispose()
+}
+
+
+class TutorialEndingState {
+- Stage stage
+- Label messageLineOne
+- Label messageLineTwo
+- SpaceButton actionButton
+- TextButton exitButton
+- int step
+# void setup()
+- void buildLayout()
+- void advanceStep()
+# void update(float)
+# void render()
+# void resize(int,int)
+# void dispose()
+}
+
+
+class TutorialPowerupState {
+- {static} float BUTTON_HEIGHT
+- {static} float BUTTON_GAP
+- TutorialCombatState tutorialGameState
+- Stage stage
+- Texture overlayTex
+- Label chargesLabel
+# void setup()
+# void show()
+- void buildLayout()
+- void addPowerupRow(Table,String,String,boolean)
+- void onPowerupChosen(String)
+- String formatChargesLine()
+# void update(float)
+# void render()
+# void resize(int,int)
+# void dispose()
+}
+
+
+class TutorialSabotageChoiceState {
+- {static} float BUTTON_HEIGHT
+- {static} float BUTTON_GAP
+- TutorialSabotageState tutorialGameState
+- Stage stage
+- Texture overlayTex
+- Label chargesLabel
+# void setup()
+# void show()
+- void buildLayout()
+- void addSabotageRow(Table,String,String,boolean)
+- void onSabotageChosen(String)
+- String formatChargesLine()
+# void update(float)
+# void render()
+# void resize(int,int)
+# void dispose()
+}
+
+
+class TutorialCombatState {
+- {static} int POWERUP_EFFECT_DURATION_SEC
+- Engine engine
+- Map<String,PowerupStrategy> powerupStrategies
+- GameHud hud
+- InputMultiplexer inputMux
+# void setup()
+# void show()
+# void update(float)
+# void render()
+~ void renderFrozen()
+- boolean canOpenPowerup()
+- void setTutorialSystemsPaused(boolean)
+~ int getAvailableAbilityCount()
+~ void applyPowerup(String)
+- boolean shouldPauseTutorial()
+- boolean isNextPromptVisible()
+- TutorialScenarioComponent getTutorialComponent()
++ InputMultiplexer getInputMultiplexer()
++ void restoreDefaultInput()
+- int getPlayerScore()
+- int getPlayerHealth()
+- int getWaveNumber()
+# void resize(int,int)
+# void dispose()
+}
+
+
+class TutorialCombatIntroState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- Stage stage
+# void setup()
+- void buildLayout()
+# void update(float)
+# void render()
+# void resize(int,int)
+# void dispose()
+}
+
+
+class TutorialSabotageIntroState {
+- Stage stage
+# void setup()
+- void buildLayout()
+# void update(float)
+# void render()
+# void resize(int,int)
+# void dispose()
+}
+
+}
+
+}
+
+State <|-- TutorialSabotageState
+State <|-- TutorialGameState
+State <|-- TutorialEndingState
+State <|-- TutorialPowerupState
+State <|-- TutorialSabotageChoiceState
+State <|-- TutorialCombatState
+State <|-- TutorialCombatIntroState
+State <|-- TutorialSabotageIntroState
+@enduml

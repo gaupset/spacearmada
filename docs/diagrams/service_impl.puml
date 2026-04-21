@@ -1,0 +1,136 @@
+@startuml
+set separator none
+
+package no.ntnu.tdt4240.project.service {
+
+class LobbyService {
+- {static} String PREFS_NAME
+- {static} String PREF_PLAYER_NAME
+- {static} String SERVER_TIMESTAMP
+- String lobbyID
++ String lobbyUserID
+- String playerID
+- Preferences prefs
++ void createLobby(LobbyCallback)
++ void joinLobby(String,LobbyCallback)
+- String buildPlayerJson()
++ void sendHeartbeat()
++ void updateScore(int)
++ void setPlayerGameOver(int)
++ void leaveLobby(LobbyCallback)
++ void startGame(LobbyCallback)
++ void setSabotage(Sabotage)
++ void delSabotage()
++ void getLobbyStatus(LobbyStatusCallback)
++ void pingGameHandler()
++ void setPlayerID(String)
++ String getPlayerID()
++ String getLobbyID()
+}
+
+
+interface LobbyService$LobbyCallback {
+~ void onSuccess(String)
+~ void onFailure(String)
+}
+
+interface LobbyService$LobbyStatusCallback {
+~ void onUpdate(JsonValue)
+~ void onFailure(String)
+}
+
+class FirebaseController {
+- LobbyService lobbyService
++ LobbyService lobbyHandler()
++ void createLobby(LobbyService.LobbyCallback)
++ void joinLobby(String,LobbyService.LobbyCallback)
++ void leaveLobby(LobbyService.LobbyCallback)
++ void getLobbyStatus(LobbyService.LobbyStatusCallback)
++ void startGame(LobbyService.LobbyCallback)
++ void pingGameHandler()
++ String getLobbyID()
+}
+
+
+class FirebaseService {
+- {static} FirebaseService instance
+- String functionsBaseUrl
+- String firestoreBaseUrl
+- String databaseBaseUrl
+- String projectId
+- String dbNsParam
++ {static} void init()
++ {static} FirebaseService getInstance()
++ void getDbData(String,FirebaseCallback)
++ void putDbData(String,String,FirebaseCallback)
++ void patchDbData(String,String,FirebaseCallback)
++ void postDbData(String,String,FirebaseCallback)
++ void deleteDbData(String,FirebaseCallback)
++ void callGameHandler(String,String,String,FirebaseCallback)
++ void callGameHandler(String,String,String,String,FirebaseCallback)
++ void testConnection(FirebaseCallback)
++ void testFirestore(FirebaseCallback)
++ void testDatabase(FirebaseCallback)
+- void sendRequest(String,String,String,FirebaseCallback)
+}
+
+
+interface FirebaseService$FirebaseCallback {
+~ void onSuccess(String)
+~ void onFailure(String)
+}
+
+class FirebaseService$ConnectivityProbe {
+~ long ts
+~ String source
+}
+
+class AudioService {
+- {static} String PREFS_NAME
+- {static} String PREF_MUSIC_VOLUME
+- {static} String PREF_SOUND_VOLUME
+- {static} AudioService instance
+- float musicVolume
+- float soundVolume
+- Music currentMusic
+- String currentMusicFile
+- Preferences prefs
++ {static} AudioService getInstance()
++ void playMusic(String,boolean)
++ void stopMusic()
++ void playSound(Sound)
++ float getMusicVolume()
++ void setMusicVolume(float)
++ float getSoundVolume()
++ void setSoundVolume(float)
+}
+
+
+class ScoreService {
+- {static} String PREFS_NAME
+- {static} String PREF_HIGH_SCORE
+- {static} String PREF_ONLINE_WINS
+- {static} ScoreService instance
+- Preferences prefs
+- int highScore
+- int onlineWins
++ {static} ScoreService getInstance()
++ int getHighScore()
++ boolean updateHighScore(int)
++ int getOnlineWins()
++ void incrementOnlineWins()
+}
+
+}
+
+LobbyService +.. LobbyService$LobbyCallback
+LobbyService +.. LobbyService$LobbyStatusCallback
+FirebaseService +.. FirebaseService$FirebaseCallback
+FirebaseService +.. FirebaseService$ConnectivityProbe
+
+FirebaseService <-- LobbyService
+
+LobbyService <-- FirebaseController
+
+ScoreService <-- LobbyService
+@enduml

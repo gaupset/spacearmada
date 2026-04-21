@@ -1,0 +1,337 @@
+@startuml
+set separator none
+
+left to right direction
+
+package no.ntnu.tdt4240.project {
+
+package event {
+    interface EventListener
+}
+
+package state {
+
+class WaitingRoomState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- {static} float UPDATE_INTERVAL
+- FirebaseController firebaseController
+- Stage stage
+- Table root
+- Label playerCountLabel
+- Label errorLabel
+- SpaceButton startBtn
+- TextField nameField
+- float updateTimer
+- float pingTimer
+- float pingInterval
+- boolean inLobby
+- boolean isHost
+# void setup()
+# void show()
+- void showMainOptions()
+- void showError(String)
+- void commitPlayerName()
+- void createLobby()
+- void showJoinInput()
+- void joinLobby(String)
+- void showWaitingRoom(boolean)
+- void updateLobbyStatus()
+# void update(float)
+# void render()
+# void resize(int,int)
+# void hide()
++ void dispose()
+}
+
+
+class GameState {
+- {static} float PAUSE_BUTTON_COOLDOWN_SECONDS
+- {static} int SABOTAGE_SCORE_THRESHOLD
+- {static} int SABOTAGE_EFFECT_DURATION_SEC
+- {static} int POWERUP_EFFECT_DURATION_SEC
+- {static} float LOBBY_POLL_INTERVAL
+- Engine engine
+- LobbyService lobbyService
+- boolean gameOver
+- GameHud hud
+- boolean menuOpen
+- boolean gameplayPaused
+- InputMultiplexer inputMux
+- boolean exitPauseWhenMenuCloses
+- boolean hasBeenSetup
+- float pauseButtonCooldownRemaining
+- float lobbyPollTimer
+- int sabotagesUsedCount
+- int powerupsUsedCount
+- Map<String,SabotageStrategy> sabotageStrategies
+- Map<String,PowerupStrategy> powerupStrategies
++ void setup()
+# void show()
+# void hide()
+- EventSystem eventSystem()
++ void receive(Event)
+- int getPlayerScore()
+- int getPlayerHealth()
+~ Stage getHudStage()
+~ void setExitPauseWhenMenuCloses(boolean)
++ boolean isMenuOpen()
++ void setMenuOpen(boolean)
+~ void startPauseButtonCooldown()
+- boolean isPauseButtonReady()
++ void renderFrozen()
+- int getWaveNumber()
++ void resumeInput()
++ void update(float)
++ void updateGameplay(float)
++ void render()
++ int getAvailableAbilityCount()
++ void recordSabotageUse()
++ void recordPowerupUse()
++ boolean isMultiplayer()
++ void applyPowerup(String,float)
+- PowerupEffectsComponent getPowerupEffectsComponent()
++ InputMultiplexer getInputMultiplexer()
++ void setGameplayPaused(boolean)
++ void restoreDefaultInput()
++ void sendSabotage(String)
++ void applySabotage(String,float)
+- SabotageEffectsComponent getSabotageEffectsComponent()
++ void resize(int,int)
++ void dispose()
+}
+
+
+class HistoryState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- Stage stage
+# void setup()
+- void buildLayout()
++ void update(float)
+# void render()
++ void resize(int,int)
++ void dispose()
+}
+
+
+class SettingsState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- {static} float BUTTON_SPACING
+- {static} float FONT_SCALE_TITLE
+- Stage stage
+- boolean showingFirebase
+# void setup()
+- void buildLayout()
++ void update(float)
+# void render()
++ void resize(int,int)
++ void dispose()
+}
+
+
+class PauseState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- {static} float PAUSE_DURATION
+- {static} float RETURN_BUTTON_HEIGHT
+- {static} float RETURN_BOTTOM_PAD
+- GameState gameState
+- Stage stage
+- Texture overlayTex
+- float pauseTimeLeft
+- Label timerLabel
+# void setup()
+# void show()
+# void hide()
+- void syncInputProcessor()
+- void buildLayout()
+- {static} String formatUnpauseTimer(float)
++ void update(float)
++ void render()
++ void resize(int,int)
++ void dispose()
+}
+
+
+class StateManager {
+- Stack<State> states
++ void push(State)
++ void pop()
++ void set(State)
++ void update(float)
++ void render()
++ void resize(int,int)
++ void dispose()
+}
+
+
+class LeaderboardState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- Stage stage
+# void setup()
+- void buildLayout()
++ void update(float)
+# void render()
++ void resize(int,int)
++ void dispose()
+}
+
+
+abstract class State {
+# StateManager sm
+# SpriteBatch batch
+# Assets assets
+# {abstract}void setup()
+# void show()
+# void hide()
+# {abstract}void update(float)
+# {abstract}void render()
+# {abstract}void resize(int,int)
+# {abstract}void dispose()
+}
+
+
+class TutorialState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- Stage stage
+- Label messageLineOne
+- Label messageLineTwo
+- SpaceButton continueButton
+- int introStep
+# void setup()
+- void buildLayout()
++ void update(float)
+# void render()
++ void resize(int,int)
++ void dispose()
+}
+
+
+class PowerupState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- {static} float POWERUP_UNPAUSE_TIMER_SEC
+- {static} int POWERUP_EFFECT_DURATION_SEC
+- {static} float BUTTON_HEIGHT
+- {static} float BUTTON_GAP
+- {static} float RETURN_BOTTOM_PAD
+- {static} String GAME_NOT_PAUSED_LABEL
+- GameState gameState
+- Stage stage
+- Texture overlayTex
+- float unpauseTimeLeft
+- boolean gameplayRunningBehindOverlay
+- Label timerLabel
+- Label chargesLabel
+# void setup()
+# void show()
+- void buildLayout()
+- void addPowerupRow(Table,String,String,boolean)
+- void onPowerupChosen(String)
+- void refreshChargesLabel()
+- String formatChargesLine()
+- {static} String formatUnpauseTimer(float)
+- void onUnpauseTimerFinished()
+- void attachGameplayInputBehindOverlay()
+# void update(float)
+# void render()
+# void resize(int,int)
+# void dispose()
+}
+
+
+class MenuState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- {static} float BUTTON_SPACING
+- Stage stage
+# void setup()
+- void buildLayout()
++ void update(float)
+# void render()
++ void resize(int,int)
++ void dispose()
+}
+
+
+class SabotageState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- {static} float SABOTAGE_UNPAUSE_TIMER_SEC
+- {static} int SABOTAGE_EFFECT_DURATION_SEC
+- {static} float BUTTON_HEIGHT
+- {static} float BUTTON_GAP
+- {static} float RETURN_BOTTOM_PAD
+- {static} String GAME_NOT_PAUSED_LABEL
+- GameState gameState
+- Stage stage
+- Texture overlayTex
+- float unpauseTimeLeft
+- boolean gameplayRunningBehindOverlay
+- Label timerLabel
+- Label chargesLabel
+# void setup()
+# void show()
+- void buildLayout()
+- void addSabotageRow(Table,String,String,boolean)
+- void onSabotageChosen(String)
+- void refreshChargesLabel()
+- String formatChargesLine()
+- {static} String formatUnpauseTimer(float)
+- void onUnpauseTimerFinished()
+- void attachGameplayInputBehindOverlay()
+# void update(float)
+# void render()
+# void resize(int,int)
+# void dispose()
+}
+
+
+class GameOverState {
+- {static} float VIEWPORT_MIN_WIDTH
+- {static} float VIEWPORT_MIN_HEIGHT
+- {static} float BUTTON_SPACING
+- {static} float POLL_INTERVAL
+- int finalScore
+- Engine engine
+- LobbyService lobbyService
+- Stage stage
+- boolean isNewHighScore
+- Label titleLabel
+- Table scoreboardTable
+- float pollTimer
+- boolean gameEndedDetected
+- boolean winRecorded
+- boolean isOnline()
+# void setup()
+- void buildSingleplayerLayout()
+- void buildOnlineLayout()
+- void updateScoreboard(JsonValue)
++ void update(float)
+# void render()
++ void resize(int,int)
++ void dispose()
+}
+
+}
+
+}
+
+EventListener <|.. GameState
+
+State <|-- WaitingRoomState
+State <|-- GameState
+State <|-- HistoryState
+State <|-- SettingsState
+State <|-- PauseState
+State <|-- LeaderboardState
+State <|-- TutorialState
+State <|-- PowerupState
+State <|-- MenuState
+State <|-- SabotageState
+State <|-- GameOverState
+@enduml

@@ -1,0 +1,59 @@
+@startuml
+set separator none
+
+left to right direction
+
+package no.ntnu.tdt4240.project {
+
+package powerup.strategy {
+
+class ShieldPowerupStrategy {
++ void apply(PowerupEffectsComponent,float)
+}
+
+interface PowerupStrategy {
+~ void apply(PowerupEffectsComponent,float)
+}
+
+class RapidFirePowerupStrategy {
++ void apply(PowerupEffectsComponent,float)
+}
+
+class SlowEnemiesPowerupStrategy {
++ void apply(PowerupEffectsComponent,float)
+}
+
+}
+
+package sabotage.strategy {
+
+class HalfPlayerBulletsSabotageStrategy {
++ void apply(SabotageEffectsComponent,float)
+}
+
+interface SabotageStrategy {
+~ void apply(SabotageEffectsComponent,float)
+}
+
+class DoubleAliensSabotageStrategy {
++ void apply(SabotageEffectsComponent,float)
+}
+
+class EnemySpeedSabotageStrategy {
++ void apply(SabotageEffectsComponent,float)
+}
+
+}
+
+}
+
+
+
+PowerupStrategy <|.. ShieldPowerupStrategy
+PowerupStrategy <|.. RapidFirePowerupStrategy
+PowerupStrategy <|.. SlowEnemiesPowerupStrategy
+
+SabotageStrategy <|.. HalfPlayerBulletsSabotageStrategy
+SabotageStrategy <|.. DoubleAliensSabotageStrategy
+SabotageStrategy <|.. EnemySpeedSabotageStrategy
+@enduml

@@ -44,6 +44,7 @@ package no.ntnu.tdt4240.project {
     package util {
         class AppConfig
         class FirebaseJson
+        class NameGenerator
         class Theme
     }
 
@@ -52,6 +53,8 @@ package no.ntnu.tdt4240.project {
 
     FirebaseJson <-- LobbyService
     FirebaseJson <-- FirebaseService
+
+    NameGenerator <-- WaitingRoomState
 
     Theme <-- SabotageState
     Theme <-- TutorialCombatIntroState

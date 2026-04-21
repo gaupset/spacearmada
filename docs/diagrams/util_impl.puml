@@ -1,0 +1,51 @@
+@startuml
+set separator none
+
+package no.ntnu.tdt4240.project.util {
+
+class NameGenerator {
+- {static} String[] ADJECTIVES
+- {static} String[] NOUNS
+- {static} Random RNG
++ {static} String random()
+}
+
+
+class Theme {
++ Color background
++ Color primary
++ Color buttonIdle
++ Color buttonHover
++ Color buttonPressed
++ Color border
++ Color textSecondary
++ Color panelBackground
++ {static} float BUTTON_WIDTH
++ {static} float BUTTON_HEIGHT
++ {static} float BORDER_THICKNESS
++ {static} float FONT_SCALE_BUTTON
++ {static} float FONT_SCALE_SMALL
++ {static} Theme CLASSIC
+}
+
+class FirebaseJson {
++ {static} String toFirestoreDocument(Object)
++ {static} String toJson(Object)
+- {static} void appendFields(StringBuilder,Object,boolean)
+- {static} void appendFirestoreValue(StringBuilder,Object)
+- {static} void appendJsonValue(StringBuilder,Object)
+- {static} String escapeJson(String)
+}
+
+class AppConfig {
+- {static} AppConfig instance
++ String firebaseBaseUrl
++ String firestoreBaseUrl
++ String databaseBaseUrl
++ String projectId
++ {static} void init(AppConfig)
++ {static} AppConfig get()
+}
+
+}
+@enduml

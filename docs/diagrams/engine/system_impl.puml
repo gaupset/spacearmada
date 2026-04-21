@@ -1,0 +1,196 @@
+@startuml
+set separator none
+
+left to right direction
+
+package no.ntnu.tdt4240.project.engine.system {
+
+class SpawnSystem {
+- float baseInterval
+- Enemy enemy
+- ImmutableArray<com.badlogic.ashley.core.Entity> sabotageEntities
+- ImmutableArray<com.badlogic.ashley.core.Entity> waveEntities
+- float spawnTimer
++ void addedToEngine(com.badlogic.ashley.core.Engine)
++ void update(float)
+}
+
+
+class BoundSystem {
+~ ImmutableArray<Entity> players
+~ ImmutableArray<Entity> enemies
+~ ImmutableArray<Entity> bullets
+~ ImmutableArray<Entity> waveEntities
+- PositionComponent pos
+- DimensionComponent dim
++ void addedToEngine(Engine)
++ void update(float)
+- void setup(Entity)
+- void bulletOutOfBounds(Entity)
+- void enemyOutOfBounds(Entity)
+- boolean isOutOfBounds()
+- boolean isOutOfTopBound()
+- boolean isOutOfBottomBound()
+- void decrementPlayerHealth()
+}
+
+
+class RemovalSystem {
+# void processEntity(Entity,float)
+}
+
+class TutorialScenarioSystem {
+# void processEntity(Entity,float)
+- void updatePowerupTutorial(TutorialScenarioComponent,int,float)
+- void updateSabotageTutorial(TutorialScenarioComponent,int)
+- void applyForcedInvincibility()
+- int getPlayerScore()
+}
+
+class SabotageEffectSystem {
+# void processEntity(Entity,float)
+- {static} float decToZero(float,float)
+}
+
+class PowerupEffectSystem {
+# void processEntity(Entity,float)
+- {static} float decToZero(float,float)
+}
+
+class TutorialPlayerShootingSystem {
+- PlayerBullet playerBullet
+- ImmutableArray<Entity> powerupEntities
++ void addedToEngine(com.badlogic.ashley.core.Engine)
+# void processEntity(Entity,float)
+}
+
+
+class BounceSystem {
+- ImmutableArray<Entity> players
+- ImmutableArray<Entity> enemies
+- PositionComponent pos
+- VelocityComponent vel
+- DimensionComponent dim
++ void addedToEngine(Engine)
++ void update(float)
+- void playerBounce(Entity)
+- void enemyBounce(Entity)
+- void bounce(Runnable)
+- boolean isLeftOutOfBounds()
+- boolean isRightOutOfBounds()
+}
+
+
+class RenderSystem {
+- TextureComponent tex
+- PositionComponent pos
+- DimensionComponent dim
+- SpriteBatch batch
+- Viewport viewport
++ void update(float)
++ void processEntity(Entity,float)
+- float centerHorizontal()
+- float centerVertical()
+}
+
+
+class EventSystem {
++ EventManager events
+- HealthComponent component
+# void processEntity(Entity,float)
+- void process()
+}
+
+
+class InputSystem {
+- PositionComponent pos
+- GameInputProcessor input
+# void processEntity(Entity,float)
+- void process()
+}
+
+
+class ShootingSystem {
+- PlayerBullet playerBullet
+- EnemyBullet enemyBullet
+- ImmutableArray<Entity> sabotageEntities
+- ImmutableArray<Entity> powerupEntities
+- ImmutableArray<Entity> players
++ void addedToEngine(com.badlogic.ashley.core.Engine)
+# void processEntity(Entity,float)
+}
+
+
+class MovementSystem {
+- PositionComponent pos
+- VelocityComponent vel
+- ImmutableArray<Entity> sabotageEntities
+- ImmutableArray<Entity> powerupEntities
++ void addedToEngine(com.badlogic.ashley.core.Engine)
+- void process(Entity,float)
++ void processEntity(Entity,float)
+}
+
+
+class WaveSystem {
+- {static} float WAVE_TRANSITION_DELAY
+# void processEntity(Entity,float)
+- void configureWave(WaveComponent)
+}
+
+
+class CollisionSystem {
+- Assets assets
+- ImmutableArray<Entity> players
+- ImmutableArray<Entity> playerBullets
+- ImmutableArray<Entity> enemies
+- ImmutableArray<Entity> enemyBullets
+- ImmutableArray<Entity> powerupEntities
+- ImmutableArray<Entity> waveEntities
++ void addedToEngine(Engine)
++ void update(float)
+- void playerCollision(Entity,ImmutableArray<Entity>)
+- void decrementEnemiesAlive()
+- void enemyCollision(Entity,ImmutableArray<Entity>)
+- void handleCollision(Entity,ImmutableArray<Entity>,BiConsumer<Entity,Entity>)
+- boolean overlap()
+- void setupRectangle1(Entity)
+- void setupRectangle2(Entity)
+- void setupRectangle(Entity,Rectangle)
+- void resetRectangle()
+}
+
+}
+
+package com.badlogic.ashley {
+
+package core {
+
+abstract class EntitySystem
+
+}
+
+package systems {
+
+abstract class IteratingSystem
+
+}
+
+}
+
+EntitySystem <|-- SpawnSystem
+EntitySystem <|-- BoundSystem
+IteratingSystem <|-- SabotageEffectSystem
+IteratingSystem <|-- PowerupEffectSystem
+IteratingSystem <|-- RemovalSystem
+IteratingSystem <|-- TutorialPlayerShootingSystem
+IteratingSystem <|-- TutorialScenarioSystem
+EntitySystem <|-- BounceSystem
+IteratingSystem <|-- RenderSystem
+IteratingSystem <|-- EventSystem
+IteratingSystem <|-- InputSystem
+IteratingSystem <|-- ShootingSystem
+IteratingSystem <|-- MovementSystem
+IteratingSystem <|-- WaveSystem
+EntitySystem <|-- CollisionSystem
+@enduml

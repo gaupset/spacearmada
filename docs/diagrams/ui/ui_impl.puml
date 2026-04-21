@@ -1,0 +1,127 @@
+@startuml
+set separator none
+
+package no.ntnu.tdt4240.project.ui {
+
+class UiFactory {
+- {static} UiFactory instance
+- Skin skin
+- BitmapFont font
+- Theme theme
+- int texCounter
+- {static} int SCALE
++ {static} void init(BitmapFont)
++ {static} UiFactory getInstance()
++ Skin getSkin()
++ Theme getTheme()
++ void setTheme(Theme)
+- void buildSkin()
+- TextureRegionDrawable createBorderedDrawable(Color,Color,int,int,int)
+- TextureRegionDrawable createSimpleDrawable(Color,int,int)
++ void dispose()
+}
+
+
+class FirebaseTestWidget {
+- {static} Color STATUS_SUCCESS
+- {static} Color STATUS_ERROR
+- {static} Color STATUS_PENDING
++ {static} String SERVICE_FUNCTIONS
++ {static} String SERVICE_FIRESTORE
++ {static} String SERVICE_DATABASE
+- Label statusLabel
+- Label.LabelStyle statusStyle
+- String service
+- {static} int SCALE
+- void runTest()
+- {static} TextureRegionDrawable createBackground(Theme)
+}
+
+class SpaceButton {
+}
+
+package view {
+
+class GameHud {
+- {static} Color PAUSE_BUTTON_DISABLED_LABEL
++ {static} float TUTORIAL_TOP_EXIT_WIDTH
++ {static} float TUTORIAL_TOP_EXIT_HEIGHT
++ {static} float TUTORIAL_TOP_EXIT_PAD
+- {static} float TUTORIAL_TOP_NEXT_WIDTH
+- {static} float TUTORIAL_TOP_NEXT_HEIGHT
+- Stage stage
+- Table menuPanel
+- Texture overlayTex
+- Label scoreLabel
+- Label healthLabel
+- Label waveLabel
+- Label enemySpeedLabel
+- Label fireRateLabel
+- Label alienSpawnLabel
+- Label shieldLabel
+- Label rapidFireLabel
+- Label slowEnemiesLabel
+- Label tutorialLabel
+- TextButton sabotageButton
+- TextButton powerupButton
+- TextButton pauseButton
+- TextButton tutorialExitButton
+- TextButton nextButton
+- TextButton tutorialPowerupButton
+- TextButton tutorialSabotageButton
+- Runnable onMenuResumePressed
+- boolean tutorialMode
+- boolean isMenuOpen
++ void act(float,boolean,boolean,boolean,boolean,int,int,int,float,float,float,float,float,float)
++ void actTutorial(float,int,int,int,String,boolean,boolean,boolean)
+- void updateEffectLabel(Label,String,float)
++ void draw()
++ Stage getStage()
++ void resize(int,int)
++ void dispose()
+}
+
+
+interface GameHud$MenuToggleListener {
+~ void onMenuToggle(boolean)
+}
+
+interface GameHud$QuitListener {
+~ void onQuit()
+}
+
+interface GameHud$PauseListener {
+~ void onPause()
+}
+
+interface GameHud$SabotageListener {
+~ void onSabotage()
+}
+
+interface GameHud$PowerupListener {
+~ void onPowerup()
+}
+
+}
+
+}
+
+package com.badlogic.gdx.scenes.scene2d.ui {
+    class Table
+    class TextButton
+}
+
+
+Table <|-- FirebaseTestWidget
+TextButton <|-- SpaceButton
+
+GameHud +.. GameHud$MenuToggleListener
+GameHud +.. GameHud$QuitListener
+GameHud +.. GameHud$PauseListener
+GameHud +.. GameHud$SabotageListener
+GameHud +.. GameHud$PowerupListener
+
+UiFactory <-- FirebaseTestWidget
+UiFactory <-- SpaceButton
+UiFactory <-- GameHud
+@enduml

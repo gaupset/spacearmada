@@ -1,0 +1,24 @@
+@startuml
+set separator none
+
+package no.ntnu.tdt4240.project.model {
+
+class Powerup {
++ {static} String TYPE_SHIELD
++ {static} String TYPE_RAPID_FIRE
++ {static} String TYPE_SLOW_ENEMIES
++ String type
++ int duration
+}
+
+class Sabotage {
++ {static} String TYPE_ENEMY_SPEED
++ {static} String TYPE_HALF_PLAYER_BULLETS
++ {static} String TYPE_DOUBLE_ALIENS
++ String type
++ int duration
+}
+
+}
+
+@enduml

@@ -1,0 +1,67 @@
+@startuml
+set separator none
+
+package no.ntnu.tdt4240.project.config {
+
+package bullet {
+abstract class Bullet {
+# {static} float BULLET_WIDTH
+# {static} float BULLET_HEIGHT
+# TextureRegion tex
+# TextureRegion[] frames
+# {abstract}NonPlayable create(Vector2,Vector2)
+# {abstract}Vector2 calculatePosition(Vector2,Vector2,float)
+}
+
+class PlayerBullet {
+- {static} float PLAYER_BULLET_VEL
++ NonPlayable create(Vector2,Vector2)
+# Vector2 calculatePosition(Vector2,Vector2,float)
+}
+
+
+class EnemyBullet {
+- {static} float ENEMY_BULLET_VEL
++ NonPlayable create(Vector2,Vector2)
++ NonPlayable create(Vector2,Vector2,Vector2)
+# Vector2 calculatePosition(Vector2,Vector2,float)
+}
+}
+
+class Enemy {
+- {static} float ENEMY_WIDTH
+- {static} float ENEMY_HEIGHT
+- {static} float ENEMY_VEL
+- TextureRegion tex
+- TextureRegion[] frames
+- boolean spawnLeft
++ NonPlayable create()
+- Vector2 calculatePosition(float)
+}
+
+
+class Player {
+- {static} float PLAYER_MARGIN_BOTTOM
+- {static} float PLAYER_WIDTH
+- {static} float PLAYER_HEIGHT
+- {static} int HEALTH
+- TextureRegion tex
+- TextureRegion[] frames
++ Playable create()
+- Vector2 calculatePosition(float)
+}
+
+
+class WaveConfig {
++ int enemyCount
++ float spawnInterval
++ float shooterChance
++ float speedMultiplier
++ {static} WaveConfig forWave(int)
+}
+
+}
+
+Bullet <|-- PlayerBullet
+Bullet <|-- EnemyBullet
+@enduml

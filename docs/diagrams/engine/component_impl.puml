@@ -1,0 +1,123 @@
+@startuml
+set separator none
+
+left to right direction
+
+package no.ntnu.tdt4240.project.engine.component {
+
+class WaveComponent {
++ long seed
++ int waveNumber
++ int enemiesToSpawn
++ int enemiesAlive
++ float spawnInterval
++ float shooterChance
++ float enemySpeedMultiplier
++ boolean waveActive
++ float waveTransitionTimer
+}
+
+class ShooterComponent {
++ float baseInterval
++ float timer
+}
+
+class VelocityComponent {
++ float x
+}
+
+class PowerupEffectsComponent {
++ {static} float ENEMY_SPEED_SLOW_MULTIPLIER
++ {static} float PLAYER_SHOOT_INTERVAL_MULTIPLIER
++ float shieldRemaining
++ float rapidFireRemaining
++ float slowEnemiesRemaining
+}
+
+class SabotageEffectsComponent {
++ {static} float ENEMY_SPEED_MULTIPLIER
++ {static} float PLAYER_SHOOT_INTERVAL_MULTIPLIER
++ {static} float ENEMY_SPAWN_RATE_MULTIPLIER
++ float enemySpeedBoostRemaining
++ float playerFireRateSlowRemaining
++ float alienSpawnBoostRemaining
+}
+
+class PositionComponent {
++ float x
+}
+
+class EnemyComponent {
+}
+class TextureComponent {
++ TextureRegion region
+}
+
+class ScoreComponent {
++ int score
+}
+
+class AnimationComponent {
++ TextureRegion[] frames
++ float frameDuration
++ float stateTime
+}
+
+class DimensionComponent {
++ float width
+}
+
+class TutorialScenarioComponent {
++ {static} int MODE_POWERUP
++ {static} int MODE_SABOTAGE
++ {static} float FORCED_INVINCIBILITY_SECONDS
++ int mode
++ int scoreThreshold
++ float nextPromptDelaySeconds
++ boolean pauseRequested
++ boolean powerupChosen
++ boolean sabotageChosen
++ boolean nextPromptVisible
++ float postSelectionElapsedSeconds
+}
+
+class PlayerComponent {
+}
+class HealthComponent {
++ {static} float INVINCIBILITY_DURATION
++ int health
++ float invincibilityRemaining
++ boolean isInvincible()
+}
+
+
+class RemoveComponent {
+}
+class BulletComponent {
+}
+
+}
+
+package com.badlogic.ashley.core {
+
+interface Component
+
+}
+
+Component <|.. ShooterComponent
+Component <|.. WaveComponent
+Component <|.. VelocityComponent
+Component <|.. PowerupEffectsComponent
+Component <|.. SabotageEffectsComponent
+Component <|.. PositionComponent
+Component <|.. EnemyComponent
+Component <|.. TextureComponent
+Component <|.. ScoreComponent
+Component <|.. AnimationComponent
+Component <|.. DimensionComponent
+Component <|.. TutorialScenarioComponent
+Component <|.. PlayerComponent
+Component <|.. HealthComponent
+Component <|.. RemoveComponent
+Component <|.. BulletComponent
+@enduml

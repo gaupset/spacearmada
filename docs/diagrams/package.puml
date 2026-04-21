@@ -1,0 +1,126 @@
+@startuml
+set separator none
+
+skinparam linetype polyline
+skinparam linetype ortho
+
+package no.ntnu.tdt4240.project {
+    package config {
+        package bullet {
+        }
+    }
+
+    package data {
+    }
+
+    package engine {
+        package component {
+        }
+        package entity {
+        }
+        package system {
+        }
+    }
+
+    package event {
+    }
+
+    package model {
+    }
+
+    package powerup.strategy {
+    }
+
+    package sabotage.strategy {
+    }
+
+    package service {
+    }
+
+    package state {
+        package tutorial {
+        }
+    }
+
+    package ui {
+        package view {
+        }
+    }
+
+    package util {
+    }
+}
+
+package com.badlogic {
+    package gdx {
+        package scenes.scene2d.ui {
+        }
+    }
+    package ashley {
+        package core {
+        }
+        package systems {
+        }
+    }
+}
+
+' config
+config <-- state
+config <-- system
+
+' config.bullet
+bullet <-- system
+
+' data
+data <-- entity
+data <-- service
+data <-- config
+data <-- bullet
+data <-- system
+
+' engine.entity
+entity <-- system
+entity <-- state
+
+' event
+event <-- state
+event <-- system
+
+' model
+model <-- state
+model <-- data
+model <-- service
+
+' powerup.strategy
+powerup.strategy <-- state
+
+' sabotage.strategy
+sabotage.strategy <-- state
+
+' service
+service <-- system
+service <-- state
+service <-- ui
+
+' ui
+ui <-- state
+
+' util
+util <-- service
+util <-- state
+util <-- ui
+util <-- view
+
+' gdx
+gdx <-- no.ntnu.tdt4240.project
+
+' gdx.scenes.scene2d.ui
+scenes.scene2d.ui <-- ui
+
+' gdx.ashley.core
+core <-- engine
+
+' gdx.ashley.systems
+systems <-- system
+
+@enduml

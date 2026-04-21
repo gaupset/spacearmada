@@ -1,0 +1,36 @@
+@startuml
+set separator none
+
+package no.ntnu.tdt4240.project.data {
+
+class LobbyPlayer {
++ String actualName
++ boolean inGameOverScreen
++ boolean gameOver
++ boolean leftLobby
++ Object lastTimeOnline
++ int personalHighScore
++ int score
++ Sabotage sabotage
++ String sabotageTargetId
+}
+
+class NonPlayable {
++ Vector2 vel
+}
+
+class Playable {
++ int health
+}
+
+class Base {
++ Vector2 pos
++ TextureRegion tex
++ TextureRegion[] frames
+}
+
+}
+
+Base <|-- NonPlayable
+Base <|-- Playable
+@enduml

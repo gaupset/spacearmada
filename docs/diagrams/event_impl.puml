@@ -1,0 +1,26 @@
+@startuml
+set separator none
+
+package no.ntnu.tdt4240.project.event {
+
+enum Event {
++  WIN
++  LOSE
+}
+
+interface EventListener {
+~ void receive(Event)
+}
+
+class EventManager {
+~ List<EventListener> listeners
++ void subscribe(EventListener)
++ void unsubscribe(EventListener)
++ void alert(Event)
+}
+
+}
+
+EventListener <-- EventManager
+
+@enduml
